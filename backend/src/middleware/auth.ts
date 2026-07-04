@@ -19,6 +19,7 @@ export async function auth(req: AuthRequest, _res: Response, next: NextFunction)
     const payload = verifyToken(token)
     const dbUser = await userRepo.findById(payload.sub)
     if (!dbUser) throw unauthorized()
+    if (dbUser.is_active === false) throw unauthorized('This account has been deactivated')
     req.user = toPublicUser(dbUser)
     next()
   } catch (err) {

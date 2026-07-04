@@ -228,10 +228,6 @@ function WeatherForecastCard({
               ))}
             </div>
           </div>
-
-          <div className="p-4 bg-amber-50 border border-amber-100 rounded-lg text-sm text-amber-900">
-            <strong>Farming tip:</strong> {weather.farmingTip}
-          </div>
         </>
       )}
     </div>

@@ -108,3 +108,114 @@ describe('Chat RAG API', () => {
     expect(followUp.body.content.toLowerCase()).not.toContain('could not find verified guidance')
   })
 })
+
+describe('Officer region filtering', () => {
+  const testFn = dbReady ? it : it.skip
+
+  testFn('GET /officer/reports/pending returns only reports in assigned region', async () => {
+    const login = await request(app)
+      .post('/auth/login')
+      .send({ username: 'officer1', password: 'password' })
+
+    expect(login.status).toBe(200)
+    const token = login.body.token as string
+    expect(login.body.user.assignedRegion).toMatch(/kurunegala/i)
+
+    const res = await request(app)
+      .get('/officer/reports/pending')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(Array.isArray(res.body)).toBe(true)
+    for (const report of res.body) {
+      expect(String(report.region).toLowerCase()).toContain('kurunegala')
+    }
+  })
+
+  testFn('POST /officer/reports/:id/review rejects out-of-region report', async () => {
+    const adminLogin = await request(app)
+      .post('/auth/login')
+      .send({ username: 'admin', password: 'password' })
+
+    const adminToken = adminLogin.body.token as string
+
+    const pending = await request(app)
+      .get('/admin/reports')
+      .query({ status: 'pending', region: 'Galle' })
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    expect(pending.status).toBe(200)
+    const galleReport = pending.body.find((r: { region: string }) =>
+      String(r.region).toLowerCase().includes('galle'),
+    )
+    expect(galleReport).toBeDefined()
+
+    const officerLogin = await request(app)
+      .post('/auth/login')
+      .send({ username: 'officer1', password: 'password' })
+
+    const officerToken = officerLogin.body.token as string
+
+    const review = await request(app)
+      .post(`/officer/reports/${galleReport.id}/review`)
+      .set('Authorization', `Bearer ${officerToken}`)
+      .send({ action: 'verify', comment: 'Should fail' })
+
+    expect(review.status).toBe(403)
+  })
+
+  testFn('officer without assigned region gets empty pending list', async () => {
+    const adminLogin = await request(app)
+      .post('/auth/login')
+      .send({ username: 'admin', password: 'password' })
+
+    const adminToken = adminLogin.body.token as string
+    const suffix = Date.now()
+
+    const created = await request(app)
+      .post('/admin/users')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        username: `officer_noreg_${suffix}`,
+        password: 'password',
+        name: 'Officer No Region',
+        role: 'officer',
+      })
+
+    expect(created.status).toBe(201)
+
+    const login = await request(app)
+      .post('/auth/login')
+      .send({ username: `officer_noreg_${suffix}`, password: 'password' })
+
+    const token = login.body.token as string
+
+    const res = await request(app)
+      .get('/officer/reports/pending')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual([])
+  })
+
+  testFn('GET /officer/reports/verified returns confirmed reports from all regions', async () => {
+    const login = await request(app)
+      .post('/auth/login')
+      .send({ username: 'officer1', password: 'password' })
+
+    const token = login.body.token as string
+
+    const res = await request(app)
+      .get('/officer/reports/verified')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(Array.isArray(res.body)).toBe(true)
+    expect(res.body.length).toBeGreaterThan(0)
+    for (const report of res.body) {
+      expect(report.status).toBe('verified')
+    }
+    const regions = res.body.map((r: { region: string }) => String(r.region).toLowerCase())
+    expect(regions.some((r: string) => r.includes('kurunegala'))).toBe(true)
+  })
+})
