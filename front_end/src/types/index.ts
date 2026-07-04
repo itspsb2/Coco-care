@@ -7,6 +7,50 @@ export interface User {
   email?: string
   phone?: string
   role: UserRole
+  isActive?: boolean
+  officerId?: string
+  assignedRegion?: string
+}
+
+export interface AdminFarm {
+  id: string
+  name: string
+  location: string
+  latitude: number
+  longitude: number
+  acreage: number
+  treeCount: number
+  ownerId: string
+  ownerName: string
+  ownerUsername: string
+}
+
+export interface RegionSummary {
+  region: string
+  pending: number
+  verified: number
+  rejected: number
+  total: number
+}
+
+export interface SystemHealth {
+  database: boolean
+  bert: boolean
+  groq: boolean
+  knowledgeDocuments: number
+  knowledgeChunks: number
+}
+
+export type NotificationAudience = 'all' | 'farmers' | 'officers'
+
+export interface AppNotification {
+  id: string
+  title: string
+  message: string
+  audience: NotificationAudience
+  createdBy?: string | null
+  createdAt: string
+  read: boolean
 }
 
 export interface Farm {
@@ -24,10 +68,13 @@ export interface DiseaseReport {
   farmId: string
   farmName: string
   region: string
+  imageUrl?: string
+  symptoms?: Record<string, string | boolean>
   imageResult?: string
   symptomResult?: string
   finalResult?: string
   confidence: number
+  advice?: string
   status: 'verified' | 'pending' | 'rejected'
   createdAt: string
   reviewComment?: string

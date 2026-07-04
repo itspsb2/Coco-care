@@ -60,18 +60,48 @@ async function seedDemoReports(farmerId: string, farmId: string, officerId: stri
   console.log(`Seeded ${demos.length} verified disease reports`)
 }
 
+async function seedGallePendingReport(farmerId: string, galleFarmId: string) {
+  const { rows } = await getPool().query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count
+     FROM disease_reports dr
+     JOIN farms f ON f.id = dr.farm_id
+     WHERE dr.status = 'pending' AND LOWER(f.location) LIKE '%galle%'`,
+  )
+  if (Number(rows[0]?.count ?? 0) > 0) return
+
+  await reportRepo.createReport({
+    farmId: galleFarmId,
+    userId: farmerId,
+    symptoms: { damagedLeafSurface: true },
+    imageResult: 'Coconut Caterpillar Damage',
+    symptomResult: 'Coconut Caterpillar Damage',
+    finalResult: 'Coconut Caterpillar Damage',
+    confidence: 0.79,
+    advice: 'Remove and destroy affected fronds. Monitor for caterpillar activity.',
+    status: 'pending',
+  })
+  console.log('Seeded pending Galle report for officer region filter demo')
+}
+
 async function seed() {
   getPool()
   const passwordHash = await hashPassword(DEFAULT_PASSWORD)
 
   const users = [
     { username: 'akeel', name: 'Akeel Bandara', phone: '0771234567', role: 'farmer' as const },
-    { username: 'officer1', name: 'Officer Silva', phone: '0777654321', role: 'officer' as const },
+    {
+      username: 'officer1',
+      name: 'Officer Silva',
+      phone: '0777654321',
+      role: 'officer' as const,
+      assignedRegion: 'Kurunegala',
+    },
     { username: 'admin', name: 'System Admin', phone: null, role: 'admin' as const, email: 'admin@cococare.lk' },
   ]
 
   let farmerId: string | null = null
-  let farmId: string | null = null
+  let kurunegalaFarmId: string | null = null
+  let galleFarmId: string | null = null
   let officerId: string | null = null
 
   for (const u of users) {
@@ -84,14 +114,23 @@ async function seed() {
         phone: u.phone ?? undefined,
         email: 'email' in u ? u.email : undefined,
         role: u.role,
+        assignedRegion: 'assignedRegion' in u ? u.assignedRegion : undefined,
       })
       console.log(`Created user: ${u.username}`)
+    } else if (u.role === 'officer' && 'assignedRegion' in u && u.assignedRegion && !user.assigned_region) {
+      await userRepo.updateUser(user.id, { assignedRegion: u.assignedRegion })
+      user = (await userRepo.findById(user.id))!
+      console.log(`Updated officer region: ${u.username} → ${u.assignedRegion}`)
     }
 
     if (u.role === 'farmer') {
       farmerId = user.id
       const farms = await farmRepo.findFarmsByUserId(user.id)
-      if (farms.length === 0) {
+
+      const kurunegala = farms.find((f) => f.location.toLowerCase().includes('kurunegala'))
+      if (kurunegala) {
+        kurunegalaFarmId = kurunegala.id
+      } else {
         const farm = await farmRepo.createFarm({
           userId: user.id,
           name: 'Akeel Coconut Estate',
@@ -101,9 +140,25 @@ async function seed() {
           acreage: 5,
           treeCount: 200,
         })
-        farmId = farm.id
+        kurunegalaFarmId = farm.id
+        console.log('Created Kurunegala farm for akeel')
+      }
+
+      const galle = farms.find((f) => f.location.toLowerCase().includes('galle'))
+      if (galle) {
+        galleFarmId = galle.id
       } else {
-        farmId = farms[0].id
+        const farm = await farmRepo.createFarm({
+          userId: user.id,
+          name: 'Southern Coconut Grove',
+          location: 'Galle',
+          latitude: 6.0535,
+          longitude: 80.221,
+          acreage: 3,
+          treeCount: 120,
+        })
+        galleFarmId = farm.id
+        console.log('Created Galle farm for akeel')
       }
     }
 
@@ -118,8 +173,12 @@ async function seed() {
     console.log('Seeded RAG knowledge from data/cri-manuals/cri/')
   }
 
-  if (farmerId && farmId && officerId) {
-    await seedDemoReports(farmerId, farmId, officerId)
+  if (farmerId && kurunegalaFarmId && officerId) {
+    await seedDemoReports(farmerId, kurunegalaFarmId, officerId)
+  }
+
+  if (farmerId && galleFarmId) {
+    await seedGallePendingReport(farmerId, galleFarmId)
   }
 
   await closePool()

@@ -7,6 +7,9 @@ export interface User {
   email?: string
   phone?: string
   role: UserRole
+  isActive?: boolean
+  officerId?: string
+  assignedRegion?: string
 }
 
 export interface Farm {
@@ -24,10 +27,13 @@ export interface DiseaseReport {
   farmId: string
   farmName: string
   region: string
+  imageUrl?: string
+  symptoms?: Record<string, string | boolean>
   imageResult?: string
   symptomResult?: string
   finalResult?: string
   confidence: number
+  advice?: string
   status: 'verified' | 'pending' | 'rejected'
   createdAt: string
   reviewComment?: string

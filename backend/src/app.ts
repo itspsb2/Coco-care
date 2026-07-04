@@ -10,6 +10,7 @@ import chatRoutes from './modules/chat/chat.routes.js'
 import adminRoutes from './modules/admin/admin.routes.js'
 import weatherRoutes from './modules/weather/weather.routes.js'
 import knowledgeRoutes from './modules/knowledge/knowledge.routes.js'
+import notificationsRoutes from './modules/notifications/notifications.routes.js'
 
 export function createApp() {
   const app = express()
@@ -45,6 +46,7 @@ export function createApp() {
   app.use(adminRoutes)
   app.use(weatherRoutes)
   app.use(knowledgeRoutes)
+  app.use(notificationsRoutes)
 
   app.use(errorHandler)
 

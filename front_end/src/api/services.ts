@@ -12,6 +12,12 @@ import type {
   DiagnosisResult,
   WeatherForecast,
   KnowledgeArticle,
+  AdminFarm,
+  RegionSummary,
+  SystemHealth,
+  AppNotification,
+  NotificationAudience,
+  UserRole,
 } from '@/types'
 
 export const authApi = {
@@ -69,6 +75,12 @@ export const reportsApi = {
     )
     return data
   },
+  verified: async () => {
+    const { data } = await apiClient.get<DiseaseReport[]>(
+      '/officer/reports/verified',
+    )
+    return data
+  },
   review: async (
     id: string,
     payload: { action: 'verify' | 'reject'; comment?: string },
@@ -118,8 +130,53 @@ export const chatApi = {
 }
 
 export const adminApi = {
-  users: async () => {
-    const { data } = await apiClient.get<User[]>('/admin/users')
+  users: async (params?: { role?: UserRole | ''; q?: string }) => {
+    const { data } = await apiClient.get<User[]>('/admin/users', { params })
+    return data
+  },
+  createUser: async (payload: {
+    username: string
+    password: string
+    name: string
+    email?: string
+    phone?: string
+    role: UserRole
+    officerId?: string
+    assignedRegion?: string
+  }) => {
+    const { data } = await apiClient.post<User>('/admin/users', payload)
+    return data
+  },
+  updateUser: async (
+    id: string,
+    payload: {
+      name?: string
+      email?: string | null
+      phone?: string | null
+      role?: UserRole
+      officerId?: string | null
+      assignedRegion?: string | null
+    },
+  ) => {
+    const { data } = await apiClient.patch<User>(`/admin/users/${id}`, payload)
+    return data
+  },
+  resetPassword: async (id: string, password: string) => {
+    const { data } = await apiClient.post<{ ok: boolean }>(`/admin/users/${id}/reset-password`, {
+      password,
+    })
+    return data
+  },
+  deactivateUser: async (id: string) => {
+    const { data } = await apiClient.post<User>(`/admin/users/${id}/deactivate`)
+    return data
+  },
+  activateUser: async (id: string) => {
+    const { data } = await apiClient.post<User>(`/admin/users/${id}/activate`)
+    return data
+  },
+  deleteUser: async (id: string) => {
+    const { data } = await apiClient.delete<{ ok: boolean }>(`/admin/users/${id}`)
     return data
   },
   stats: async () => {
@@ -128,6 +185,57 @@ export const adminApi = {
       pendingReports: number
       verifiedOutbreaks: number
     }>('/admin/stats')
+    return data
+  },
+  reports: async (params?: {
+    status?: 'pending' | 'verified' | 'rejected' | ''
+    region?: string
+    disease?: string
+  }) => {
+    const { data } = await apiClient.get<DiseaseReport[]>('/admin/reports', { params })
+    return data
+  },
+  reviewReport: async (id: string, payload: { action: 'verify' | 'reject'; comment?: string }) => {
+    const { data } = await apiClient.post<DiseaseReport>(`/admin/reports/${id}/review`, payload)
+    return data
+  },
+  farms: async () => {
+    const { data } = await apiClient.get<AdminFarm[]>('/admin/farms')
+    return data
+  },
+  farmReports: async (farmId: string) => {
+    const { data } = await apiClient.get<DiseaseReport[]>(`/admin/farms/${farmId}/reports`)
+    return data
+  },
+  regionSummary: async () => {
+    const { data } = await apiClient.get<RegionSummary[]>('/admin/regions/summary')
+    return data
+  },
+  health: async () => {
+    const { data } = await apiClient.get<SystemHealth>('/admin/health')
+    return data
+  },
+  listBroadcasts: async () => {
+    const { data } = await apiClient.get<AppNotification[]>('/admin/notifications')
+    return data
+  },
+  createBroadcast: async (payload: {
+    title: string
+    message: string
+    audience: NotificationAudience
+  }) => {
+    const { data } = await apiClient.post<AppNotification>('/admin/notifications', payload)
+    return data
+  },
+}
+
+export const notificationsApi = {
+  list: async () => {
+    const { data } = await apiClient.get<AppNotification[]>('/api/notifications')
+    return data
+  },
+  markRead: async (id: string) => {
+    const { data } = await apiClient.post<{ ok: boolean }>(`/api/notifications/${id}/read`)
     return data
   },
 }
