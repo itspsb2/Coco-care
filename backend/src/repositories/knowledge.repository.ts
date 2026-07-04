@@ -193,6 +193,13 @@ export async function countChunks(): Promise<number> {
   return Number(rows[0]?.count ?? 0)
 }
 
+export async function countDocuments(): Promise<number> {
+  const { rows } = await getPool().query<{ count: string }>(
+    'SELECT COUNT(*)::text AS count FROM knowledge_documents',
+  )
+  return Number(rows[0]?.count ?? 0)
+}
+
 export async function keywordSearch(terms: string[], limit: number): Promise<KnowledgeChunk[]> {
   if (terms.length === 0) return []
 

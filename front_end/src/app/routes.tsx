@@ -11,6 +11,11 @@ import { OfficerLayout } from './layouts/OfficerLayout'
 import { ReportReviewPage } from './pages/officer/ReportReviewPage'
 import { AdminLayout } from './layouts/AdminLayout'
 import { AdminDashboard } from './pages/admin/AdminDashboard'
+import { AdminUsersPage } from './pages/admin/AdminUsersPage'
+import { AdminReportsPage } from './pages/admin/AdminReportsPage'
+import { AdminFarmsPage } from './pages/admin/AdminFarmsPage'
+import { AdminSystemPage } from './pages/admin/AdminSystemPage'
+import { AdminNotificationsPage } from './pages/admin/AdminNotificationsPage'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -54,7 +59,11 @@ export const router = createBrowserRouter([
         Component: AdminLayout,
         children: [
           { index: true, Component: AdminDashboard },
-          { path: 'users', Component: AdminDashboard },
+          { path: 'users', Component: AdminUsersPage },
+          { path: 'reports', Component: AdminReportsPage },
+          { path: 'farms', Component: AdminFarmsPage },
+          { path: 'system', Component: AdminSystemPage },
+          { path: 'notifications', Component: AdminNotificationsPage },
         ],
       },
     ],

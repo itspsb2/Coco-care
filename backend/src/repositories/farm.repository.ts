@@ -70,3 +70,86 @@ export async function createFarm(input: CreateFarmInput): Promise<Farm> {
   )
   return mapFarm(rows[0])
 }
+
+export interface AdminFarmRow {
+  id: string
+  name: string
+  location: string
+  latitude: number
+  longitude: number
+  acreage: string
+  tree_count: number
+  owner_id: string
+  owner_name: string
+  owner_username: string
+}
+
+export interface AdminFarm {
+  id: string
+  name: string
+  location: string
+  latitude: number
+  longitude: number
+  acreage: number
+  treeCount: number
+  ownerId: string
+  ownerName: string
+  ownerUsername: string
+}
+
+export async function listAllFarmsWithOwner(): Promise<AdminFarm[]> {
+  const { rows } = await getPool().query<AdminFarmRow>(
+    `SELECT f.id, f.name, f.location, f.latitude, f.longitude, f.acreage, f.tree_count,
+            u.id AS owner_id, u.name AS owner_name, u.username AS owner_username
+     FROM farms f
+     JOIN users u ON u.id = f.user_id
+     ORDER BY f.created_at DESC`,
+  )
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    location: r.location,
+    latitude: r.latitude,
+    longitude: r.longitude,
+    acreage: Number(r.acreage),
+    treeCount: r.tree_count,
+    ownerId: r.owner_id,
+    ownerName: r.owner_name,
+    ownerUsername: r.owner_username,
+  }))
+}
+
+export interface RegionSummary {
+  region: string
+  pending: number
+  verified: number
+  rejected: number
+  total: number
+}
+
+export async function getRegionSummary(): Promise<RegionSummary[]> {
+  const { rows } = await getPool().query<{
+    region: string
+    pending: string
+    verified: string
+    rejected: string
+    total: string
+  }>(
+    `SELECT f.location AS region,
+            COUNT(*) FILTER (WHERE dr.status = 'pending')::text AS pending,
+            COUNT(*) FILTER (WHERE dr.status = 'verified')::text AS verified,
+            COUNT(*) FILTER (WHERE dr.status = 'rejected')::text AS rejected,
+            COUNT(*)::text AS total
+     FROM farms f
+     LEFT JOIN disease_reports dr ON dr.farm_id = f.id
+     GROUP BY f.location
+     ORDER BY COUNT(*) FILTER (WHERE dr.status = 'verified') DESC, f.location`,
+  )
+  return rows.map((r) => ({
+    region: r.region,
+    pending: Number(r.pending),
+    verified: Number(r.verified),
+    rejected: Number(r.rejected),
+    total: Number(r.total),
+  }))
+}
