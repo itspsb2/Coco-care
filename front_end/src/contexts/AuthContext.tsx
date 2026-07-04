@@ -7,7 +7,6 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { authApi } from '@/api/services'
 import { TOKEN_KEY } from '@/api/client'
 import type { LoginPayload, RegisterPayload, User, UserRole } from '@/types'
 
@@ -22,6 +21,26 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 const USER_KEY = 'coco_user'
+const DEMO_TOKEN = 'coco_demo_token'
+
+function buildDemoUser(payload: LoginPayload | RegisterPayload): User {
+  const role =
+    'role' in payload
+      ? payload.role
+      : payload.username === 'admin'
+        ? 'admin'
+        : payload.username === 'officer1'
+          ? 'officer'
+          : 'farmer'
+
+  return {
+    id: `demo-${payload.username}`,
+    username: payload.username,
+    name: 'name' in payload && payload.name ? payload.name : payload.username,
+    phone: 'phone' in payload ? payload.phone : undefined,
+    role,
+  }
+}
 
 export function getRoleHomePath(role: UserRole): string {
   if (role === 'officer') return '/officer/reports'
@@ -44,28 +63,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const cachedUser = localStorage.getItem(USER_KEY)
     const token = localStorage.getItem(TOKEN_KEY)
+
+    if (cachedUser && token) {
+      try {
+        setUser(JSON.parse(cachedUser) as User)
+      } catch {
+        clearSession()
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
+
     if (!token) {
       setLoading(false)
       return
     }
-    authApi
-      .me()
-      .then((u) => setUser(u))
-      .catch(() => clearSession())
-      .finally(() => setLoading(false))
+
+    clearSession()
+    setLoading(false)
   }, [])
 
   const login = useCallback(async (payload: LoginPayload) => {
-    const { token, user: loggedIn } = await authApi.login(payload)
-    persistSession(token, loggedIn)
+    const loggedIn = buildDemoUser(payload)
+    persistSession(DEMO_TOKEN, loggedIn)
     setUser(loggedIn)
     return loggedIn
   }, [])
 
   const register = useCallback(async (payload: RegisterPayload) => {
-    const { token, user: registered } = await authApi.register(payload)
-    persistSession(token, registered)
+    const registered = buildDemoUser(payload)
+    persistSession(DEMO_TOKEN, registered)
     setUser(registered)
     return registered
   }, [])

@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from 'react-router'
-import { ClipboardList, LogOut, Sprout } from 'lucide-react'
+import { ClipboardList, LogOut } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { CocoCareLogo } from '@/app/components/CocoCareLogo'
 
 export function OfficerLayout() {
   const location = useLocation()
@@ -11,8 +12,8 @@ export function OfficerLayout() {
       <header className="bg-white border-b border-green-100 px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center gap-2">
-            <Sprout className="w-8 h-8 text-[#2d5f2e]" />
-            <span className="text-lg font-semibold text-[#2d5f2e]">Coco Care Officer</span>
+            <CocoCareLogo iconClassName="h-8 w-auto" />
+            <span className="text-lg font-semibold text-[#2d5f2e]">Officer</span>
           </Link>
           <Link
             to="/officer/reports"
