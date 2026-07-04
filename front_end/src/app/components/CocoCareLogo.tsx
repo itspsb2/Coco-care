@@ -1,25 +1,28 @@
-import { Sprout } from 'lucide-react'
 import { Link } from 'react-router'
+import logo from '@/imports/image-3.png'
 
 type CocoCareLogoProps = {
   to?: string
   className?: string
   iconClassName?: string
-  textClassName?: string
 }
 
 export function CocoCareLogo({
   to,
   className = '',
-  iconClassName = 'w-8 h-8',
-  textClassName = 'text-xl',
+  iconClassName = 'h-9 w-auto',
 }: CocoCareLogoProps) {
   const content = (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <Sprout className={`${iconClassName} text-[#2d5f2e] shrink-0`} />
-      <span className={`${textClassName} font-semibold text-[#2d5f2e] whitespace-nowrap`}>
-        Coco Care
-      </span>
+    <div className={`flex items-center ${className}`}>
+      <img
+        src={logo}
+        alt="CocoCare"
+        className={`${iconClassName} shrink-0`}
+        style={{
+          filter:
+            'brightness(0) saturate(100%) invert(21%) sepia(48%) saturate(1200%) hue-rotate(70deg) brightness(95%) contrast(90%)',
+        }}
+      />
     </div>
   )
 

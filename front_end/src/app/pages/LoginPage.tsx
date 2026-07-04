@@ -1,130 +1,175 @@
-import { Link, useNavigate } from 'react-router'
-import { User, Lock, Chrome } from 'lucide-react'
-import { useState } from 'react'
-import { useAuth, getRoleHomePath } from '@/contexts/AuthContext'
-import { CocoCareLogo } from '@/app/components/CocoCareLogo'
+import { Link, useNavigate } from "react-router";
+import { Eye, EyeOff } from "lucide-react";
+import logo from "../../imports/image-3.png";
+import { useState } from "react";
+import { motion } from "motion/react";
+import { useAuth, getRoleHomePath } from "@/contexts/AuthContext";
 
 export function LoginPage() {
-  const navigate = useNavigate()
-  const { login } = useAuth()
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setSubmitting(true)
-    try {
-      const user = await login({ username, password })
-      navigate(getRoleHomePath(user.role))
-    } catch {
-      setError('Invalid username or password. Try akeel, officer1, or admin.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
+    e.preventDefault();
+    const user = await login({ username, password });
+    navigate(getRoleHomePath(user.role));
+  };
 
   return (
-    <div className="min-h-screen flex">
-      <div className="flex-1 flex items-center justify-center p-8 bg-gradient-to-br from-white to-green-50">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-              <CocoCareLogo iconClassName="w-10 h-10" textClassName="text-2xl" />
-            </div>
-            <h1 className="text-3xl text-[#1a2e1a] mb-2">Welcome Back</h1>
-            <p className="text-[#6b7c6b]">Sign in to access your farming dashboard</p>
-          </div>
+    <div className="min-h-screen bg-white flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(45,80,22,0.08),_transparent_45%),radial-gradient(circle_at_bottom_right,_rgba(244,164,96,0.08),_transparent_35%)]" />
 
-          <div className="bg-white p-8 rounded-2xl shadow-lg border border-green-100">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {error && (
-                <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
-                  {error}
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm mb-2 text-[#1a2e1a]">Username</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6b7c6b]" />
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e] bg-white"
-                    placeholder="akeel"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm mb-2 text-[#1a2e1a]">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6b7c6b]" />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e] bg-white"
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full py-3 bg-[#2d5f2e] text-white rounded-lg hover:bg-[#1a2e1a] transition-colors disabled:opacity-60"
-              >
-                {submitting ? 'Signing in...' : 'Sign In'}
-              </button>
-
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-green-200"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-[#6b7c6b]">Or continue with</span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                className="w-full py-3 border-2 border-green-200 text-[#1a2e1a] rounded-lg hover:bg-green-50 transition-colors flex items-center justify-center gap-2"
-              >
-                <Chrome className="w-5 h-5" />
-                Sign in with Google
-              </button>
-            </form>
-
-            <p className="mt-6 text-center text-sm text-[#6b7c6b]">
-              Don&apos;t have an account?{' '}
-              <Link to="/register" className="text-[#2d5f2e] hover:text-[#1a2e1a]">
-                Register now
+      {/* Main content */}
+      <div className="w-full max-w-md relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <div className="flex justify-center mb-8">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            >
+              <Link to="/">
+                <img
+                  src={logo}
+                  alt="CocoCare"
+                  className="h-20 w-auto"
+                  style={{ 
+                    filter: "brightness(0) saturate(100%) invert(21%) sepia(48%) saturate(1200%) hue-rotate(70deg) brightness(95%) contrast(90%)"
+                  }}
+                />
               </Link>
-            </p>
+            </motion.div>
           </div>
-        </div>
-      </div>
+          <motion.h1 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="text-5xl font-bold text-[#1a2e1a] mb-3"
+          >
+            Login
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+            className="text-gray-600"
+          >
+            Welcome back to CocoCare
+          </motion.p>
+        </motion.div>
 
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-[#2d5f2e] to-[#1a2e1a] items-center justify-center p-12">
-        <div className="max-w-md text-white">
-          <img
-            src="https://images.unsplash.com/photo-1714894695939-beff8548022f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwyfHxjb2NvbnV0JTIwdHJlZSUyMGRpc2Vhc2UlMjBhZ3JpY3VsdHVyZXxlbnwxfHx8fDE3Nzg2MTYzNjd8MA&ixlib=rb-4.1.0&q=80&w=1080"
-            alt="Coconut farming"
-            className="rounded-2xl mb-8 opacity-80"
-          />
-          <h2 className="text-3xl mb-4">AI-Powered Coconut Farming</h2>
-          <p className="text-green-100 text-lg">
-            Join thousands of Sri Lankan farmers using advanced technology to protect their coconut plantations and maximize yields.
-          </p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
+        >
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6, duration: 0.5 }}
+            >
+              <label className="block text-sm font-bold mb-3 text-[#1a2e1a]">Username</label>
+              <motion.div
+                whileFocus={{ scale: 1.01 }}
+                transition={{ duration: 0.2 }}
+              >
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full px-6 py-4 border-2 border-[#1a2e1a] rounded-full focus:outline-none focus:border-[#2d5016] transition-all bg-white text-[#1a2e1a] hover:shadow-md"
+                  placeholder="akeel"
+                  required
+                />
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.7, duration: 0.5 }}
+            >
+              <label className="block text-sm font-bold mb-3 text-[#1a2e1a]">Password</label>
+              <motion.div className="relative" whileFocus={{ scale: 1.01 }} transition={{ duration: 0.2 }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-6 py-4 border-2 border-[#1a2e1a] rounded-full focus:outline-none focus:border-[#2d5016] transition-all bg-white text-[#1a2e1a] pr-12 hover:shadow-md"
+                  placeholder="Enter your password"
+                  required
+                />
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#2d5016] transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </motion.button>
+              </motion.div>
+              <div className="text-right mt-2">
+                <motion.a 
+                  whileHover={{ x: 3 }}
+                  href="#" 
+                  className="text-sm text-gray-500 hover:text-[#2d5016] transition-colors inline-block"
+                >
+                  Forgot password?
+                </motion.a>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8, duration: 0.5 }}
+            >
+              <motion.button
+                type="submit"
+                whileHover={{ scale: 1.02, boxShadow: "0 10px 30px rgba(45, 80, 22, 0.3)" }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full py-4 bg-[#2d5016] text-white rounded-full font-bold text-lg hover:bg-[#1a2e1a] transition-colors shadow-lg"
+              >
+                Login
+              </motion.button>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.9, duration: 0.5 }}
+              className="border-t-2 border-gray-200 my-8"
+            ></motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1, duration: 0.5 }}
+              className="text-center"
+            >
+              <p className="text-[#1a2e1a]">
+                Don't have an account?{" "}
+                <Link 
+                  to="/register" 
+                  className="font-bold text-[#2d5016] hover:text-[#1a2e1a] transition-colors underline"
+                >
+                  Create an account
+                </Link>
+              </p>
+            </motion.div>
+          </form>
+        </motion.div>
       </div>
     </div>
-  )
+  );
 }

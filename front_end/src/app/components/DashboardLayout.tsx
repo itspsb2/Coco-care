@@ -151,7 +151,7 @@ export function DashboardLayout() {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header className="bg-white border-b border-green-100 px-4 lg:px-6 h-16 flex items-center justify-between shrink-0">
-          <CocoCareLogo to="/app" iconClassName="w-9 h-9" textClassName="text-2xl" />
+          <CocoCareLogo to="/app" iconClassName="h-9 w-auto" />
 
           <div className="relative" ref={profileRef}>
             <button

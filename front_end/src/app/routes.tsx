@@ -1,8 +1,5 @@
 import { createBrowserRouter } from 'react-router'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
-import { LandingPage } from './pages/LandingPage'
-import { LoginPage } from './pages/LoginPage'
-import { RegisterPage } from './pages/RegisterPage'
 import { DashboardLayout } from './components/DashboardLayout'
 import { Dashboard } from './pages/Dashboard'
 import { DiseaseDetection } from './pages/DiseaseDetection'
@@ -14,6 +11,9 @@ import { OfficerLayout } from './layouts/OfficerLayout'
 import { ReportReviewPage } from './pages/officer/ReportReviewPage'
 import { AdminLayout } from './layouts/AdminLayout'
 import { AdminDashboard } from './pages/admin/AdminDashboard'
+import { LandingPage } from './pages/LandingPage'
+import { LoginPage } from './pages/LoginPage'
+import { RegisterPage } from './pages/RegisterPage'
 
 export const router = createBrowserRouter([
   { path: '/', Component: LandingPage },
