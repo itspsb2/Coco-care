@@ -1,25 +1,38 @@
-import { Link, useNavigate } from "react-router";
-import { Sprout, Mail, Lock, Chrome } from "lucide-react";
-import { useState } from "react";
+import { Link, useNavigate } from 'react-router'
+import { User, Lock, Chrome } from 'lucide-react'
+import { useState } from 'react'
+import { useAuth, getRoleHomePath } from '@/contexts/AuthContext'
+import { CocoCareLogo } from '@/app/components/CocoCareLogo'
 
 export function LoginPage() {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const navigate = useNavigate()
+  const { login } = useAuth()
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    navigate("/app");
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setSubmitting(true)
+    try {
+      const user = await login({ username, password })
+      navigate(getRoleHomePath(user.role))
+    } catch {
+      setError('Invalid username or password. Try akeel, officer1, or admin.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <div className="min-h-screen flex">
       <div className="flex-1 flex items-center justify-center p-8 bg-gradient-to-br from-white to-green-50">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Sprout className="w-10 h-10 text-[#2d5f2e]" />
-              <span className="text-2xl font-semibold text-[#2d5f2e]">Coco Care</span>
+            <div className="flex justify-center mb-4">
+              <CocoCareLogo iconClassName="w-10 h-10" textClassName="text-2xl" />
             </div>
             <h1 className="text-3xl text-[#1a2e1a] mb-2">Welcome Back</h1>
             <p className="text-[#6b7c6b]">Sign in to access your farming dashboard</p>
@@ -27,16 +40,22 @@ export function LoginPage() {
 
           <div className="bg-white p-8 rounded-2xl shadow-lg border border-green-100">
             <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+                  {error}
+                </div>
+              )}
+
               <div>
-                <label className="block text-sm mb-2 text-[#1a2e1a]">Email</label>
+                <label className="block text-sm mb-2 text-[#1a2e1a]">Username</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6b7c6b]" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6b7c6b]" />
                   <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e] bg-white"
-                    placeholder="farmer@example.com"
+                    placeholder="akeel"
                     required
                   />
                 </div>
@@ -57,21 +76,12 @@ export function LoginPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="rounded border-green-300 text-[#2d5f2e] focus:ring-[#2d5f2e]" />
-                  <span className="text-sm text-[#6b7c6b]">Remember me</span>
-                </label>
-                <a href="#" className="text-sm text-[#2d5f2e] hover:text-[#1a2e1a]">
-                  Forgot password?
-                </a>
-              </div>
-
               <button
                 type="submit"
-                className="w-full py-3 bg-[#2d5f2e] text-white rounded-lg hover:bg-[#1a2e1a] transition-colors"
+                disabled={submitting}
+                className="w-full py-3 bg-[#2d5f2e] text-white rounded-lg hover:bg-[#1a2e1a] transition-colors disabled:opacity-60"
               >
-                Sign In
+                {submitting ? 'Signing in...' : 'Sign In'}
               </button>
 
               <div className="relative my-6">
@@ -93,7 +103,7 @@ export function LoginPage() {
             </form>
 
             <p className="mt-6 text-center text-sm text-[#6b7c6b]">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{' '}
               <Link to="/register" className="text-[#2d5f2e] hover:text-[#1a2e1a]">
                 Register now
               </Link>
@@ -116,5 +126,5 @@ export function LoginPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

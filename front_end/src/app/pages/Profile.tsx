@@ -1,175 +1,246 @@
-import { User, MapPin, Phone, Mail, Home, Calendar, Edit2, Save } from "lucide-react";
-import { useState } from "react";
+import { MapPin, Phone, Mail, Home, Loader2, Plus } from 'lucide-react'
+import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { farmApi } from '@/api/services'
+import { useAuth } from '@/contexts/AuthContext'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/app/components/ui/dialog'
+
+const emptyFarmForm = {
+  name: '',
+  location: '',
+  latitude: '7.4818',
+  longitude: '80.365',
+  acreage: '5',
+  treeCount: '200',
+}
 
 export function Profile() {
-  const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    name: "Nimal Perera",
-    email: "nimal.perera@example.com",
-    phone: "077 123 4567",
-    nic: "199012345678",
-    district: "Gampaha",
-    plantationSize: "Medium (3 acres)",
-    joinedDate: "January 2025",
-  });
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+  const [showAddFarm, setShowAddFarm] = useState(false)
+  const [newFarm, setNewFarm] = useState(emptyFarmForm)
 
-  const handleSave = () => {
-    setIsEditing(false);
-  };
+  const resetFarmForm = () => setNewFarm(emptyFarmForm)
+
+  const handleDialogChange = (open: boolean) => {
+    setShowAddFarm(open)
+    if (!open) resetFarmForm()
+  }
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['farmer', 'profile'],
+    queryFn: farmApi.profile,
+  })
+
+  const createFarmMutation = useMutation({
+    mutationFn: farmApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['farmer', 'profile'] })
+      setShowAddFarm(false)
+      resetFarmForm()
+    },
+  })
+
+  const initials = (user?.name ?? 'U').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    createFarmMutation.mutate({
+      name: newFarm.name,
+      location: newFarm.location,
+      latitude: parseFloat(newFarm.latitude),
+      longitude: parseFloat(newFarm.longitude),
+      acreage: parseFloat(newFarm.acreage),
+      treeCount: parseInt(newFarm.treeCount, 10),
+    })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-[#2d5f2e]" />
+      </div>
+    )
+  }
+
+  const displayUser = profile?.user ?? user
 
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
         <h1 className="text-3xl text-[#1a2e1a] mb-2">Profile</h1>
-        <p className="text-[#6b7c6b]">Manage your account information and plantation details.</p>
+        <p className="text-[#6b7c6b]">Your account and registered farms.</p>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-20 h-20 bg-gradient-to-br from-[#2d5f2e] to-[#1a2e1a] rounded-full flex items-center justify-center text-white text-2xl">
-              NP
-            </div>
-            <div>
-              <h2 className="text-2xl text-gray-900">{profile.name}</h2>
-              <p className="text-gray-600">Coconut Farmer</p>
-            </div>
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-20 h-20 bg-gradient-to-br from-[#2d5f2e] to-[#1a2e1a] rounded-full flex items-center justify-center text-white text-2xl">
+            {initials}
           </div>
+          <div>
+            <h2 className="text-2xl text-gray-900">{displayUser?.name}</h2>
+            <p className="text-gray-600 capitalize">{displayUser?.role} · @{displayUser?.username}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <InfoRow icon={<Phone className="w-4 h-4" />} label="Phone" value={displayUser?.phone ?? '—'} />
+          <InfoRow icon={<Mail className="w-4 h-4" />} label="Email" value={displayUser?.email ?? '—'} />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg text-gray-900">My Farms</h3>
           <button
-            onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
-            className="px-4 py-2 bg-[#2d5f2e] text-white rounded-lg hover:bg-[#1a2e1a] transition-colors flex items-center gap-2"
+            type="button"
+            onClick={() => setShowAddFarm(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-[#2d5f2e] text-white rounded-lg text-sm hover:bg-[#1a2e1a]"
           >
-            {isEditing ? (
-              <>
-                <Save className="w-4 h-4" />
-                Save Changes
-              </>
-            ) : (
-              <>
-                <Edit2 className="w-4 h-4" />
-                Edit Profile
-              </>
-            )}
+            <Plus className="w-4 h-4" />
+            Add Farm
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ProfileField
-            icon={<User className="w-5 h-5" />}
-            label="Full Name"
-            value={profile.name}
-            isEditing={isEditing}
-            onChange={(value) => setProfile({ ...profile, name: value })}
-          />
-          <ProfileField
-            icon={<Mail className="w-5 h-5" />}
-            label="Email"
-            value={profile.email}
-            isEditing={isEditing}
-            onChange={(value) => setProfile({ ...profile, email: value })}
-          />
-          <ProfileField
-            icon={<Phone className="w-5 h-5" />}
-            label="Mobile Number"
-            value={profile.phone}
-            isEditing={isEditing}
-            onChange={(value) => setProfile({ ...profile, phone: value })}
-          />
-          <ProfileField
-            icon={<User className="w-5 h-5" />}
-            label="NIC"
-            value={profile.nic}
-            isEditing={false}
-          />
-          <ProfileField
-            icon={<MapPin className="w-5 h-5" />}
-            label="District"
-            value={profile.district}
-            isEditing={isEditing}
-            onChange={(value) => setProfile({ ...profile, district: value })}
-          />
-          <ProfileField
-            icon={<Home className="w-5 h-5" />}
-            label="Plantation Size"
-            value={profile.plantationSize}
-            isEditing={isEditing}
-            onChange={(value) => setProfile({ ...profile, plantationSize: value })}
-          />
-          <ProfileField
-            icon={<Calendar className="w-5 h-5" />}
-            label="Member Since"
-            value={profile.joinedDate}
-            isEditing={false}
-          />
-        </div>
-      </div>
+        <Dialog open={showAddFarm} onOpenChange={handleDialogChange}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add New Farm</DialogTitle>
+              <DialogDescription>
+                Register a coconut estate for disease reporting and diagnosis.
+              </DialogDescription>
+            </DialogHeader>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-          <div className="text-3xl text-[#2d5f2e] mb-2">156</div>
-          <div className="text-gray-600">AI Scans Completed</div>
-        </div>
-        <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-          <div className="text-3xl text-[#2d5f2e] mb-2">83%</div>
-          <div className="text-gray-600">Plantation Health</div>
-        </div>
-        <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-          <div className="text-3xl text-[#2d5f2e] mb-2">12</div>
-          <div className="text-gray-600">Alerts Received</div>
-        </div>
-      </div>
+            <form id="add-farm-form" onSubmit={handleSubmit} className="grid grid-cols-1 gap-3">
+              <label className="space-y-1">
+                <span className="text-sm text-gray-600">Farm name</span>
+                <input
+                  placeholder="e.g. Akeel Coconut Estate"
+                  value={newFarm.name}
+                  onChange={(e) => setNewFarm({ ...newFarm, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e]/30"
+                  required
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="text-sm text-gray-600">Location / District</span>
+                <input
+                  placeholder="e.g. Kurunegala"
+                  value={newFarm.location}
+                  onChange={(e) => setNewFarm({ ...newFarm, location: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e]/30"
+                  required
+                />
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="space-y-1">
+                  <span className="text-sm text-gray-600">Acreage</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={newFarm.acreage}
+                    onChange={(e) => setNewFarm({ ...newFarm, acreage: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e]/30"
+                    required
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-sm text-gray-600">Tree count</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={newFarm.treeCount}
+                    onChange={(e) => setNewFarm({ ...newFarm, treeCount: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e]/30"
+                    required
+                  />
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="space-y-1">
+                  <span className="text-sm text-gray-600">Latitude</span>
+                  <input
+                    type="number"
+                    step="any"
+                    value={newFarm.latitude}
+                    onChange={(e) => setNewFarm({ ...newFarm, latitude: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e]/30"
+                    required
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-sm text-gray-600">Longitude</span>
+                  <input
+                    type="number"
+                    step="any"
+                    value={newFarm.longitude}
+                    onChange={(e) => setNewFarm({ ...newFarm, longitude: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e]/30"
+                    required
+                  />
+                </label>
+              </div>
+            </form>
 
-      <div className="bg-gradient-to-r from-green-50 to-yellow-50 rounded-2xl border border-green-200 p-6">
-        <h3 className="text-lg text-gray-900 mb-4">Account Activity</h3>
+            <DialogFooter>
+              <button
+                type="button"
+                onClick={() => handleDialogChange(false)}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="add-farm-form"
+                disabled={createFarmMutation.isPending}
+                className="px-4 py-2 text-sm bg-[#2d5f2e] text-white rounded-lg hover:bg-[#1a2e1a] disabled:opacity-60"
+              >
+                {createFarmMutation.isPending ? 'Saving...' : 'Save Farm'}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <div className="space-y-3">
-          <ActivityItem time="2 hours ago" action="Completed AI disease scan" />
-          <ActivityItem time="1 day ago" action="Generated fertilizer plan" />
-          <ActivityItem time="3 days ago" action="Viewed disease heatmap" />
-          <ActivityItem time="5 days ago" action="Used AI chatbot for farming advice" />
+          {(profile?.farms ?? []).length === 0 ? (
+            <p className="text-gray-500 text-sm">No farms registered yet.</p>
+          ) : (
+            profile?.farms.map((farm) => (
+              <div key={farm.id} className="p-4 bg-gray-50 rounded-lg flex items-start gap-3">
+                <Home className="w-5 h-5 text-[#2d5f2e] mt-0.5" />
+                <div>
+                  <div className="font-medium text-gray-900">{farm.name}</div>
+                  <div className="text-sm text-gray-600 flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {farm.location} · {farm.acreage} acres · {farm.treeCount} trees
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-function ProfileField({
-  icon,
-  label,
-  value,
-  isEditing,
-  onChange,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  isEditing: boolean;
-  onChange?: (value: string) => void;
-}) {
+function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div>
-      <label className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-        {icon}
-        {label}
-      </label>
-      {isEditing && onChange ? (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e]"
-        />
-      ) : (
-        <div className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">{value}</div>
-      )}
+    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+      <span className="text-[#2d5f2e]">{icon}</span>
+      <div>
+        <div className="text-gray-500 text-xs">{label}</div>
+        <div className="text-gray-900">{value}</div>
+      </div>
     </div>
-  );
-}
-
-function ActivityItem({ time, action }: { time: string; action: string }) {
-  return (
-    <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-      <span className="text-gray-900">{action}</span>
-      <span className="text-sm text-gray-500">{time}</span>
-    </div>
-  );
+  )
 }

@@ -1,42 +1,62 @@
-import { createBrowserRouter } from "react-router";
-import { LandingPage } from "./pages/LandingPage";
-import { LoginPage } from "./pages/LoginPage";
-import { RegisterPage } from "./pages/RegisterPage";
-import { DashboardLayout } from "./components/DashboardLayout";
-import { Dashboard } from "./pages/Dashboard";
-import { DiseaseDetection } from "./pages/DiseaseDetection";
-import { AIChatbot } from "./pages/AIChatbot";
-import { DiseaseHeatmap } from "./pages/DiseaseHeatmap";
-import { FarmAnalytics } from "./pages/FarmAnalytics";
-import { FertilizerPlanner } from "./pages/FertilizerPlanner";
-import { Notifications } from "./pages/Notifications";
-import { Profile } from "./pages/Profile";
+import { createBrowserRouter } from 'react-router'
+import { ProtectedRoute } from '@/routes/ProtectedRoute'
+import { LandingPage } from './pages/LandingPage'
+import { LoginPage } from './pages/LoginPage'
+import { RegisterPage } from './pages/RegisterPage'
+import { DashboardLayout } from './components/DashboardLayout'
+import { Dashboard } from './pages/Dashboard'
+import { DiseaseDetection } from './pages/DiseaseDetection'
+import { AIChatbot } from './pages/AIChatbot'
+import { DiseaseHeatmap } from './pages/DiseaseHeatmap'
+import { Notifications } from './pages/Notifications'
+import { Profile } from './pages/Profile'
+import { OfficerLayout } from './layouts/OfficerLayout'
+import { ReportReviewPage } from './pages/officer/ReportReviewPage'
+import { AdminLayout } from './layouts/AdminLayout'
+import { AdminDashboard } from './pages/admin/AdminDashboard'
 
 export const router = createBrowserRouter([
+  { path: '/', Component: LandingPage },
+  { path: '/login', Component: LoginPage },
+  { path: '/register', Component: RegisterPage },
   {
-    path: "/",
-    Component: LandingPage,
-  },
-  {
-    path: "/login",
-    Component: LoginPage,
-  },
-  {
-    path: "/register",
-    Component: RegisterPage,
-  },
-  {
-    path: "/app",
-    Component: DashboardLayout,
+    element: <ProtectedRoute roles={['farmer']} />,
     children: [
-      { index: true, Component: Dashboard },
-      { path: "disease-detection", Component: DiseaseDetection },
-      { path: "chatbot", Component: AIChatbot },
-      { path: "heatmap", Component: DiseaseHeatmap },
-      { path: "analytics", Component: FarmAnalytics },
-      { path: "fertilizer", Component: FertilizerPlanner },
-      { path: "notifications", Component: Notifications },
-      { path: "profile", Component: Profile },
+      {
+        path: '/app',
+        Component: DashboardLayout,
+        children: [
+          { index: true, Component: Dashboard },
+          { path: 'disease-detection', Component: DiseaseDetection },
+          { path: 'chatbot', Component: AIChatbot },
+          { path: 'heatmap', Component: DiseaseHeatmap },
+          { path: 'notifications', Component: Notifications },
+          { path: 'profile', Component: Profile },
+        ],
+      },
     ],
   },
-]);
+  {
+    element: <ProtectedRoute roles={['officer']} />,
+    children: [
+      {
+        path: '/officer',
+        Component: OfficerLayout,
+        children: [{ path: 'reports', Component: ReportReviewPage }],
+      },
+    ],
+  },
+  {
+    element: <ProtectedRoute roles={['admin']} />,
+    children: [
+      {
+        path: '/admin',
+        Component: AdminLayout,
+        children: [
+          { index: true, Component: AdminDashboard },
+          { path: 'users', Component: AdminDashboard },
+        ],
+      },
+    ],
+  },
+])

@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Sprout, Brain, Map, TrendingUp, FlaskConical, Bell, CheckCircle, Users, Target, Award } from "lucide-react";
+import { Sprout, Brain, Map, MessageSquare, Bell, CheckCircle, Users, Target, Award } from "lucide-react";
 
 export function LandingPage() {
   return (
@@ -69,14 +69,14 @@ export function LandingPage() {
             <h2 className="text-3xl sm:text-4xl text-[#1a2e1a] mb-4">Platform Features</h2>
             <p className="text-lg text-[#6b7c6b]">Advanced AI-powered tools for modern coconut farming</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <FeatureCard
               icon={<Brain className="w-10 h-10 text-[#2d5f2e]" />}
               title="AI Disease Diagnosis"
               description="Upload coconut leaf images for instant disease detection and treatment recommendations using advanced AI technology."
             />
             <FeatureCard
-              icon={<TrendingUp className="w-10 h-10 text-[#8b6f47]" />}
+              icon={<MessageSquare className="w-10 h-10 text-[#8b6f47]" />}
               title="Knowledge Chatbot"
               description="Get instant answers to farming questions from our AI assistant trained on agricultural best practices."
             />
@@ -84,16 +84,6 @@ export function LandingPage() {
               icon={<Map className="w-10 h-10 text-[#2d5f2e]" />}
               title="Disease Heatmap"
               description="Monitor disease spread across Sri Lanka with real-time heatmaps and outbreak alerts in your area."
-            />
-            <FeatureCard
-              icon={<TrendingUp className="w-10 h-10 text-[#8b6f47]" />}
-              title="Yield Analytics"
-              description="Track plantation health, predict yields, and optimize productivity with data-driven insights."
-            />
-            <FeatureCard
-              icon={<FlaskConical className="w-10 h-10 text-[#2d5f2e]" />}
-              title="Fertilizer Planning"
-              description="Receive personalized fertilizer recommendations based on soil type, tree age, and plantation conditions."
             />
             <FeatureCard
               icon={<Bell className="w-10 h-10 text-[#8b6f47]" />}
