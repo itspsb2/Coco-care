@@ -115,7 +115,7 @@ async function seed() {
   const chunkCount = await knowledgeRepo.countChunks()
   if (chunkCount === 0) {
     await ingestFromDirectory(undefined, 'CRI Advisory Circular')
-    console.log('Seeded RAG knowledge from data/cri-manuals/')
+    console.log('Seeded RAG knowledge from data/cri-manuals/cri/')
   }
 
   if (farmerId && farmId && officerId) {

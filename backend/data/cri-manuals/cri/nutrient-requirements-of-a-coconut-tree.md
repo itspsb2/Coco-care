@@ -1,5 +1,19 @@
+---
+title: "Nutrient Requirements of a Coconut Tree"
+slug: nutrient-requirements-of-a-coconut-tree
+sourceId: KAPRUKA
+category: "General Coconut Cultivation"
+officialTitle: "Nutrient Requirements of a Coconut Tree"
+---
 # Nutrient Requirements of a Coconut Tree
 
+### Official CRI Source
+- Source ID: KAPRUKA
+- Category: General Coconut Cultivation
+- Title: Nutrient Requirements of a Coconut Tree
+- PDF: Included in compiled Kapruka/CRI knowledge text; no separate PDF link supplied.
+
+### Details
 For optimal growth and a sustainable, high nut yield, the essential macronutrients required by a coconut tree are Nitrogen (N), Phosphorus (P), Potassium (K), and Magnesium (Mg).
 
 Although the coconut tree absorbs these nutrients from the soil, they deplete over time beyond what is naturally available due to the following reasons:

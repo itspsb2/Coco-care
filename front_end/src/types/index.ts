@@ -45,6 +45,14 @@ export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   createdAt: string
+  conversationId?: string
+}
+
+export interface ChatConversation {
+  id: string
+  title: string
+  updatedAt: string
+  createdAt: string
 }
 
 export interface KnowledgeArticle {
@@ -52,6 +60,7 @@ export interface KnowledgeArticle {
   title: string
   source: string
   content: string
+  sourceUrl?: string | null
 }
 
 export interface RegisterPayload {

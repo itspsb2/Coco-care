@@ -13,6 +13,8 @@ Project Proposal - Group 25.pdf
 *.plan.md
 plans/
 docs/plans/
+fertilizer.md
+leda*.md
 
 # Logs and debug output
 *.log

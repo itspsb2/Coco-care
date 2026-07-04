@@ -21,7 +21,7 @@ npm install
 cp .env.example .env   # or use the generated .env
 npm run db:up          # start PostgreSQL + pgvector container
 npm run db:migrate     # apply schema migrations
-npm run db:seed        # users, farm, mock RAG, demo reports
+npm run db:seed        # users, farm, CRI RAG, demo reports
 npm run dev
 ```
 
@@ -36,8 +36,8 @@ Server runs at `http://localhost:3000`.
 | `npm run db:reset` | Destroy volume, restart, migrate, seed |
 | `npm run db:migrate` | Apply pending SQL migrations |
 | `npm run db:seed` | Seed users, farm, CRI RAG knowledge, verified demo reports |
-| `npm run rag:prepare` | Split project-root `Rag data.md` into `data/cri-manuals/cri/*.md` |
-| `npm run rag:ingest` | Ingest `.md`/`.txt` from `data/cri-manuals/` |
+| `npm run rag:prepare` | Split project-root `fertilizer.md` + `leda 5.md` into `data/cri-manuals/cri/*.md` |
+| `npm run rag:ingest` | Ingest prepared topics from `data/cri-manuals/cri/` |
 | `npm run rag:clear` | Truncate knowledge tables |
 
 ## Database schema
@@ -58,8 +58,8 @@ Verify after seed:
 
 ```sql
 SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename;
-SELECT COUNT(*) FROM knowledge_documents;  -- expect 6
-SELECT COUNT(*) FROM knowledge_chunks;     -- expect > 6
+SELECT COUNT(*) FROM knowledge_documents;  -- expect 11
+SELECT COUNT(*) FROM knowledge_chunks;     -- expect > 11
 SELECT COUNT(*) FROM disease_reports WHERE status = 'verified';  -- expect 3
 ```
 
@@ -67,16 +67,14 @@ SELECT COUNT(*) FROM disease_reports WHERE status = 'verified';  -- expect 3
 
 ### CRI advisory circulars (production data)
 
-1. Place or update source content in project-root `Rag data.md`
-2. Run: `npm run rag:prepare` (splits into `data/cri-manuals/cri/*.md`)
+Sources: project-root `fertilizer.md` (nutrients & organic fertilizer packages) and `leda 5.md` (pests & diseases).
+
+1. Update those source files as needed
+2. Run: `npm run rag:prepare` (splits into 11 topic files under `data/cri-manuals/cri/`)
 3. Run: `npm run rag:clear && npm run rag:ingest`
-4. Verify: `npx tsx scripts/verify-rag-chat.ts` (all 6 suggested chatbot questions should pass)
+4. Verify: `npx tsx scripts/verify-rag-chat.ts`
 
-On fresh `db:seed`, knowledge is ingested automatically from `data/cri-manuals/` when tables are empty.
-
-### Legacy mock data
-
-Six placeholder files remain in `data/cri-manuals/mock/` for reference. Re-running ingest skips documents that already exist (matched by title). See `data/cri-manuals/README.md`.
+On fresh `db:seed`, knowledge is ingested automatically from `data/cri-manuals/cri/` when tables are empty. Mock manuals are not used.
 
 ## Environment variables
 
@@ -92,8 +90,13 @@ Six placeholder files remain in `data/cri-manuals/mock/` for reference. Re-runni
 | `RAG_TOP_K` | `8` | Chunks retrieved per chat query |
 | `RAG_MIN_SCORE` | `0.5` | Minimum similarity for RAG answers (with English keyword boost/fallback) |
 | `OPENWEATHER_API_KEY` | — | [OpenWeatherMap](https://openweathermap.org/api) key for dashboard forecast |
+| `GROQ_API_KEY` | — | [Groq](https://console.groq.com) key for grounded chat answers after BERT retrieval |
+| `GROQ_MODEL` | `llama-3.3-70b-versatile` | Groq chat model |
+| `GROQ_ENABLED` | `true` | Set `false` to force `extractAnswer` fallback |
 
 See `.env.example` for AWS S3 and Azure CV optional settings.
+
+Chat flow: BERT embeds the question → retrieve CRI chunks from Postgres → Groq generates a clear answer from those chunks only → app appends `Source: {title}`. If Groq is unavailable, falls back to local `extractAnswer`.
 
 ## Auth
 
@@ -154,12 +157,15 @@ cd front_end && npm run dev
 
 ```
 backend/
-├── data/cri-manuals/mock/   # mock RAG .md files
+├── data/cri-manuals/cri/    # prepared CRI topic .md files
+├── data/rag-suggested-questions.json
 ├── docker-compose.yml
 ├── sql/                     # migrations
 ├── scripts/
+│   ├── prepare-rag-data.ts
 │   ├── ingest-knowledge.ts
-│   └── clear-knowledge.ts
+│   ├── clear-knowledge.ts
+│   └── verify-rag-chat.ts
 └── src/
     ├── modules/
     ├── repositories/
