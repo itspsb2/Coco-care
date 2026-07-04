@@ -1,5 +1,19 @@
+---
+title: "Organic Fertilizers"
+slug: organic-fertilizers
+sourceId: KAPRUKA
+category: "General Coconut Cultivation"
+officialTitle: "Organic Fertilizers"
+---
 # Organic Fertilizers
 
+### Official CRI Source
+- Source ID: KAPRUKA
+- Category: General Coconut Cultivation
+- Title: Organic Fertilizers
+- PDF: Included in compiled Kapruka/CRI knowledge text; no separate PDF link supplied.
+
+### Details
 Organic fertilizers are naturally produced materials that can be applied to the soil to provide the nutrients necessary for the sustainable growth of plants.
 
 **Examples of Organic Fertilizers:**
@@ -8,7 +22,7 @@ Organic fertilizers are naturally produced materials that can be applied to the 
 * Natural minerals such as Dolomite, Eppawala Rock Phosphate (ERP), and Sulphate of Potash (SOP)
 * Man-made compost
 
-### Advantages of Applying Organic Fertilizers
+##### Advantages of Applying Organic Fertilizers
 * **Increased Yield:** Enhances the yield (female flowers/nuts/copra).
 * **Improved Soil Quality:** Enhances physical, chemical, and biological properties of the soil.
 
@@ -32,12 +46,12 @@ Organic fertilizers are naturally produced materials that can be applied to the 
 
 Applying organic fertilizers increases the annual coconut and copra yield, ensuring a sustainable harvest.
 
-### Disadvantages of Applying Organic Fertilizers
+##### Disadvantages of Applying Organic Fertilizers
 1. Due to the lower concentration of nutrients, a larger bulk of organic fertilizer must be applied.
 2. Difficulty in sourcing the materials.
 *(Note: Since robust state sponsorship is provided for organic fertilizers, sourcing difficulties are not expected in the future.)*
 
-### Easily Available Materials for Organic Fertilizer:
+##### Easily Available Materials for Organic Fertilizer:
 1. Cow dung manure
 2. Cured poultry manure
 3. Goat manure
@@ -45,5 +59,3 @@ Applying organic fertilizers increases the annual coconut and copra yield, ensur
 5. Compost fertilizer
 
 By applying the following quantities of organic fertilizers, the nutrient requirements of the coconut tree can be fulfilled.
-
----

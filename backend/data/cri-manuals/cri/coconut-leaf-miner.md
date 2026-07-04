@@ -1,25 +1,37 @@
-# b1
+---
+title: "Coconut Leaf Miner"
+slug: coconut-leaf-miner
+sourceId: B1
+category: "Pests & Diseases"
+pdf: https://cri.gov.lk/wp-content/uploads/2021/10/b1.pdf
+officialTitle: "Coconut Leaf Miner"
+---
+# Coconut Leaf Miner
 
-### Advisory Circular No B 1: COCONUT LEAF MINER
+### Official CRI Source
+- Source ID: B1
+- Category: Pests & Diseases
+- Title: Coconut Leaf Miner
+- PDF: https://cri.gov.lk/wp-content/uploads/2021/10/b1.pdf
 
+### Details
 The coconut leaf miner *Promecotheca cumingi* (commonly called "Cumingi") is a beetle pest of coconut first recorded in Sri Lanka in 1970. It was first observed in the Dehiwala area, but soon spread to other areas in the Western, Southern, and North Western Provinces. It is now under complete control by natural enemies, but outbreaks have occurred occasionally.
 
-#### Nature of damage and identification
+##### Symptoms
+
 The damage is inflicted by both the adult beetle and the larvae.
 - **Adult beetle damage:** Causes damage by feeding on the leaf tissue, leaving behind characteristic 1-3 cm long streak-like grooves on the lower surface of the leaf.
 - **Larval damage:** The larvae are found within the leaf tissue inside "blister-like" formations known as mines. The leaf tissue over the larval mines dies and turns brown.
 
 A severely damaged plantation appears brown, presenting a burnt-up appearance from a distance. A closer examination would show the presence of elongated brown patches, which are the larval mines.
 
-#### Pest Description
+##### Pest Description
 - **Adult:** The adult beetle is about 9 mm in length and reddish brown in colour. It is similar in size and appearance to the firefly (*Kalamediriya*). The adult lives for about 2 1/2 months and lays eggs almost throughout this period.
 - **Egg:** The eggs are laid in 2 mm long oval cavities on the underside of the leaf. These cavities are covered with chewed-up leaf matter and mucilage to form a capsule. These egg capsules can be seen as small "cyst-like" swellings on the lower side of the leaflets. The eggs hatch in about 9 - 12 days.
 - **Larva:** A flattened tiny "worm-like" larva hatches from the egg. It enters the leaf and feeds on the green tissue between the upper and lower surfaces, forming a mine. The mine increases in size as the larva feeds. A fully formed mine is about 10 cm long and 1 cm broad and contains a single larva. The larva is always inside the mine and can be seen only if the mine is opened. There are three larval instars, and a full-grown 3rd instar larva is about 12 mm long. The larval period lasts for about 30 days.
 - **Pupa:** The full-grown larva changes into a pupa, which is about 7 mm long. The pupa is not as flattened as the larva. Inside the mine, the pupa develops into an adult in about 12 days. The adult emerges through the upper surface of the leaf by making a semi-circular cut.
 
-#### Control Measures
+##### Control Measures
 The original infestation was controlled by biological means using two exotic insect parasitoids: *Dimmokia javanica* and *Pediobius parvulus*. These parasitoids were multiplied in the laboratories of the Coconut Research Institute and released in large numbers in infested areas. The tiny wasp-like *Dimmokia javanica* attacks the larvae and became established, responsible for the successful control of the pest. Both parasitoids are now firmly established in the field and keep the pest under very satisfactory control.
 
 **Action:** If the presence of *Promecotheca* is suspected, the Coconut Development Officer of the area should be notified for necessary action.
-
----

@@ -17,4 +17,8 @@ export const env = {
   knowledgeDataDir: process.env.KNOWLEDGE_DATA_DIR ?? './data/cri-manuals',
   fusionConfidenceThreshold: Number(process.env.FUSION_CONFIDENCE_THRESHOLD) || 0.75,
   openWeatherApiKey: process.env.OPENWEATHER_API_KEY ?? '',
+  groqApiKey: process.env.GROQ_API_KEY ?? '',
+  groqModel: process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile',
+  /** When false, skip Groq even if key is set. Default: enabled when key present. */
+  groqEnabled: process.env.GROQ_ENABLED !== 'false',
 }

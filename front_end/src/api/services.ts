@@ -7,6 +7,7 @@ import type {
   DiseaseReport,
   HeatmapPoint,
   ChatMessage,
+  ChatConversation,
   DiagnosisPayload,
   DiagnosisResult,
   WeatherForecast,
@@ -90,14 +91,28 @@ export const diseaseMapApi = {
 }
 
 export const chatApi = {
-  send: async (message: string) => {
-    const { data } = await apiClient.post<ChatMessage>('/api/chat', {
-      message,
-    })
+  listConversations: async () => {
+    const { data } = await apiClient.get<ChatConversation[]>('/api/chat/conversations')
     return data
   },
-  history: async () => {
-    const { data } = await apiClient.get<ChatMessage[]>('/api/chat/history')
+  createConversation: async () => {
+    const { data } = await apiClient.post<ChatConversation>('/api/chat/conversations')
+    return data
+  },
+  deleteConversation: async (id: string) => {
+    await apiClient.delete(`/api/chat/conversations/${id}`)
+  },
+  getMessages: async (conversationId: string) => {
+    const { data } = await apiClient.get<ChatMessage[]>(
+      `/api/chat/conversations/${conversationId}/messages`,
+    )
+    return data
+  },
+  send: async (conversationId: string, message: string) => {
+    const { data } = await apiClient.post<ChatMessage>('/api/chat', {
+      conversationId,
+      message,
+    })
     return data
   },
 }

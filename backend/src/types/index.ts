@@ -60,6 +60,7 @@ export interface KnowledgeArticle {
   title: string
   source: string
   content: string
+  sourceUrl?: string | null
 }
 
 export interface RegisterPayload {

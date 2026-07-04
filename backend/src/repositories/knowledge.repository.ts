@@ -6,6 +6,8 @@ export interface KnowledgeChunk {
   content: string
   score: number
   sourceTitle?: string
+  category?: string
+  slug?: string
 }
 
 export interface CreateKnowledgeChunkInput {
@@ -33,6 +35,7 @@ export interface KnowledgeDocumentMeta {
   id: string
   title: string
   source: string
+  sourceUrl?: string | null
 }
 
 export interface KnowledgeArticle {
@@ -40,6 +43,7 @@ export interface KnowledgeArticle {
   title: string
   source: string
   content: string
+  sourceUrl?: string | null
 }
 
 export async function findDocumentByTitle(title: string): Promise<{ id: string } | null> {
@@ -51,11 +55,20 @@ export async function findDocumentByTitle(title: string): Promise<{ id: string }
 }
 
 export async function findDocumentById(id: string): Promise<KnowledgeDocumentMeta | null> {
-  const { rows } = await getPool().query<KnowledgeDocumentMeta>(
-    'SELECT id, title, source FROM knowledge_documents WHERE id = $1 LIMIT 1',
-    [id],
-  )
-  return rows[0] ?? null
+  const { rows } = await getPool().query<{
+    id: string
+    title: string
+    source: string
+    source_url: string | null
+  }>('SELECT id, title, source, source_url FROM knowledge_documents WHERE id = $1 LIMIT 1', [id])
+  const row = rows[0]
+  if (!row) return null
+  return {
+    id: row.id,
+    title: row.title,
+    source: row.source,
+    sourceUrl: row.source_url,
+  }
 }
 
 export async function getDocumentArticleById(id: string): Promise<KnowledgeArticle | null> {
@@ -73,18 +86,24 @@ export async function getDocumentArticleById(id: string): Promise<KnowledgeArtic
     id: doc.id,
     title: doc.title,
     source: doc.source,
+    sourceUrl: doc.sourceUrl,
     content: rows.map((r) => r.content).join('\n\n'),
   }
 }
 
 export async function getDocumentArticleByTitle(title: string): Promise<KnowledgeArticle | null> {
-  const { rows } = await getPool().query<KnowledgeDocumentMeta>(
-    'SELECT id, title, source FROM knowledge_documents WHERE title = $1 LIMIT 1',
+  const { rows } = await getPool().query<{
+    id: string
+    title: string
+    source: string
+    source_url: string | null
+  }>(
+    'SELECT id, title, source, source_url FROM knowledge_documents WHERE title = $1 LIMIT 1',
     [title.trim()],
   )
-  const doc = rows[0]
-  if (!doc) return null
-  return getDocumentArticleById(doc.id)
+  const row = rows[0]
+  if (!row) return null
+  return getDocumentArticleById(row.id)
 }
 
 export async function clearAllKnowledge(): Promise<void> {
@@ -119,6 +138,15 @@ function cosineSimilarity(a: number[], b: number[]): number {
   return denom === 0 ? 0 : dot / denom
 }
 
+function metaFields(metadata: unknown): { category?: string; slug?: string } {
+  if (!metadata || typeof metadata !== 'object') return {}
+  const m = metadata as Record<string, unknown>
+  return {
+    category: typeof m.category === 'string' ? m.category : undefined,
+    slug: typeof m.slug === 'string' ? m.slug : undefined,
+  }
+}
+
 export async function vectorSearch(
   embedding: number[],
   limit: number,
@@ -127,10 +155,11 @@ export async function vectorSearch(
     id: string
     document_id: string
     content: string
-    embedding: number[]
+    embedding: number[] | string
+    metadata: unknown
     title: string
   }>(
-    `SELECT kc.id, kc.document_id, kc.content, kc.embedding, kd.title
+    `SELECT kc.id, kc.document_id, kc.content, kc.embedding, kc.metadata, kd.title
      FROM knowledge_chunks kc
      JOIN knowledge_documents kd ON kd.id = kc.document_id`,
   )
@@ -140,12 +169,17 @@ export async function vectorSearch(
       const emb = Array.isArray(r.embedding)
         ? r.embedding
         : (typeof r.embedding === 'string' ? JSON.parse(r.embedding) : [])
+      const meta =
+        typeof r.metadata === 'string' ? JSON.parse(r.metadata) : r.metadata
+      const { category, slug } = metaFields(meta)
       return {
         id: r.id,
         documentId: r.document_id,
         content: r.content,
         score: cosineSimilarity(embedding, emb as number[]),
         sourceTitle: r.title,
+        category,
+        slug,
       }
     })
     .sort((a, b) => b.score - a.score)
@@ -169,9 +203,10 @@ export async function keywordSearch(terms: string[], limit: number): Promise<Kno
     id: string
     document_id: string
     content: string
+    metadata: unknown
     title: string
   }>(
-    `SELECT kc.id, kc.document_id, kc.content, kd.title
+    `SELECT kc.id, kc.document_id, kc.content, kc.metadata, kd.title
      FROM knowledge_chunks kc
      JOIN knowledge_documents kd ON kd.id = kc.document_id
      WHERE ${conditions.join(' OR ')}
@@ -185,7 +220,10 @@ export async function keywordSearch(terms: string[], limit: number): Promise<Kno
   for (const r of rows) {
     if (seen.has(r.id)) continue
     seen.add(r.id)
-    const lower = `${r.content} ${r.title}`.toLowerCase()
+    const meta =
+      typeof r.metadata === 'string' ? JSON.parse(r.metadata) : r.metadata
+    const { category, slug } = metaFields(meta)
+    const lower = `${r.content} ${r.title} ${category ?? ''}`.toLowerCase()
     const hits = terms.filter((t) => lower.includes(t)).length
     results.push({
       id: r.id,
@@ -193,6 +231,8 @@ export async function keywordSearch(terms: string[], limit: number): Promise<Kno
       content: r.content,
       score: 0.5 + hits * 0.1,
       sourceTitle: r.title,
+      category,
+      slug,
     })
     if (results.length >= limit) break
   }
