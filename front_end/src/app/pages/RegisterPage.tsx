@@ -1,27 +1,70 @@
-import { Link, useNavigate } from "react-router";
-import { Sprout, User, CreditCard, Phone, MapPin, Home, Lock, Chrome } from "lucide-react";
-import { useState } from "react";
+import { Link, useNavigate } from 'react-router'
+import { Sprout, User, CreditCard, Phone, MapPin, Home, Lock, Chrome } from 'lucide-react'
+import { useState } from 'react'
+import { useAuth, getRoleHomePath } from '@/contexts/AuthContext'
+
+const PLANTATION_DEFAULTS: Record<string, { acreage: number; treeCount: number }> = {
+  small: { acreage: 0.5, treeCount: 50 },
+  medium: { acreage: 3, treeCount: 150 },
+  large: { acreage: 10, treeCount: 400 },
+}
 
 export function RegisterPage() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
+  const { register } = useAuth()
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
-    fullName: "",
-    nic: "",
-    mobile: "",
-    district: "",
-    plantationSize: "",
-    password: "",
-    confirmPassword: "",
-  });
+    fullName: '',
+    nic: '',
+    mobile: '',
+    district: '',
+    plantationSize: '',
+    password: '',
+    confirmPassword: '',
+  })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    navigate("/app");
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
+
+    const size = PLANTATION_DEFAULTS[formData.plantationSize] ?? PLANTATION_DEFAULTS.medium
+
+    setSubmitting(true)
+    try {
+      const user = await register({
+        role: 'farmer',
+        username: formData.nic,
+        name: formData.fullName,
+        phone: formData.mobile,
+        password: formData.password,
+        farms: [
+          {
+            name: `${formData.fullName}'s Plantation`,
+            location: formData.district,
+            latitude: 7.4818,
+            longitude: 80.365,
+            acreage: size.acreage,
+            treeCount: size.treeCount,
+          },
+        ],
+      })
+      navigate(getRoleHomePath(user.role))
+    } catch {
+      setError('Registration failed. Please check your details and try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-green-50 py-12 px-4">
@@ -37,6 +80,12 @@ export function RegisterPage() {
 
         <div className="bg-white p-8 rounded-2xl shadow-lg border border-green-100">
           <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+                {error}
+              </div>
+            )}
+
             <div>
               <label className="block text-sm mb-2 text-[#1a2e1a]">Full Name</label>
               <div className="relative">
@@ -55,7 +104,7 @@ export function RegisterPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-sm mb-2 text-[#1a2e1a]">NIC</label>
+                <label className="block text-sm mb-2 text-[#1a2e1a]">NIC (Username)</label>
                 <div className="relative">
                   <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6b7c6b]" />
                   <input
@@ -144,6 +193,7 @@ export function RegisterPage() {
                     onChange={handleChange}
                     className="w-full pl-10 pr-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e] bg-white"
                     placeholder="••••••••"
+                    minLength={6}
                     required
                   />
                 </div>
@@ -168,31 +218,15 @@ export function RegisterPage() {
 
             <button
               type="submit"
-              className="w-full py-3 bg-[#2d5f2e] text-white rounded-lg hover:bg-[#1a2e1a] transition-colors"
+              disabled={submitting}
+              className="w-full py-3 bg-[#2d5f2e] text-white rounded-lg hover:bg-[#1a2e1a] transition-colors disabled:opacity-60"
             >
-              Create Account
-            </button>
-
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-green-200"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-[#6b7c6b]">Or register with</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              className="w-full py-3 border-2 border-green-200 text-[#1a2e1a] rounded-lg hover:bg-green-50 transition-colors flex items-center justify-center gap-2"
-            >
-              <Chrome className="w-5 h-5" />
-              Sign up with Google
+              {submitting ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-[#6b7c6b]">
-            Already have an account?{" "}
+            Already have an account?{' '}
             <Link to="/login" className="text-[#2d5f2e] hover:text-[#1a2e1a]">
               Sign in
             </Link>
@@ -200,5 +234,5 @@ export function RegisterPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

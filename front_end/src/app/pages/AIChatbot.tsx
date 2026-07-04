@@ -1,65 +1,148 @@
-import { Send, Mic, FileText, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { Send, FileText, Sparkles, Loader2, BookOpen } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { chatApi, knowledgeApi } from '@/api/services'
+import type { ChatMessage, KnowledgeArticle } from '@/types'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/app/components/ui/dialog'
 
 const suggestedQuestions = [
-  "How to treat bud rot disease?",
-  "Best fertilizer for coconut trees?",
-  "How to increase coconut yield?",
-  "How to prevent caterpillar attacks?",
-  "What is the ideal watering schedule?",
-  "Signs of stem bleeding disease?",
-];
+  'How to treat bud rot disease?',
+  'Best fertilizer for coconut trees?',
+  'How to increase coconut yield?',
+  'How to prevent caterpillar attacks?',
+  'What is the ideal watering schedule?',
+  'Signs of stem bleeding disease?',
+]
 
-const initialMessages = [
-  {
-    role: "assistant",
-    content: "Hello! I'm your AI farming assistant. I can help you with coconut cultivation, disease management, fertilizer recommendations, and general farming questions. How can I help you today?",
-    time: "Just now",
-  },
-];
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+function parseSourceTitle(content: string): { body: string; sourceTitle: string | null } {
+  const sourceIdx = content.lastIndexOf('\n\nSource:')
+  if (sourceIdx === -1) return { body: content, sourceTitle: null }
+  const body = content.slice(0, sourceIdx)
+  const sourceLine = content.slice(sourceIdx + 2).trim()
+  const title = sourceLine.replace(/^Source:\s*/i, '').trim()
+  return { body, sourceTitle: title || null }
+}
+
+function MessageContent({
+  content,
+  role,
+  onOpenSource,
+}: {
+  content: string
+  role: 'user' | 'assistant'
+  onOpenSource?: (title: string) => void
+}) {
+  if (role === 'user') {
+    return <div className="whitespace-pre-wrap">{content}</div>
+  }
+
+  const { body, sourceTitle } = parseSourceTitle(content)
+  if (!sourceTitle) {
+    return <div className="whitespace-pre-wrap">{content}</div>
+  }
+
+  return (
+    <div>
+      <div className="whitespace-pre-wrap">{body}</div>
+      <div className="mt-2 pt-2 border-t border-gray-200 flex flex-wrap items-center gap-2">
+        <span className="text-xs text-gray-500">Source:</span>
+        <button
+          type="button"
+          onClick={() => onOpenSource?.(sourceTitle)}
+          className="inline-flex items-center gap-1 text-xs font-medium text-[#2d5f2e] underline underline-offset-2 hover:text-[#1a2e1a] cursor-pointer"
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          {sourceTitle}
+        </button>
+        <span className="text-xs text-gray-400">· Read full article</span>
+      </div>
+    </div>
+  )
+}
 
 export function AIChatbot() {
-  const [messages, setMessages] = useState(initialMessages);
-  const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const queryClient = useQueryClient()
+  const [input, setInput] = useState('')
+  const [sendError, setSendError] = useState('')
+  const [articleOpen, setArticleOpen] = useState(false)
+  const [articleTitle, setArticleTitle] = useState<string | null>(null)
+  const [article, setArticle] = useState<KnowledgeArticle | null>(null)
+  const [articleLoading, setArticleLoading] = useState(false)
+  const [articleError, setArticleError] = useState('')
+  const scrollRef = useRef<HTMLDivElement>(null)
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const { data: history = [], isLoading } = useQuery({
+    queryKey: ['chat', 'history'],
+    queryFn: chatApi.history,
+  })
 
-    const userMessage = {
-      role: "user",
-      content: input,
-      time: "Just now",
-    };
+  const sendMutation = useMutation({
+    mutationFn: chatApi.send,
+    onSuccess: () => {
+      setSendError('')
+      queryClient.invalidateQueries({ queryKey: ['chat', 'history'] })
+    },
+    onError: (err: unknown) => {
+      const message =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined
+      setSendError(
+        message ??
+          'Knowledge assistant is temporarily unavailable. Ensure the backend BERT model is loaded and try again.',
+      )
+    },
+  })
 
-    setMessages([...messages, userMessage]);
-    setInput("");
-    setIsTyping(true);
+  const sendMessage = async (message: string) => {
+    const trimmed = message.trim()
+    if (!trimmed || sendMutation.isPending) return
+    setSendError('')
+    await sendMutation.mutateAsync(trimmed)
+  }
 
-    setTimeout(() => {
-      const aiResponse = {
-        role: "assistant",
-        content: getAIResponse(input),
-        time: "Just now",
-      };
-      setMessages((prev) => [...prev, aiResponse]);
-      setIsTyping(false);
-    }, 1500);
-  };
+  const handleSend = async () => {
+    const message = input.trim()
+    if (!message) return
+    setInput('')
+    await sendMessage(message)
+  }
 
-  const getAIResponse = (question: string) => {
-    if (question.toLowerCase().includes("bud rot")) {
-      return "Bud rot disease is a serious condition in coconut palms. Here's how to treat it:\n\n1. Remove and destroy infected tissues immediately\n2. Apply Bordeaux mixture (1%) to the affected area\n3. Improve drainage around the tree\n4. Apply recommended fungicides like Copper oxychloride\n5. Ensure proper sanitation of tools\n\nPrevention is key - maintain good field hygiene and avoid water stagnation in the crown.";
+  const openSourceArticle = async (title: string) => {
+    setArticleTitle(title)
+    setArticleOpen(true)
+    setArticle(null)
+    setArticleError('')
+    setArticleLoading(true)
+    try {
+      const data = await knowledgeApi.getByTitle(title)
+      setArticle(data)
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined
+      setArticleError(message ?? 'Could not load the full article.')
+    } finally {
+      setArticleLoading(false)
     }
-    if (question.toLowerCase().includes("fertilizer")) {
-      return "For optimal coconut growth, I recommend:\n\n1. NPK fertilizer (15:15:15) at 2-3 kg per tree annually\n2. Apply in 2-3 split doses during monsoon\n3. Organic manure: 25-50 kg per tree per year\n4. Micronutrients: Boron, Zinc, and Magnesium\n\nApplication method:\n- Dig a circular trench 1.5-2m from the trunk\n- Apply fertilizer and cover with soil\n- Water thoroughly after application";
-    }
-    return "That's a great question! Based on agricultural best practices and our knowledge base, here's what I recommend: Regular monitoring of your plantation, maintaining proper irrigation, using organic fertilizers, and early disease detection are key to successful coconut farming. Would you like more specific information about any aspect?";
-  };
+  }
 
-  const handleQuestionClick = (question: string) => {
-    setInput(question);
-  };
+  const messages: ChatMessage[] = history
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
+  }, [messages.length, sendMutation.isPending])
 
   return (
     <div className="h-[calc(100vh-8rem)]">
@@ -72,65 +155,67 @@ export function AIChatbot() {
             <div className="flex-1">
               <h1 className="text-2xl text-[#1a2e1a]">AI Farming Assistant</h1>
               <div className="flex items-center gap-2 text-sm text-green-600">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                Online & Ready to Help
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                Connected to CRI knowledge base
               </div>
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
               <FileText className="w-4 h-4 text-blue-600" />
-              <span className="text-sm text-blue-900">PDF Knowledge Base</span>
+              <span className="text-sm text-blue-900">RAG Knowledge Base</span>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[80%] ${
-                  message.role === "user"
-                    ? "bg-[#2d5f2e] text-white"
-                    : "bg-gray-100 text-gray-900"
-                } rounded-2xl px-4 py-3`}
-              >
-                <div className="whitespace-pre-wrap">{message.content}</div>
-                <div
-                  className={`text-xs mt-1 ${
-                    message.role === "user" ? "text-green-100" : "text-gray-500"
-                  }`}
-                >
-                  {message.time}
+        {sendError && (
+          <div className="mx-6 mt-4 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+            {sendError}
+          </div>
+        )}
+
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4">
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-[#2d5f2e]" />
+            </div>
+          ) : (
+            messages.map((message) => (
+              <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] ${message.role === 'user' ? 'bg-[#2d5f2e] text-white' : 'bg-gray-100 text-gray-900'} rounded-2xl px-4 py-3`}>
+                  <MessageContent
+                    content={message.content}
+                    role={message.role}
+                    onOpenSource={openSourceArticle}
+                  />
+                  <div className={`text-xs mt-1 ${message.role === 'user' ? 'text-green-100' : 'text-gray-500'}`}>
+                    {formatTime(message.createdAt)}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
 
-          {isTyping && (
+          {sendMutation.isPending && (
             <div className="flex justify-start">
-              <div className="bg-gray-100 rounded-2xl px-4 py-3">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }}></div>
-                </div>
+              <div className="bg-gray-100 rounded-2xl px-4 py-3 flex items-center gap-2 text-sm text-gray-600">
+                <Loader2 className="w-4 h-4 animate-spin text-[#2d5f2e]" />
+                Searching knowledge base…
               </div>
             </div>
           )}
         </div>
 
-        {messages.length === 1 && (
+        {messages.length <= 1 && !isLoading && (
           <div className="px-6 pb-4">
             <div className="bg-gradient-to-br from-green-50 to-yellow-50 rounded-xl p-4">
               <h3 className="text-sm text-gray-900 mb-3">Suggested Questions:</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {suggestedQuestions.map((question, index) => (
+                {suggestedQuestions.map((question) => (
                   <button
-                    key={index}
-                    onClick={() => handleQuestionClick(question)}
-                    className="text-left px-3 py-2 bg-white rounded-lg text-sm text-gray-700 hover:bg-green-50 hover:text-[#2d5f2e] transition-colors border border-green-100"
+                    key={question}
+                    type="button"
+                    disabled={sendMutation.isPending}
+                    onClick={() => sendMessage(question)}
+                    className="text-left px-3 py-2 bg-white rounded-lg text-sm text-gray-700 hover:bg-green-50 hover:text-[#2d5f2e] border border-green-100 disabled:opacity-50"
                   >
                     {question}
                   </button>
@@ -142,27 +227,68 @@ export function AIChatbot() {
 
         <div className="border-t border-green-100 p-4">
           <div className="flex items-center gap-3">
-            <button className="p-3 hover:bg-gray-100 rounded-lg transition-colors">
-              <Mic className="w-5 h-5 text-gray-600" />
-            </button>
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Ask me anything about coconut farming..."
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              placeholder="Ask in English about coconut farming, diseases, or fertilizer..."
               className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e] bg-gray-50"
             />
             <button
+              type="button"
               onClick={handleSend}
-              disabled={!input.trim()}
-              className="p-3 bg-[#2d5f2e] text-white rounded-lg hover:bg-[#1a2e1a] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              disabled={!input.trim() || sendMutation.isPending}
+              className="p-3 bg-[#2d5f2e] text-white rounded-lg hover:bg-[#1a2e1a] disabled:bg-gray-300"
             >
               <Send className="w-5 h-5" />
             </button>
           </div>
         </div>
       </div>
+
+      <Dialog
+        open={articleOpen}
+        onOpenChange={(open) => {
+          setArticleOpen(open)
+          if (!open) {
+            setArticle(null)
+            setArticleTitle(null)
+            setArticleError('')
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-3 border-b border-green-100 shrink-0">
+            <DialogTitle className="text-[#1a2e1a] pr-8">
+              {article?.title ?? articleTitle ?? 'CRI Article'}
+            </DialogTitle>
+            <DialogDescription>
+              {article?.source
+                ? `${article.source} · Full advisory from the knowledge base`
+                : 'Full advisory from the CRI knowledge base'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0 max-h-[70vh]">
+            {articleLoading && (
+              <div className="flex justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-[#2d5f2e]" />
+              </div>
+            )}
+            {articleError && (
+              <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+                {articleError}
+              </div>
+            )}
+            {article && !articleLoading && (
+              <div className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed">
+                {article.content || 'No content available for this document.'}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
-  );
+  )
 }
