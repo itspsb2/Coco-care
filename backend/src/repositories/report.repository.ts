@@ -19,7 +19,7 @@ interface ReportRow {
   farm_id: string
   user_id: string
   image_url: string | null
-  symptoms: Record<string, string | boolean>
+  symptoms: Record<string, string | boolean> | string | null
   image_result: string | null
   symptom_result: string | null
   final_result: string | null
@@ -34,15 +34,25 @@ interface ReportRow {
 }
 
 function mapReport(row: ReportRow): DiseaseReport {
+  const symptoms =
+    row.symptoms && typeof row.symptoms === 'object'
+      ? row.symptoms
+      : typeof row.symptoms === 'string'
+        ? (JSON.parse(row.symptoms) as Record<string, string | boolean>)
+        : undefined
+
   return {
     id: row.id,
     farmId: row.farm_id,
     farmName: row.farm_name,
     region: row.region,
+    imageUrl: row.image_url ?? undefined,
+    symptoms,
     imageResult: row.image_result ?? undefined,
     symptomResult: row.symptom_result ?? undefined,
     finalResult: row.final_result ?? undefined,
     confidence: Number(row.confidence ?? 0),
+    advice: row.advice ?? undefined,
     status: row.status,
     createdAt: row.created_at.toISOString(),
     reviewComment: row.review_comment ?? undefined,
@@ -92,8 +102,52 @@ export async function findReportsByUserId(userId: string): Promise<DiseaseReport
 }
 
 export async function findPendingReports(): Promise<DiseaseReport[]> {
+  return findReportsByStatus('pending')
+}
+
+export async function findPendingReportsByRegion(region: string): Promise<DiseaseReport[]> {
+  return findReportsFiltered({ status: 'pending', region })
+}
+
+export async function findReportsByStatus(
+  status: 'pending' | 'verified' | 'rejected',
+): Promise<DiseaseReport[]> {
+  return findReportsFiltered({ status })
+}
+
+export async function findReportsByFarmId(farmId: string): Promise<DiseaseReport[]> {
   const { rows } = await getPool().query<ReportRow>(
-    `${REPORT_SELECT} WHERE dr.status = 'pending' ORDER BY dr.created_at DESC`,
+    `${REPORT_SELECT} WHERE dr.farm_id = $1 ORDER BY dr.created_at DESC`,
+    [farmId],
+  )
+  return rows.map(mapReport)
+}
+
+export async function findReportsFiltered(filters: {
+  status?: 'pending' | 'verified' | 'rejected'
+  region?: string
+  disease?: string
+}): Promise<DiseaseReport[]> {
+  const conditions: string[] = []
+  const params: unknown[] = []
+
+  if (filters.status) {
+    params.push(filters.status)
+    conditions.push(`dr.status = $${params.length}`)
+  }
+  if (filters.region?.trim()) {
+    params.push(`%${filters.region.trim().toLowerCase()}%`)
+    conditions.push(`LOWER(f.location) LIKE $${params.length}`)
+  }
+  if (filters.disease?.trim()) {
+    params.push(`%${filters.disease.trim().toLowerCase()}%`)
+    conditions.push(`LOWER(COALESCE(dr.final_result, '')) LIKE $${params.length}`)
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+  const { rows } = await getPool().query<ReportRow>(
+    `${REPORT_SELECT} ${where} ORDER BY dr.created_at DESC`,
+    params,
   )
   return rows.map(mapReport)
 }

@@ -11,9 +11,18 @@ export async function my(req: AuthRequest, res: Response, next: NextFunction) {
   }
 }
 
-export async function pending(_req: AuthRequest, res: Response, next: NextFunction) {
+export async function pending(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    res.json(await reportsService.getPendingReports())
+    if (!req.user) throw new Error('Unauthorized')
+    res.json(await reportsService.getPendingReportsForOfficer(req.user.id))
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function verified(_req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    res.json(await reportsService.getVerifiedReportsForOfficer())
   } catch (err) {
     next(err)
   }

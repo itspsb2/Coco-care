@@ -14,6 +14,9 @@ export async function login(payload: LoginPayload) {
     if (!user || !passwordOk) {
       throw unauthorized('Invalid username or password')
     }
+    if (user.is_active === false) {
+      throw unauthorized('This account has been deactivated')
+    }
     return {
       token: signToken(user.id),
       user: toPublicUser(user),
@@ -44,7 +47,7 @@ export async function register(payload: RegisterPayload) {
       `INSERT INTO users (username, password_hash, name, email, phone, role, officer_id, assigned_region)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id, username, password_hash, name, email, phone, role,
-                 officer_id, assigned_region, created_at, updated_at`,
+                 officer_id, assigned_region, is_active, created_at, updated_at`,
       [
         payload.username,
         passwordHash,

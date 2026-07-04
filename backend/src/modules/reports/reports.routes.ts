@@ -13,6 +13,12 @@ router.get(
   roles('officer'),
   reportsController.pending,
 )
+router.get(
+  '/officer/reports/verified',
+  auth,
+  roles('officer'),
+  reportsController.verified,
+)
 router.post(
   '/officer/reports/:id/review',
   auth,

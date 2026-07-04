@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import { TOKEN_KEY } from '@/api/client'
+import { authApi } from '@/api/services'
 import type { LoginPayload, RegisterPayload, User, UserRole } from '@/types'
 
 interface AuthContextValue {
@@ -21,26 +22,6 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 const USER_KEY = 'coco_user'
-const DEMO_TOKEN = 'coco_demo_token'
-
-function buildDemoUser(payload: LoginPayload | RegisterPayload): User {
-  const role =
-    'role' in payload
-      ? payload.role
-      : payload.username === 'admin'
-        ? 'admin'
-        : payload.username === 'officer1'
-          ? 'officer'
-          : 'farmer'
-
-  return {
-    id: `demo-${payload.username}`,
-    username: payload.username,
-    name: 'name' in payload && payload.name ? payload.name : payload.username,
-    phone: 'phone' in payload ? payload.phone : undefined,
-    role,
-  }
-}
 
 export function getRoleHomePath(role: UserRole): string {
   if (role === 'officer') return '/officer/reports'
@@ -87,15 +68,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = useCallback(async (payload: LoginPayload) => {
-    const loggedIn = buildDemoUser(payload)
-    persistSession(DEMO_TOKEN, loggedIn)
+    const { token, user: loggedIn } = await authApi.login(payload)
+    persistSession(token, loggedIn)
     setUser(loggedIn)
     return loggedIn
   }, [])
 
   const register = useCallback(async (payload: RegisterPayload) => {
-    const registered = buildDemoUser(payload)
-    persistSession(DEMO_TOKEN, registered)
+    const { token, user: registered } = await authApi.register(payload)
+    persistSession(token, registered)
     setUser(registered)
     return registered
   }, [])
