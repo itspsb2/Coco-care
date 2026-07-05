@@ -10,12 +10,11 @@ interface NotificationItem {
   message: string
   time: string
   read: boolean
-  source: 'broadcast' | 'local'
+  source: 'broadcast' | 'disease' | 'report'
 }
 
 export function Notifications() {
   const queryClient = useQueryClient()
-  const [readIds, setReadIds] = useState<Set<string>>(new Set())
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())
   const [filter, setFilter] = useState('all')
 
@@ -24,9 +23,9 @@ export function Notifications() {
     queryFn: reportsApi.my,
   })
 
-  const { data: heatmap = [], isLoading: mapLoading } = useQuery({
-    queryKey: ['disease-map', 'heatmap'],
-    queryFn: diseaseMapApi.heatmap,
+  const { data: diseaseAlerts = [], isLoading: alertsLoading } = useQuery({
+    queryKey: ['disease-map', 'alerts'],
+    queryFn: diseaseMapApi.alerts,
   })
 
   const { data: broadcasts = [], isLoading: broadcastsLoading } = useQuery({
@@ -34,9 +33,14 @@ export function Notifications() {
     queryFn: notificationsApi.list,
   })
 
-  const markReadMutation = useMutation({
+  const markBroadcastReadMutation = useMutation({
     mutationFn: notificationsApi.markRead,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications', 'list'] }),
+  })
+
+  const markDiseaseAlertReadMutation = useMutation({
+    mutationFn: diseaseMapApi.markAlertRead,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['disease-map', 'alerts'] }),
   })
 
   const notifications = useMemo(() => {
@@ -54,19 +58,17 @@ export function Notifications() {
       })
     })
 
-    heatmap
-      .filter((p) => p.weight >= 0.7)
-      .forEach((p, i) => {
-        items.push({
-          id: `heatmap-${i}`,
-          type: 'alert',
-          title: 'Disease Outbreak Alert',
-          message: `${p.diseaseType} reported near ${p.lat.toFixed(2)}, ${p.lng.toFixed(2)} (intensity ${Math.round(p.weight * 100)}%).`,
-          time: 'Recent',
-          read: false,
-          source: 'local',
-        })
+    diseaseAlerts.forEach((a) => {
+      items.push({
+        id: a.id,
+        type: 'alert',
+        title: `Nearby ${a.diseaseType}`,
+        message: a.message,
+        time: new Date(a.createdAt).toLocaleString(),
+        read: a.read,
+        source: 'disease',
       })
+    })
 
     reports.forEach((r) => {
       items.push({
@@ -76,16 +78,15 @@ export function Notifications() {
         message: `${r.finalResult ?? r.imageResult ?? 'Disease scan'} — ${Math.round(r.confidence * 100)}% confidence.`,
         time: new Date(r.createdAt).toLocaleDateString(),
         read: r.status !== 'pending',
-        source: 'local',
+        source: 'report',
       })
     })
 
     return items
-  }, [reports, heatmap, broadcasts])
+  }, [reports, diseaseAlerts, broadcasts])
 
   const visible = notifications
     .filter((n) => !deletedIds.has(n.id))
-    .map((n) => ({ ...n, read: n.read || readIds.has(n.id) }))
     .filter((n) => {
       if (filter === 'unread') return !n.read
       if (filter === 'read') return n.read
@@ -93,15 +94,15 @@ export function Notifications() {
     })
 
   const unreadCount = notifications.filter(
-    (n) => !n.read && !readIds.has(n.id) && !deletedIds.has(n.id),
+    (n) => !n.read && !deletedIds.has(n.id),
   ).length
-  const isLoading = reportsLoading || mapLoading || broadcastsLoading
+  const isLoading = reportsLoading || alertsLoading || broadcastsLoading
 
   const markAsRead = (item: NotificationItem) => {
     if (item.source === 'broadcast') {
-      markReadMutation.mutate(item.id)
-    } else {
-      setReadIds((prev) => new Set(prev).add(item.id))
+      markBroadcastReadMutation.mutate(item.id)
+    } else if (item.source === 'disease') {
+      markDiseaseAlertReadMutation.mutate(item.id)
     }
   }
 
@@ -118,7 +119,7 @@ export function Notifications() {
         <div>
           <h1 className="text-3xl text-[#1a2e1a] mb-2">Notifications</h1>
           <p className="text-[#6b7c6b]">
-            Admin broadcasts, your reports, and nearby disease outbreaks.
+            Admin broadcasts, nearby outbreak alerts, and your report updates.
           </p>
         </div>
         {unreadCount > 0 && (
@@ -181,6 +182,8 @@ function NotificationCard({
     info: <Bell className="w-5 h-5 text-blue-600" />,
   }
 
+  const canMarkRead = notification.source === 'broadcast' || notification.source === 'disease'
+
   return (
     <div
       className={`bg-white rounded-xl border p-4 flex gap-4 ${
@@ -198,7 +201,7 @@ function NotificationCard({
         <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{notification.message}</p>
         <div className="flex items-center justify-between mt-2">
           <span className="text-xs text-gray-400">{notification.time}</span>
-          {!notification.read && (
+          {!notification.read && canMarkRead && (
             <button onClick={onRead} className="text-xs text-[#2d5f2e] hover:underline">
               Mark as read
             </button>

@@ -44,6 +44,42 @@ export interface HeatmapPoint {
   lng: number
   weight: number
   diseaseType: string
+  createdAt?: string
+}
+
+export interface DiseaseAlert {
+  id: string
+  reportId: string
+  farmId: string
+  diseaseType: string
+  distanceKm: number
+  message: string
+  read: boolean
+  createdAt: string
+}
+
+export interface NearbyOutbreak {
+  lat: number
+  lng: number
+  diseaseType: string
+  weight: number
+  distanceKm: number
+  reportId: string
+  createdAt: string
+}
+
+export interface NearbyResponse {
+  farms: Array<{
+    farmId: string
+    farmName: string
+    outbreaks: NearbyOutbreak[]
+  }>
+}
+
+export interface DiseaseMapStats {
+  byDisease: Array<{ diseaseType: string; count: number }>
+  byWeek: Array<{ week: string; count: number }>
+  highRiskCount: number
 }
 
 export interface ChatMessage {

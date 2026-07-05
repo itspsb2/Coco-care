@@ -32,7 +32,7 @@ export function AdminSystemPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <HealthCard label="Database" ok={data.database} detail={data.database ? 'Connected' : 'Unavailable'} />
-          <HealthCard label="BERT embeddings" ok={data.bert} detail={data.bert ? 'Ready' : 'Not loaded'} />
+          <HealthCard label="Gemini embeddings" ok={data.geminiEmbedding} detail={data.geminiEmbedding ? 'Ready' : 'Not configured'} />
           <HealthCard label="Groq LLM" ok={data.groq} detail={data.groq ? 'Configured' : 'Not configured'} />
           <HealthCard
             label="Knowledge documents"

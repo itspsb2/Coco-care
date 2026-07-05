@@ -1,33 +1,75 @@
-import { MapPin, AlertTriangle, TrendingUp, Filter, Loader2 } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
+import { AlertTriangle, Filter, Loader2 } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { diseaseMapApi } from '@/api/services'
-import type { HeatmapPoint } from '@/types'
+import { DiseaseMap, pointKey } from '@/app/components/DiseaseMap'
+import { SRI_LANKA_DISTRICTS } from '@/constants/districts'
+import type { HeatmapFilters, HeatmapPoint } from '@/types'
 
-function toMapPosition(point: HeatmapPoint) {
-  const left = ((point.lng - 79.5) / (82 - 79.5)) * 100
-  const top = ((9.5 - point.lat) / (9.5 - 5.9)) * 100
-  return { left: `${Math.min(95, Math.max(5, left))}%`, top: `${Math.min(95, Math.max(5, top))}%` }
-}
-
-function riskLevel(weight: number) {
-  if (weight >= 0.8) return 'high'
+export function riskLevel(weight: number) {
+  if (weight >= 0.7) return 'high'
   if (weight >= 0.6) return 'medium'
   return 'low'
 }
 
 export function DiseaseHeatmap() {
+  const [diseaseFilter, setDiseaseFilter] = useState('')
+  const [districtFilter, setDistrictFilter] = useState('')
+  const [minWeight, setMinWeight] = useState<number | undefined>(undefined)
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [focusedPoint, setFocusedPoint] = useState<HeatmapPoint | null>(null)
+  const [focusedKey, setFocusedKey] = useState<string | null>(null)
+
+  const dateRangeInvalid = Boolean(fromDate && toDate && fromDate > toDate)
+
+  const filters = useMemo<HeatmapFilters | undefined>(() => {
+    if (dateRangeInvalid) return undefined
+    const next: HeatmapFilters = {}
+    if (diseaseFilter.trim()) next.diseaseType = diseaseFilter.trim()
+    if (districtFilter.trim()) next.district = districtFilter.trim()
+    if (minWeight != null) next.minWeight = minWeight
+    if (fromDate) next.from = `${fromDate}T00:00:00.000Z`
+    if (toDate) next.to = `${toDate}T23:59:59.999Z`
+    return Object.keys(next).length > 0 ? next : undefined
+  }, [diseaseFilter, districtFilter, minWeight, fromDate, toDate, dateRangeInvalid])
+
   const { data: heatmap = [], isLoading } = useQuery({
-    queryKey: ['disease-map', 'heatmap'],
-    queryFn: diseaseMapApi.heatmap,
+    queryKey: ['disease-map', 'heatmap', filters],
+    queryFn: () => diseaseMapApi.heatmap(filters),
+    enabled: !dateRangeInvalid,
   })
 
-  const spreadData = heatmap.map((p, i) => ({
-    month: `P${i + 1}`,
-    cases: Math.round(p.weight * 20),
-  }))
+  const { data: nearby } = useQuery({
+    queryKey: ['disease-map', 'nearby'],
+    queryFn: () => diseaseMapApi.nearby(),
+  })
 
+  const diseaseOptions = useMemo(
+    () => [...new Set(heatmap.map((p) => p.diseaseType))].sort(),
+    [heatmap],
+  )
   const highRiskCount = heatmap.filter((p) => p.weight >= 0.7).length
+
+  const nearbyOutbreaks = nearby?.farms.flatMap((f) =>
+    f.outbreaks.map((o) => ({ ...o, farmName: f.farmName })),
+  ) ?? []
+
+  const clearFilters = () => {
+    setDiseaseFilter('')
+    setDistrictFilter('')
+    setMinWeight(undefined)
+    setFromDate('')
+    setToDate('')
+    setFocusedPoint(null)
+    setFocusedKey(null)
+  }
+
+  const focusOutbreak = (point: HeatmapPoint) => {
+    const key = pointKey(point)
+    setFocusedPoint(point)
+    setFocusedKey(key)
+  }
 
   return (
     <div className="space-y-6">
@@ -36,15 +78,70 @@ export function DiseaseHeatmap() {
         <p className="text-[#6b7c6b]">Monitor disease spread across Sri Lanka from verified outbreak data.</p>
       </div>
 
-      <div className="flex gap-4 flex-wrap">
-        <select className="px-4 py-2 border border-gray-200 rounded-lg bg-white">
-          <option>All Diseases</option>
+      <div className="flex gap-4 flex-wrap items-end">
+        <select
+          value={diseaseFilter}
+          onChange={(e) => setDiseaseFilter(e.target.value)}
+          className="px-4 py-2 border border-gray-200 rounded-lg bg-white"
+        >
+          <option value="">All Diseases</option>
+          {diseaseOptions.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
         </select>
-        <button type="button" className="px-4 py-2 border-2 border-[#2d5f2e] text-[#2d5f2e] rounded-lg flex items-center gap-2">
+        <select
+          value={districtFilter}
+          onChange={(e) => setDistrictFilter(e.target.value)}
+          className="px-4 py-2 border border-gray-200 rounded-lg bg-white"
+        >
+          <option value="">All Districts</option>
+          {SRI_LANKA_DISTRICTS.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
+        <select
+          value={minWeight ?? ''}
+          onChange={(e) => setMinWeight(e.target.value ? Number(e.target.value) : undefined)}
+          className="px-4 py-2 border border-gray-200 rounded-lg bg-white"
+        >
+          <option value="">All risk levels</option>
+          <option value="0.6">Medium+ (≥ 60%)</option>
+          <option value="0.7">High (≥ 70%)</option>
+          <option value="0.8">Critical (≥ 80%)</option>
+        </select>
+        <label className="flex flex-col gap-1 text-sm text-[#6b7c6b]">
+          From
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="px-4 py-2 border border-gray-200 rounded-lg bg-white"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-[#6b7c6b]">
+          To
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className="px-4 py-2 border border-gray-200 rounded-lg bg-white"
+          />
+        </label>
+        <button
+          type="button"
+          onClick={clearFilters}
+          className="px-4 py-2 border-2 border-[#2d5f2e] text-[#2d5f2e] rounded-lg flex items-center gap-2"
+        >
           <Filter className="w-4 h-4" />
-          Filter Districts
+          Clear filters
         </button>
       </div>
+
+      {dateRangeInvalid ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          &quot;From&quot; date must be on or before the &quot;To&quot; date.
+        </div>
+      ) : null}
 
       {isLoading ? (
         <div className="flex justify-center py-20">
@@ -54,93 +151,56 @@ export function DiseaseHeatmap() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-green-100 p-6">
             <h2 className="text-xl text-[#1a2e1a] mb-4">Sri Lanka Disease Distribution</h2>
-            <div className="relative bg-gradient-to-br from-green-50 to-blue-50 rounded-xl min-h-[500px]">
-              {heatmap.length === 0 ? (
-                <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                  No heatmap data available
-                </div>
-              ) : (
-                heatmap.map((point, i) => {
-                  const pos = toMapPosition(point)
-                  const risk = riskLevel(point.weight)
-                  const pinClass =
-                    risk === 'high'
-                      ? 'border-red-500 bg-red-500/30 text-red-700'
-                      : risk === 'medium'
-                        ? 'border-orange-500 bg-orange-500/30 text-orange-700'
-                        : 'border-green-500 bg-green-500/30 text-green-700'
-                  return (
-                    <div
-                      key={i}
-                      className={`absolute w-10 h-10 rounded-full flex items-center justify-center border-4 ${pinClass}`}
-                      style={{ left: pos.left, top: pos.top, transform: 'translate(-50%, -50%)' }}
-                      title={`${point.diseaseType} (${Math.round(point.weight * 100)}%)`}
-                    >
-                      <MapPin className="w-5 h-5" />
-                    </div>
-                  )
-                })
-              )}
-            </div>
+            {heatmap.length === 0 ? (
+              <div className="flex items-center justify-center h-[500px] rounded-xl bg-gray-50 text-gray-500">
+                No outbreak data matches the current filters.
+              </div>
+            ) : (
+              <DiseaseMap points={heatmap} focusedPoint={focusedPoint} />
+            )}
           </div>
 
           <div className="space-y-6">
             <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-sm p-6 text-white">
               <h3 className="text-lg mb-2">High Risk Alerts</h3>
               <div className="text-3xl mb-1">{highRiskCount}</div>
-              <p className="text-red-100 text-sm">Hotspots with weight ≥ 70%</p>
+              <p className="text-red-100 text-sm">Verified reports with confidence ≥ 70%</p>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
               <h3 className="text-lg text-[#1a2e1a] mb-4">Outbreak Points</h3>
-              <div className="space-y-3">
-                {heatmap.slice(0, 5).map((point, index) => (
-                  <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-start justify-between mb-1">
-                      <div className="font-medium text-gray-900 text-sm">{point.diseaseType}</div>
-                      <span className={`px-2 py-0.5 rounded text-xs ${
-                        riskLevel(point.weight) === 'high' ? 'bg-red-100 text-red-700' :
-                        riskLevel(point.weight) === 'medium' ? 'bg-orange-100 text-orange-700' :
-                        'bg-green-100 text-green-700'
-                      }`}>
-                        {riskLevel(point.weight)}
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-500">{point.lat.toFixed(2)}, {point.lng.toFixed(2)}</div>
-                  </div>
-                ))}
+              <p className="text-xs text-[#6b7c6b] mb-3">Click an outbreak to locate it on the map.</p>
+              <div className="space-y-3 max-h-[360px] overflow-y-auto">
+                {heatmap.length === 0 ? (
+                  <p className="text-sm text-gray-500">No outbreaks to display.</p>
+                ) : (
+                  heatmap.map((point) => (
+                    <OutbreakPointCard
+                      key={pointKey(point)}
+                      point={point}
+                      selected={pointKey(point) === focusedKey}
+                      onSelect={() => focusOutbreak(point)}
+                    />
+                  ))
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {spreadData.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-          <h2 className="text-xl text-[#1a2e1a] mb-6">Outbreak Intensity</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={spreadData}>
-              <XAxis dataKey="month" stroke="#6b7c6b" />
-              <YAxis stroke="#6b7c6b" />
-              <Tooltip />
-              <Line type="monotone" dataKey="cases" stroke="#dc2626" strokeWidth={3} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {heatmap.length > 0 && (
+      {nearbyOutbreaks.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
           <h2 className="text-xl text-[#1a2e1a] mb-4">Nearby Outbreak Alerts</h2>
           <div className="space-y-3">
-            {heatmap.filter((p) => p.weight >= 0.6).slice(0, 3).map((point, i) => (
+            {nearbyOutbreaks.slice(0, 5).map((outbreak, i) => (
               <div key={i} className="p-4 bg-red-50 rounded-lg border border-red-200">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-1">{point.diseaseType}</h4>
+                    <h4 className="text-sm font-medium text-gray-900 mb-1">{outbreak.diseaseType}</h4>
                     <p className="text-sm text-gray-700">
-                      Outbreak intensity {Math.round(point.weight * 100)}% at coordinates {point.lat.toFixed(2)}, {point.lng.toFixed(2)}
+                      {outbreak.distanceKm} km from {outbreak.farmName} — intensity {Math.round(outbreak.weight * 100)}%
                     </p>
                   </div>
                 </div>
@@ -150,5 +210,38 @@ export function DiseaseHeatmap() {
         </div>
       )}
     </div>
+  )
+}
+
+type OutbreakPointCardProps = {
+  point: HeatmapPoint
+  selected: boolean
+  onSelect: () => void
+}
+
+function OutbreakPointCard({ point, selected, onSelect }: OutbreakPointCardProps) {
+  const risk = riskLevel(point.weight)
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`w-full text-left p-3 rounded-lg transition-colors ${
+        selected
+          ? 'bg-green-50 border-2 border-[#2d5f2e] ring-1 ring-[#2d5f2e]/20'
+          : 'bg-gray-50 border-2 border-transparent hover:bg-green-50/50 hover:border-green-100'
+      }`}
+    >
+      <div className="flex items-start justify-between mb-1">
+        <div className="font-medium text-gray-900 text-sm">{point.diseaseType}</div>
+        <span className={`px-2 py-0.5 rounded text-xs ${
+          risk === 'high' ? 'bg-red-100 text-red-700' :
+          risk === 'medium' ? 'bg-orange-100 text-orange-700' :
+          'bg-green-100 text-green-700'
+        }`}>
+          {risk}
+        </span>
+      </div>
+      <div className="text-xs text-gray-500">{point.lat.toFixed(2)}, {point.lng.toFixed(2)}</div>
+    </button>
   )
 }
