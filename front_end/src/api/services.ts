@@ -6,6 +6,10 @@ import type {
   Farm,
   DiseaseReport,
   HeatmapPoint,
+  HeatmapFilters,
+  DiseaseAlert,
+  NearbyResponse,
+  DiseaseMapStats,
   ChatMessage,
   ChatConversation,
   DiagnosisPayload,
@@ -94,9 +98,34 @@ export const reportsApi = {
 }
 
 export const diseaseMapApi = {
-  heatmap: async () => {
+  heatmap: async (filters?: HeatmapFilters) => {
     const { data } = await apiClient.get<HeatmapPoint[]>(
       '/api/disease-map/heatmap',
+      { params: filters },
+    )
+    return data
+  },
+  nearby: async (radiusKm?: number) => {
+    const { data } = await apiClient.get<NearbyResponse>(
+      '/api/disease-map/nearby',
+      { params: radiusKm != null ? { radiusKm } : undefined },
+    )
+    return data
+  },
+  alerts: async () => {
+    const { data } = await apiClient.get<DiseaseAlert[]>('/api/disease-map/alerts')
+    return data
+  },
+  markAlertRead: async (id: string) => {
+    const { data } = await apiClient.patch<DiseaseAlert>(
+      `/api/disease-map/alerts/${id}/read`,
+    )
+    return data
+  },
+  stats: async (filters?: HeatmapFilters) => {
+    const { data } = await apiClient.get<DiseaseMapStats>(
+      '/api/disease-map/stats',
+      { params: filters },
     )
     return data
   },

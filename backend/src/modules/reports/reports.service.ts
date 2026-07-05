@@ -1,5 +1,6 @@
 import * as reportRepo from '../../repositories/report.repository.js'
 import * as userRepo from '../../repositories/user.repository.js'
+import * as diseaseMapService from '../diseaseMap/diseaseMap.service.js'
 import { notFound, forbidden } from '../../utils/errors.js'
 
 export function regionMatches(farmLocation: string, assignedRegion: string): boolean {
@@ -51,10 +52,16 @@ export async function reviewReport(
     }
   }
 
-  return reportRepo.updateReportReview(
+  const updated = await reportRepo.updateReportReview(
     id,
     action === 'verify' ? 'verified' : 'rejected',
     reviewerId,
     comment,
   )
+
+  if (action === 'verify') {
+    await diseaseMapService.createAlertsForVerifiedReport(id)
+  }
+
+  return updated
 }

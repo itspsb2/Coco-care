@@ -9,9 +9,11 @@ export const env = {
   awsS3Bucket: process.env.AWS_S3_BUCKET ?? '',
   azureCvEndpoint: process.env.AZURE_CV_ENDPOINT ?? '',
   azureCvKey: process.env.AZURE_CV_KEY ?? '',
-  bertModelName:
-    process.env.BERT_MODEL_NAME ?? 'Xenova/paraphrase-multilingual-MiniLM-L12-v2',
-  bertRequired: process.env.BERT_REQUIRED !== 'false',
+  geminiApiKey: process.env.GEMINI_API_KEY ?? '',
+  geminiEmbeddingModel: process.env.GEMINI_EMBEDDING_MODEL ?? 'gemini-embedding-001',
+  geminiEmbeddingEnabled: process.env.GEMINI_EMBEDDING_ENABLED !== 'false',
+  /** 0 = use model default dimensionality; 768 recommended for storage/search. */
+  geminiEmbeddingDimensions: Number(process.env.GEMINI_EMBEDDING_DIMENSIONS) || 768,
   ragTopK: Number(process.env.RAG_TOP_K) || 8,
   ragMinScore: Number(process.env.RAG_MIN_SCORE) || 0.5,
   knowledgeDataDir: process.env.KNOWLEDGE_DATA_DIR ?? './data/cri-manuals',
@@ -21,4 +23,5 @@ export const env = {
   groqModel: process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile',
   /** When false, skip Groq even if key is set. Default: enabled when key present. */
   groqEnabled: process.env.GROQ_ENABLED !== 'false',
+  diseaseAlertRadiusKm: Number(process.env.DISEASE_ALERT_RADIUS_KM) || 25,
 }

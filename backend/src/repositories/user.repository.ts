@@ -160,8 +160,23 @@ export async function setActive(id: string, isActive: boolean): Promise<DbUser |
 }
 
 export async function deleteUser(id: string): Promise<boolean> {
-  const result = await getPool().query(`DELETE FROM users WHERE id = $1`, [id])
-  return (result.rowCount ?? 0) > 0
+  const client = await getPool().connect()
+  try {
+    await client.query('BEGIN')
+    await client.query(
+      'UPDATE disease_reports SET reviewed_by = NULL WHERE reviewed_by = $1',
+      [id],
+    )
+    await client.query('DELETE FROM disease_reports WHERE user_id = $1', [id])
+    const result = await client.query('DELETE FROM users WHERE id = $1', [id])
+    await client.query('COMMIT')
+    return (result.rowCount ?? 0) > 0
+  } catch (err) {
+    await client.query('ROLLBACK')
+    throw err
+  } finally {
+    client.release()
+  }
 }
 
 export async function countUsers(): Promise<number> {

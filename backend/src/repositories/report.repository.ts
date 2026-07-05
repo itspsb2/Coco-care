@@ -197,17 +197,166 @@ export interface HeatmapRow {
   lng: number
   weight: number
   disease_type: string
+  created_at: Date
 }
 
-export async function findVerifiedHeatmapPoints(): Promise<HeatmapRow[]> {
+export interface HeatmapFilters {
+  diseaseType?: string
+  from?: string
+  to?: string
+  minWeight?: number
+  district?: string
+}
+
+export interface NearbyOutbreakRow {
+  farm_id: string
+  farm_name: string
+  lat: number
+  lng: number
+  disease_type: string
+  weight: number
+  distance_km: number
+  report_id: string
+  created_at: Date
+}
+
+export interface ReportFarmCoords {
+  latitude: number
+  longitude: number
+}
+
+const HAVERSINE_KM = `
+  6371 * acos(
+    LEAST(1.0, GREATEST(-1.0,
+      cos(radians(ff.latitude)) * cos(radians(f.latitude)) * cos(radians(f.longitude) - radians(ff.longitude))
+      + sin(radians(ff.latitude)) * sin(radians(f.latitude))
+    ))
+  )
+`
+
+function buildVerifiedHeatmapConditions(filters: HeatmapFilters = {}) {
+  const conditions = [`dr.status = 'verified'`]
+  const params: unknown[] = []
+
+  if (filters.diseaseType?.trim()) {
+    params.push(`%${filters.diseaseType.trim().toLowerCase()}%`)
+    conditions.push(`LOWER(COALESCE(dr.final_result, '')) LIKE $${params.length}`)
+  }
+  if (filters.from?.trim()) {
+    params.push(filters.from.trim())
+    conditions.push(`dr.created_at >= $${params.length}::timestamptz`)
+  }
+  if (filters.to?.trim()) {
+    params.push(filters.to.trim())
+    conditions.push(`dr.created_at <= $${params.length}::timestamptz`)
+  }
+  if (filters.minWeight != null) {
+    params.push(filters.minWeight)
+    conditions.push(`COALESCE(dr.confidence, 0.5) >= $${params.length}`)
+  }
+  if (filters.district?.trim()) {
+    params.push(filters.district.trim())
+    conditions.push(`LOWER(f.location) = LOWER($${params.length})`)
+  }
+
+  return { conditions, params }
+}
+
+export async function findVerifiedHeatmapPoints(
+  filters: HeatmapFilters = {},
+): Promise<HeatmapRow[]> {
+  const { conditions, params } = buildVerifiedHeatmapConditions(filters)
+  const where = `WHERE ${conditions.join(' AND ')}`
   const { rows } = await getPool().query<HeatmapRow>(
     `SELECT f.latitude AS lat, f.longitude AS lng,
             COALESCE(dr.confidence, 0.5)::float AS weight,
-            COALESCE(dr.final_result, 'Unknown') AS disease_type
+            COALESCE(dr.final_result, 'Unknown') AS disease_type,
+            dr.created_at
      FROM disease_reports dr
      JOIN farms f ON f.id = dr.farm_id
-     WHERE dr.status = 'verified'
+     ${where}
      ORDER BY dr.created_at DESC`,
+    params,
   )
   return rows
+}
+
+export async function findNearbyOutbreaks(
+  farmerUserId: string,
+  radiusKm: number,
+): Promise<NearbyOutbreakRow[]> {
+  const { rows } = await getPool().query<NearbyOutbreakRow>(
+    `SELECT ff.id AS farm_id,
+            ff.name AS farm_name,
+            f.latitude AS lat,
+            f.longitude AS lng,
+            COALESCE(dr.final_result, 'Unknown') AS disease_type,
+            COALESCE(dr.confidence, 0.5)::float AS weight,
+            MIN((${HAVERSINE_KM})::float) AS distance_km,
+            dr.id AS report_id,
+            dr.created_at
+     FROM farms ff
+     JOIN disease_reports dr ON dr.status = 'verified'
+     JOIN farms f ON f.id = dr.farm_id
+     WHERE ff.user_id = $1
+       AND dr.user_id != $1
+       AND (${HAVERSINE_KM}) <= $2
+     GROUP BY ff.id, ff.name, f.latitude, f.longitude, dr.final_result, dr.confidence, dr.id, dr.created_at
+     ORDER BY distance_km ASC, dr.created_at DESC`,
+    [farmerUserId, radiusKm],
+  )
+  return rows
+}
+
+export async function findReportFarmCoords(reportId: string): Promise<ReportFarmCoords | null> {
+  const { rows } = await getPool().query<ReportFarmCoords>(
+    `SELECT f.latitude, f.longitude
+     FROM disease_reports dr
+     JOIN farms f ON f.id = dr.farm_id
+     WHERE dr.id = $1`,
+    [reportId],
+  )
+  return rows[0] ?? null
+}
+
+export async function getVerifiedStats(highRiskThreshold: number, filters: HeatmapFilters = {}) {
+  const { conditions, params } = buildVerifiedHeatmapConditions(filters)
+  const where = `WHERE ${conditions.join(' AND ')}`
+
+  const byDisease = await getPool().query<{ disease_type: string; count: string }>(
+    `SELECT COALESCE(dr.final_result, 'Unknown') AS disease_type, COUNT(*)::text AS count
+     FROM disease_reports dr
+     JOIN farms f ON f.id = dr.farm_id
+     ${where}
+     GROUP BY dr.final_result
+     ORDER BY COUNT(*) DESC`,
+    params,
+  )
+
+  const byWeek = await getPool().query<{ week: string; count: string }>(
+    `SELECT to_char(date_trunc('week', dr.created_at), 'YYYY-MM-DD') AS week,
+            COUNT(*)::text AS count
+     FROM disease_reports dr
+     JOIN farms f ON f.id = dr.farm_id
+     ${where}
+     GROUP BY date_trunc('week', dr.created_at)
+     ORDER BY date_trunc('week', dr.created_at) DESC
+     LIMIT 12`,
+    params,
+  )
+
+  const highRiskParams = [...params, highRiskThreshold]
+  const highRisk = await getPool().query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count
+     FROM disease_reports dr
+     JOIN farms f ON f.id = dr.farm_id
+     ${where} AND COALESCE(dr.confidence, 0) >= $${highRiskParams.length}`,
+    highRiskParams,
+  )
+
+  return {
+    byDisease: byDisease.rows,
+    byWeek: byWeek.rows,
+    highRiskCount: Number(highRisk.rows[0]?.count ?? 0),
+  }
 }

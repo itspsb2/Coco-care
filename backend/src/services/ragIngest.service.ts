@@ -2,7 +2,7 @@ import { readFile, readdir } from 'node:fs/promises'
 import { join, basename } from 'node:path'
 import { env } from '../config/env.js'
 import * as knowledgeRepo from '../repositories/knowledge.repository.js'
-import { encodeQueryStrict, warmupBert } from './bertNlp.service.js'
+import { embedText, warmupGeminiEmbedding } from './geminiEmbedding.service.js'
 
 export interface DocFrontmatter {
   title?: string
@@ -269,7 +269,7 @@ export async function ingestDocument(
   const chunks = chunkDocument(title, content)
 
   for (let i = 0; i < chunks.length; i++) {
-    const embedding = await encodeQueryStrict(chunks[i])
+    const embedding = await embedText(chunks[i], { ingest: true })
     await knowledgeRepo.insertChunk({
       documentId: docId,
       chunkIndex: i,
@@ -278,7 +278,7 @@ export async function ingestDocument(
       metadata: {
         title,
         source,
-        model: env.bertModelName,
+        model: env.geminiEmbeddingModel,
         lang: 'en',
         slug: options?.slug,
         sourceId: options?.sourceId,
@@ -300,7 +300,7 @@ export async function ingestFromDirectory(
   dir = join(env.knowledgeDataDir, 'cri'),
   source = 'CRI Advisory Circular',
 ): Promise<void> {
-  await warmupBert()
+  await warmupGeminiEmbedding()
 
   const files = await collectKnowledgeFiles(dir)
   if (files.length === 0) {

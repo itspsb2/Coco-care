@@ -9,7 +9,7 @@ import * as reportsService from '../reports/reports.service.js'
 import { hashPassword } from '../../utils/password.js'
 import { badRequest, notFound, forbidden } from '../../utils/errors.js'
 import { getPool } from '../../db/pool.js'
-import { isBertReady } from '../../services/bertNlp.service.js'
+import { isGeminiEmbeddingReady } from '../../services/geminiEmbedding.service.js'
 import { isGroqConfigured } from '../../services/groq.service.js'
 
 export async function getUsers(filters?: { role?: string; q?: string }) {
@@ -156,7 +156,7 @@ export async function getHealth() {
 
   return {
     database,
-    bert: isBertReady(),
+    geminiEmbedding: isGeminiEmbeddingReady(),
     groq: isGroqConfigured(),
     knowledgeDocuments,
     knowledgeChunks,

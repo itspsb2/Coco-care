@@ -49,8 +49,8 @@ export function OfficerLayout() {
       <header className="sticky top-0 z-30 border-b border-green-100/80 bg-white/90 backdrop-blur-md shadow-sm">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <div className="flex min-w-0 flex-1 items-center gap-4">
-            <Link to="/" className="flex shrink-0 items-center gap-2">
-              <CocoCareLogo iconClassName="h-8 w-auto" />
+            <Link to="/officer/reports" className="flex shrink-0 items-center gap-2 hover:opacity-90 transition-opacity">
+              <CocoCareLogo iconClassName="h-8 w-auto max-w-[120px] object-contain" />
               <span className="hidden text-lg font-semibold text-[#2d5f2e] sm:inline">Officer</span>
             </Link>
             {user?.assignedRegion ? (

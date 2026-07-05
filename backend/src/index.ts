@@ -1,13 +1,19 @@
 import { createApp } from './app.js'
 import { env } from './config/env.js'
-import { warmupBert } from './services/bertNlp.service.js'
+import { warmupGeminiEmbedding } from './services/geminiEmbedding.service.js'
 
 async function main() {
-  if (env.bertRequired) {
+  if (env.geminiEmbeddingEnabled) {
+    if (!env.geminiApiKey) {
+      console.error(
+        'GEMINI_API_KEY is required when GEMINI_EMBEDDING_ENABLED=true. Add it to backend/.env and restart.',
+      )
+      process.exit(1)
+    }
     try {
-      await warmupBert()
+      await warmupGeminiEmbedding()
     } catch (err) {
-      console.error('Failed to load BERT model (required for RAG chat):', err)
+      console.error('Failed to warm up Gemini embeddings (required for RAG chat):', err)
       process.exit(1)
     }
   }

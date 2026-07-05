@@ -1,6 +1,8 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --font-family-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-family-serif: 'Fraunces', serif;
   --font-size: 16px;
   --background: #ffffff;
   --foreground: #1a2e1a;

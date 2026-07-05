@@ -9,7 +9,10 @@ export const registerSchema = z.object({
   role: z.enum(['farmer', 'officer', 'admin']),
   name: z.string().optional(),
   username: z.string().min(1),
-  email: z.string().email().optional(),
+  email: z.preprocess(
+    (val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
+    z.string().email().optional(),
+  ),
   phone: z.string().min(1),
   password: z.string().min(6),
   officerId: z.string().optional(),

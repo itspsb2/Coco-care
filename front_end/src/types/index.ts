@@ -35,7 +35,7 @@ export interface RegionSummary {
 
 export interface SystemHealth {
   database: boolean
-  bert: boolean
+  geminiEmbedding: boolean
   groq: boolean
   knowledgeDocuments: number
   knowledgeChunks: number
@@ -85,6 +85,50 @@ export interface HeatmapPoint {
   lng: number
   weight: number
   diseaseType: string
+  createdAt?: string
+}
+
+export interface DiseaseAlert {
+  id: string
+  reportId: string
+  farmId: string
+  diseaseType: string
+  distanceKm: number
+  message: string
+  read: boolean
+  createdAt: string
+}
+
+export interface NearbyOutbreak {
+  lat: number
+  lng: number
+  diseaseType: string
+  weight: number
+  distanceKm: number
+  reportId: string
+  createdAt: string
+}
+
+export interface NearbyResponse {
+  farms: Array<{
+    farmId: string
+    farmName: string
+    outbreaks: NearbyOutbreak[]
+  }>
+}
+
+export interface DiseaseMapStats {
+  byDisease: Array<{ diseaseType: string; count: number }>
+  byWeek: Array<{ week: string; count: number }>
+  highRiskCount: number
+}
+
+export interface HeatmapFilters {
+  diseaseType?: string
+  from?: string
+  to?: string
+  minWeight?: number
+  district?: string
 }
 
 export interface ChatMessage {
