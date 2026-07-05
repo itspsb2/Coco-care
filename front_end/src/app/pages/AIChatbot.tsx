@@ -259,7 +259,7 @@ export function AIChatbot() {
           : undefined
       setSendError(
         message ??
-          'Knowledge assistant is temporarily unavailable. Ensure the backend BERT model is loaded and try again.',
+          'Knowledge assistant is temporarily unavailable. Ensure the backend is running and GEMINI_API_KEY is set in backend/.env, then run npm run rag:ingest.',
       )
     },
   })

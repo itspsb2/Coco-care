@@ -1,9 +1,10 @@
 import { Link, useNavigate } from "react-router";
-import { Eye, EyeOff } from "lucide-react";
-import logo from "../../imports/image-3.png";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import loginLogo from "@/imports/login-logo.png";
 import { useState } from "react";
 import { motion } from "motion/react";
 import { useAuth, getRoleHomePath } from "@/contexts/AuthContext";
+import { SRI_LANKA_DISTRICTS } from '@/constants/districts'
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ export function RegisterPage() {
     fullName: "",
     nic: "",
     mobile: "",
+    email: "",
     district: "",
     plantationSize: "",
     password: "",
@@ -19,27 +21,37 @@ export function RegisterPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const user = await register({
-      role: "farmer",
-      username: formData.nic,
-      name: formData.fullName,
-      phone: formData.mobile,
-      password: formData.password,
-      farms: [
-        {
-          name: `${formData.fullName}'s Plantation`,
-          location: formData.district,
-          latitude: 7.4818,
-          longitude: 80.365,
-          acreage: 3,
-          treeCount: 150,
-        },
-      ],
-    });
-    navigate(getRoleHomePath(user.role));
+    setError("");
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    const emailTrimmed = formData.email.trim();
+    if (emailTrimmed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const user = await register({
+        role: "farmer",
+        username: formData.nic.trim(),
+        name: formData.fullName.trim(),
+        phone: formData.mobile.trim(),
+        password: formData.password,
+        ...(emailTrimmed ? { email: emailTrimmed } : {}),
+      });
+      navigate(getRoleHomePath(user.role));
+    } catch {
+      setError("Registration failed. That username may already be taken.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -47,31 +59,26 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4 py-12 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(45,80,22,0.08),_transparent_45%),radial-gradient(circle_at_bottom_left,_rgba(244,164,96,0.08),_transparent_35%)]" />
-
-      {/* Main content */}
-      <div className="w-full max-w-2xl relative z-10">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4 py-12">
+      <div className="w-full max-w-2xl">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-6">
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
+              whileHover={{ scale: 1.05 }}
               transition={{ delay: 0.2, duration: 0.5 }}
             >
-              <Link to="/">
+              <Link to="/" className="inline-block hover:opacity-90 transition-opacity">
                 <img
-                  src={logo}
-                  alt="CocoCare"
-                  className="h-20 w-auto"
-                  style={{ 
-                    filter: "brightness(0) saturate(100%) invert(21%) sepia(48%) saturate(1200%) hue-rotate(70deg) brightness(95%) contrast(90%)"
-                  }}
+                  src={loginLogo}
+                  alt="Coco Care"
+                  className="h-12 w-auto max-w-[200px] object-contain mx-auto"
                 />
               </Link>
             </motion.div>
@@ -100,6 +107,11 @@ export function RegisterPage() {
           transition={{ delay: 0.5, duration: 0.6 }}
         >
           <form onSubmit={handleSubmit} className="space-y-6">
+            {error ? (
+              <div className="rounded-full border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 text-center">
+                {error}
+              </div>
+            ) : null}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -124,7 +136,7 @@ export function RegisterPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.7, duration: 0.5 }}
               >
-                <label className="block text-sm font-bold mb-3 text-[#1a2e1a]">NIC (Username)</label>
+                <label className="block text-sm font-bold mb-3 text-[#1a2e1a]">NIC</label>
                 <motion.input
                   whileFocus={{ scale: 1.01 }}
                   type="text"
@@ -156,6 +168,27 @@ export function RegisterPage() {
               </motion.div>
             </div>
 
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.85, duration: 0.5 }}
+            >
+              <label className="block text-sm font-bold mb-3 text-[#1a2e1a]">
+                Email{" "}
+                <span className="font-normal text-gray-500">(optional)</span>
+              </label>
+              <motion.input
+                whileFocus={{ scale: 1.01 }}
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full px-6 py-4 border-2 border-[#1a2e1a] rounded-full focus:outline-none focus:border-[#2d5016] transition-all bg-white text-[#1a2e1a] hover:shadow-md"
+                placeholder="Enter your email address"
+                autoComplete="email"
+              />
+            </motion.div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -172,14 +205,9 @@ export function RegisterPage() {
                   required
                 >
                   <option value="">Select District</option>
-                  <option value="Colombo">Colombo</option>
-                  <option value="Gampaha">Gampaha</option>
-                  <option value="Kalutara">Kalutara</option>
-                  <option value="Galle">Galle</option>
-                  <option value="Matara">Matara</option>
-                  <option value="Hambantota">Hambantota</option>
-                  <option value="Kurunegala">Kurunegala</option>
-                  <option value="Puttalam">Puttalam</option>
+                  {SRI_LANKA_DISTRICTS.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
                 </motion.select>
               </motion.div>
 
@@ -212,7 +240,10 @@ export function RegisterPage() {
                 transition={{ delay: 1.1, duration: 0.5 }}
               >
                 <label className="block text-sm font-bold mb-3 text-[#1a2e1a]">Password</label>
-                <motion.div className="relative" whileFocus={{ scale: 1.01 }} transition={{ duration: 0.2 }}>
+                <motion.div 
+                  className="relative"
+                  whileFocus={{ scale: 1.01 }}
+                >
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
@@ -220,7 +251,6 @@ export function RegisterPage() {
                     onChange={handleChange}
                     className="w-full px-6 py-4 border-2 border-[#1a2e1a] rounded-full focus:outline-none focus:border-[#2d5016] transition-all bg-white text-[#1a2e1a] pr-12 hover:shadow-md"
                     placeholder="Enter password"
-                    minLength={6}
                     required
                   />
                   <motion.button
@@ -230,7 +260,11 @@ export function RegisterPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#2d5016] transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </motion.button>
                 </motion.div>
               </motion.div>
@@ -278,11 +312,19 @@ export function RegisterPage() {
             >
               <motion.button
                 type="submit"
-                whileHover={{ scale: 1.02, boxShadow: "0 10px 30px rgba(45, 80, 22, 0.3)" }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full py-4 bg-[#2d5016] text-white rounded-full font-bold text-lg hover:bg-[#1a2e1a] transition-colors shadow-lg mt-2"
+                disabled={loading}
+                whileHover={loading ? undefined : { scale: 1.02, boxShadow: "0 10px 30px rgba(45, 80, 22, 0.3)" }}
+                whileTap={loading ? undefined : { scale: 0.98 }}
+                className="w-full py-4 bg-[#2d5016] text-white rounded-full font-bold text-lg hover:bg-[#1a2e1a] transition-colors shadow-lg mt-2 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Create Account
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Creating account…
+                  </>
+                ) : (
+                  "Create Account"
+                )}
               </motion.button>
             </motion.div>
 

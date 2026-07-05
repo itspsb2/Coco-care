@@ -85,18 +85,22 @@ On fresh `db:seed`, knowledge is ingested automatically from `data/cri-manuals/c
 | `JWT_SECRET` | — | Secret for signing JWTs (required in production) |
 | `JWT_EXPIRES_IN` | `7d` | Token expiry |
 | `KNOWLEDGE_DATA_DIR` | `./data/cri-manuals` | Root folder for RAG ingest |
-| `BERT_MODEL_NAME` | `Xenova/paraphrase-multilingual-MiniLM-L12-v2` | Embedding model (required for ingest + chat) |
-| `BERT_REQUIRED` | `true` | Fail startup/ingest/chat if BERT cannot load |
+| `GEMINI_API_KEY` | — | [Google AI Studio](https://aistudio.google.com) key for RAG embeddings |
+| `GEMINI_EMBEDDING_MODEL` | `gemini-embedding-001` | Gemini embedding model |
+| `GEMINI_EMBEDDING_ENABLED` | `true` | Set `false` to skip Gemini (chat/ingest will fail without embeddings) |
+| `GEMINI_EMBEDDING_DIMENSIONS` | `768` | Output vector size (query and stored chunks must match) |
 | `RAG_TOP_K` | `8` | Chunks retrieved per chat query |
 | `RAG_MIN_SCORE` | `0.5` | Minimum similarity for RAG answers (with English keyword boost/fallback) |
 | `OPENWEATHER_API_KEY` | — | [OpenWeatherMap](https://openweathermap.org/api) key for dashboard forecast |
-| `GROQ_API_KEY` | — | [Groq](https://console.groq.com) key for grounded chat answers after BERT retrieval |
+| `GROQ_API_KEY` | — | [Groq](https://console.groq.com) key for grounded chat answers after retrieval |
 | `GROQ_MODEL` | `llama-3.3-70b-versatile` | Groq chat model |
 | `GROQ_ENABLED` | `true` | Set `false` to force `extractAnswer` fallback |
 
 See `.env.example` for AWS S3 and Azure CV optional settings.
 
-Chat flow: BERT embeds the question → retrieve CRI chunks from Postgres → Groq generates a clear answer from those chunks only → app appends `Source: {title}`. If Groq is unavailable, falls back to local `extractAnswer`.
+Chat flow: Gemini embeds the question → retrieve CRI chunks from Postgres → Groq generates a clear answer from those chunks only → app appends `Source: {title}`. If Groq is unavailable, falls back to local `extractAnswer`.
+
+After switching embedding models, re-ingest: `npm run rag:clear && npm run rag:ingest`.
 
 ## Auth
 

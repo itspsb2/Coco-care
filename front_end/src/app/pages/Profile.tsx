@@ -4,6 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { farmApi } from '@/api/services'
 import { useAuth } from '@/contexts/AuthContext'
 import {
+  FarmLocationPicker,
+  type FarmLocationValue,
+} from '@/app/components/FarmLocationPicker'
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -14,11 +18,14 @@ import {
 
 const emptyFarmForm = {
   name: '',
-  location: '',
-  latitude: '7.4818',
-  longitude: '80.365',
   acreage: '5',
   treeCount: '200',
+}
+
+const emptyLocation: FarmLocationValue = {
+  latitude: null,
+  longitude: null,
+  location: '',
 }
 
 export function Profile() {
@@ -26,8 +33,14 @@ export function Profile() {
   const queryClient = useQueryClient()
   const [showAddFarm, setShowAddFarm] = useState(false)
   const [newFarm, setNewFarm] = useState(emptyFarmForm)
+  const [farmLocation, setFarmLocation] = useState<FarmLocationValue>(emptyLocation)
+  const [locationError, setLocationError] = useState('')
 
-  const resetFarmForm = () => setNewFarm(emptyFarmForm)
+  const resetFarmForm = () => {
+    setNewFarm(emptyFarmForm)
+    setFarmLocation(emptyLocation)
+    setLocationError('')
+  }
 
   const handleDialogChange = (open: boolean) => {
     setShowAddFarm(open)
@@ -52,11 +65,22 @@ export function Profile() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setLocationError('')
+
+    if (farmLocation.latitude === null || farmLocation.longitude === null) {
+      setLocationError('Please pin your farm location on the map.')
+      return
+    }
+    if (!farmLocation.location.trim()) {
+      setLocationError('Waiting for location name — move the pin slightly or try again.')
+      return
+    }
+
     createFarmMutation.mutate({
       name: newFarm.name,
-      location: newFarm.location,
-      latitude: parseFloat(newFarm.latitude),
-      longitude: parseFloat(newFarm.longitude),
+      location: farmLocation.location,
+      latitude: farmLocation.latitude,
+      longitude: farmLocation.longitude,
       acreage: parseFloat(newFarm.acreage),
       treeCount: parseInt(newFarm.treeCount, 10),
     })
@@ -110,7 +134,7 @@ export function Profile() {
         </div>
 
         <Dialog open={showAddFarm} onOpenChange={handleDialogChange}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Add New Farm</DialogTitle>
               <DialogDescription>
@@ -129,16 +153,21 @@ export function Profile() {
                   required
                 />
               </label>
-              <label className="space-y-1">
-                <span className="text-sm text-gray-600">Location / District</span>
-                <input
-                  placeholder="e.g. Kurunegala"
-                  value={newFarm.location}
-                  onChange={(e) => setNewFarm({ ...newFarm, location: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e]/30"
-                  required
+
+              {showAddFarm ? (
+                <FarmLocationPicker
+                  value={farmLocation}
+                  onChange={(next) => {
+                    setFarmLocation(next)
+                    if (next.latitude !== null) setLocationError('')
+                  }}
                 />
-              </label>
+              ) : null}
+
+              {locationError ? (
+                <p className="text-xs text-red-600">{locationError}</p>
+              ) : null}
+
               <div className="grid grid-cols-2 gap-3">
                 <label className="space-y-1">
                   <span className="text-sm text-gray-600">Acreage</span>
@@ -159,30 +188,6 @@ export function Profile() {
                     min="0"
                     value={newFarm.treeCount}
                     onChange={(e) => setNewFarm({ ...newFarm, treeCount: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e]/30"
-                    required
-                  />
-                </label>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="space-y-1">
-                  <span className="text-sm text-gray-600">Latitude</span>
-                  <input
-                    type="number"
-                    step="any"
-                    value={newFarm.latitude}
-                    onChange={(e) => setNewFarm({ ...newFarm, latitude: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e]/30"
-                    required
-                  />
-                </label>
-                <label className="space-y-1">
-                  <span className="text-sm text-gray-600">Longitude</span>
-                  <input
-                    type="number"
-                    step="any"
-                    value={newFarm.longitude}
-                    onChange={(e) => setNewFarm({ ...newFarm, longitude: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e]/30"
                     required
                   />

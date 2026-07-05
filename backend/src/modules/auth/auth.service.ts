@@ -15,7 +15,7 @@ export async function login(payload: LoginPayload) {
       throw unauthorized('Invalid username or password')
     }
     if (user.is_active === false) {
-      throw unauthorized('This account has been deactivated')
+      throw unauthorized('Your account is inactive. Please contact the admin.')
     }
     return {
       token: signToken(user.id),
