@@ -32,8 +32,15 @@ export function Dashboard() {
 
   const { data: heatmap = [] } = useQuery({
     queryKey: ['disease-map', 'heatmap'],
-    queryFn: diseaseMapApi.heatmap,
+    queryFn: () => diseaseMapApi.heatmap(),
   })
+
+  const { data: diseaseAlerts = [] } = useQuery({
+    queryKey: ['disease-map', 'alerts'],
+    queryFn: diseaseMapApi.alerts,
+  })
+
+  const unreadAlertCount = diseaseAlerts.filter((a) => !a.read).length
 
   const farm = profile?.farms[0]
   const farmRegion = farm?.location ?? 'Kurunegala'
@@ -98,10 +105,26 @@ export function Dashboard() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-          <h2 className="text-xl text-[#1a2e1a] mb-4">Current Disease Alerts</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl text-[#1a2e1a]">Current Disease Alerts</h2>
+            {unreadAlertCount > 0 && (
+              <span className="text-xs font-medium px-2 py-1 rounded-full bg-red-100 text-red-700">
+                {unreadAlertCount} unread
+              </span>
+            )}
+          </div>
           <div className="space-y-3">
-            {heatmap.length === 0 ? (
+            {diseaseAlerts.length === 0 && heatmap.length === 0 ? (
               <p className="text-sm text-gray-500">No outbreak data available.</p>
+            ) : diseaseAlerts.length > 0 ? (
+              diseaseAlerts.slice(0, 4).map((alert) => (
+                <AlertItem
+                  key={alert.id}
+                  disease={alert.diseaseType}
+                  location={`${alert.distanceKm} km away`}
+                  severity={alert.read ? 'low' : 'high'}
+                />
+              ))
             ) : (
               heatmap.slice(0, 4).map((point, i) => (
                 <AlertItem

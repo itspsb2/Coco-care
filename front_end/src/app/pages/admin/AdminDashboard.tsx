@@ -75,7 +75,7 @@ export function AdminDashboard() {
   }
 
   const allSystemsOk =
-    health?.database && health?.bert && health?.groq && (health?.knowledgeChunks ?? 0) > 0
+    health?.database && health?.geminiEmbedding && health?.groq && (health?.knowledgeChunks ?? 0) > 0
 
   return (
     <div className="space-y-8 pb-8">
@@ -198,7 +198,7 @@ export function AdminDashboard() {
             <MiniStat label="Documents" value={health.knowledgeDocuments} />
             <MiniStat label="RAG chunks" value={health.knowledgeChunks} />
             <MiniStat label="Database" value={health.database ? 'Online' : 'Offline'} ok={health.database} />
-            <MiniStat label="AI pipeline" value={health.groq && health.bert ? 'Ready' : 'Partial'} ok={health.groq && health.bert} />
+            <MiniStat label="AI pipeline" value={health.groq && health.geminiEmbedding ? 'Ready' : 'Partial'} ok={health.groq && health.geminiEmbedding} />
           </div>
         </section>
       )}

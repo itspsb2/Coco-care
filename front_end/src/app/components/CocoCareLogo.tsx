@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import logo from '@/imports/image-3.png'
+import logo from '@/imports/clogo.png'
 
 type CocoCareLogoProps = {
   to?: string
@@ -10,25 +10,21 @@ type CocoCareLogoProps = {
 export function CocoCareLogo({
   to,
   className = '',
-  iconClassName = 'h-9 w-auto',
+  iconClassName = 'h-8 w-auto max-w-[140px] object-contain',
 }: CocoCareLogoProps) {
   const content = (
     <div className={`flex items-center ${className}`}>
       <img
         src={logo}
-        alt="CocoCare"
+        alt="Coco Care"
         className={`${iconClassName} shrink-0`}
-        style={{
-          filter:
-            'brightness(0) saturate(100%) invert(21%) sepia(48%) saturate(1200%) hue-rotate(70deg) brightness(95%) contrast(90%)',
-        }}
       />
     </div>
   )
 
   if (to) {
     return (
-      <Link to={to} className="hover:opacity-90 transition-opacity">
+      <Link to={to} className="hover:opacity-90 transition-opacity shrink-0">
         {content}
       </Link>
     )

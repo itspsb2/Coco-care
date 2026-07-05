@@ -1,7 +1,8 @@
 import type { ChatMessage, ChatConversation } from '../../types/index.js'
 import * as chatRepo from '../../repositories/chat.repository.js'
 import * as knowledgeRepo from '../../repositories/knowledge.repository.js'
-import { encodeQueryStrict, extractAnswer, isBertReady } from '../../services/bertNlp.service.js'
+import { extractAnswer } from '../../services/bertNlp.service.js'
+import { embedText } from '../../services/geminiEmbedding.service.js'
 import { generateGroundedAnswer, isGroqConfigured } from '../../services/groq.service.js'
 import { expandQueryTerms } from '../../services/ragGlossary.js'
 import { env } from '../../config/env.js'
@@ -114,14 +115,10 @@ export async function sendMessage(
   }
 
   try {
-    if (env.bertRequired && !isBertReady()) {
-      await encodeQueryStrict('warmup')
-    }
-
     const history = await chatRepo.findMessagesByConversationId(userId, conversationId)
     const contextualQuery = buildContextualQuery(history, message)
 
-    const embedding = await encodeQueryStrict(contextualQuery)
+    const embedding = await embedText(contextualQuery)
     const chunks = await knowledgeRepo.vectorSearch(embedding, env.ragTopK * 2)
     // Rank/boost using the current question only so prior turns do not pull wrong topics
     const ranked = rankChunks(message, chunks)
@@ -177,7 +174,7 @@ export async function sendMessage(
         )
         .join(', ')
       console.log(
-        `RAG reply evidence: [${evidence}] bert=true groq=${groqUsed} conversation=${conversationId}`,
+        `RAG reply evidence: [${evidence}] geminiEmbed=true groq=${groqUsed} conversation=${conversationId}`,
       )
     }
 

@@ -5,7 +5,6 @@ import {
   Scan,
   MessageSquare,
   Map,
-  Bell,
   ChevronRight,
   ArrowRight,
   Menu,
@@ -17,7 +16,7 @@ import {
   Award,
   TrendingUp,
 } from "lucide-react";
-import logo from "../../imports/image-3.png";
+import { LandingLogo } from '@/app/components/LandingLogo'
 
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1590487527083-c8236d53dea0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwyfHxjb2NvbnV0JTIwcGFsbSUyMHBsYW50YXRpb24lMjB0cm9waWNhbCUyMFNyaSUyMExhbmthfGVufDF8fHx8MTc4MzE0NTY4NHww&ixlib=rb-4.1.0&q=80&w=1920";
@@ -55,17 +54,11 @@ function FadeIn({
 export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [activeFeature, setActiveFeature] = useState(0);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
-    const t = setInterval(() => setActiveFeature((p) => (p + 1) % features.length), 3000);
-    return () => clearInterval(t);
   }, []);
 
   return (
@@ -78,19 +71,7 @@ export function LandingPage() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center">
-            <img
-              src={logo}
-              alt="CocoCare"
-              className="h-9 w-auto"
-              style={{ 
-                mixBlendMode: scrolled ? "multiply" : "screen",
-                filter: scrolled 
-                  ? "brightness(0) saturate(100%) invert(21%) sepia(48%) saturate(1200%) hue-rotate(70deg) brightness(95%) contrast(90%)" 
-                  : "brightness(0) invert(1)"
-              }}
-            />
-          </div>
+          <LandingLogo to="/" light={!scrolled} />
 
           <div className="hidden md:flex items-center gap-7">
             {[["Features", "#features"], ["How It Works", "#how-it-works"], ["About", "#about"]].map(([label, href]) => (
@@ -281,7 +262,7 @@ export function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map((feat, i) => (
               <FadeIn key={feat.title} delay={i * 0.07}>
-                <FeatureCard {...feat} active={activeFeature === i} onClick={() => setActiveFeature(i)} />
+                <FeatureCard {...feat} />
               </FadeIn>
             ))}
           </div>
@@ -460,52 +441,23 @@ export function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
             <div>
               <div className="mb-4">
-                <img
-                  src={logo}
-                  alt="CocoCare"
-                  className="h-10 w-auto"
-                  style={{ 
-                    mixBlendMode: "screen",
-                    filter: "brightness(0) invert(1)"
-                  }}
-                />
+                <LandingLogo light to="/" variant="footer" allWhite />
               </div>
               <p className="text-green-300/55 text-sm leading-relaxed">
                 AI-powered coconut farming support platform for Sri Lankan farmers.
               </p>
             </div>
             {[
-              {
-                title: "Platform",
-                links: [
-                  { label: "Disease Detection", href: "#features" },
-                  { label: "AI Chatbot", href: "#features" },
-                  { label: "Disease Heatmap", href: "#features" },
-                ],
-              },
-              {
-                title: "Resources",
-                links: [
-                  { label: "Best Practices", href: "#how-it-works" },
-                  { label: "Get Started", href: "/register" },
-                  { label: "Sign In", href: "/login" },
-                ],
-              },
-              {
-                title: "Company",
-                links: [
-                  { label: "About Us", href: "#about" },
-                  { label: "Our Mission", href: "#about" },
-                  { label: "Contact", href: "mailto:hello@cococare.lk" },
-                ],
-              },
+              { title: "Platform", links: ["Disease Detection", "AI Chatbot", "Disease Heatmap", "Farm Analytics", "Fertilizer Planner"] },
+              { title: "Resources", links: ["Disease Guide", "Best Practices", "Agricultural Research", "Blog", "Support"] },
+              { title: "Company", links: ["About Us", "Our Mission", "Contact", "Privacy Policy"] },
             ].map((col) => (
               <div key={col.title}>
                 <h3 className="text-xs font-bold uppercase tracking-widest text-green-400/60 mb-4">{col.title}</h3>
                 <ul className="space-y-2.5">
                   {col.links.map((l) => (
-                    <li key={l.label}>
-                      <a href={l.href} className="text-sm text-green-300/55 hover:text-white transition-colors">{l.label}</a>
+                    <li key={l}>
+                      <a href="#" className="text-sm text-green-300/55 hover:text-white transition-colors">{l}</a>
                     </li>
                   ))}
                 </ul>
@@ -545,13 +497,6 @@ const features = [
     iconBg: "#e3f2fd",
     title: "Disease Heatmap",
     description: "Visualise active outbreaks across Sri Lanka in real-time and receive early warnings before they reach your district.",
-  },
-  {
-    icon: <Bell className="w-6 h-6" />,
-    iconColor: "#e65100",
-    iconBg: "#fff3e0",
-    title: "Smart Alerts",
-    description: "Timely push notifications about disease outbreaks, weather risks, and seasonal care reminders tailored to your farm.",
   },
 ];
 
@@ -598,25 +543,16 @@ function FeatureCard({
   iconBg,
   title,
   description,
-  active,
-  onClick,
 }: {
   icon: React.ReactNode;
   iconColor: string;
   iconBg: string;
   title: string;
   description: string;
-  active: boolean;
-  onClick: () => void;
 }) {
   return (
     <div
-      onClick={onClick}
-      className={`p-6 rounded-3xl border cursor-pointer transition-all duration-300 ${
-        active
-          ? "bg-white shadow-xl border-green-200 -translate-y-1"
-          : "bg-white/50 border-transparent hover:bg-white hover:shadow-md"
-      }`}
+      className="p-6 rounded-3xl border border-transparent bg-white/50 transition-all duration-300 hover:bg-white hover:shadow-xl hover:border-green-200 hover:-translate-y-1"
     >
       <div
         className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5"

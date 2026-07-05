@@ -1,4 +1,4 @@
-import { extractAnswer, isBertReady } from '../src/services/bertNlp.service.js'
+import { extractAnswer } from '../src/services/bertNlp.service.js'
 import { expandQueryTerms, queryTerms } from '../src/services/ragGlossary.js'
 import { chunkDocument } from '../src/services/ragIngest.service.js'
 
@@ -142,10 +142,3 @@ Release parasitoids.
   })
 })
 
-
-describe('bertNlp readiness', () => {
-  it('reports not ready before warmup in isolated unit context', () => {
-    // Warmup is not run in unit tests; readiness is false unless another suite loaded the model.
-    expect(typeof isBertReady()).toBe('boolean')
-  })
-})
