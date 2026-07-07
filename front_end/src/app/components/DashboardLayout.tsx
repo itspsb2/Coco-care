@@ -38,7 +38,7 @@ export function DashboardLayout() {
 
   const navigation = [
     { name: 'Dashboard', href: '/app', icon: LayoutDashboard },
-    { name: 'Disease Detection', href: '/app/disease-detection', icon: Microscope },
+    { name: 'Coconut Disease Diagnosis', href: '/app/disease-detection', icon: Microscope },
     { name: 'AI Chatbot', href: '/app/chatbot', icon: MessageSquare },
     { name: 'Heatmap', href: '/app/heatmap', icon: Map },
     { name: 'Notifications', href: '/app/notifications', icon: Bell },
