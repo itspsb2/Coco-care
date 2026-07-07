@@ -9,6 +9,7 @@ export const env = {
   awsS3Bucket: process.env.AWS_S3_BUCKET ?? '',
   azureCvEndpoint: process.env.AZURE_CV_ENDPOINT ?? '',
   azureCvKey: process.env.AZURE_CV_KEY ?? '',
+  azureCvPredictionUrl: process.env.AZURE_CV_PREDICTION_URL ?? '',
   geminiApiKey: process.env.GEMINI_API_KEY ?? '',
   geminiEmbeddingModel: process.env.GEMINI_EMBEDDING_MODEL ?? 'gemini-embedding-001',
   geminiEmbeddingEnabled: process.env.GEMINI_EMBEDDING_ENABLED !== 'false',

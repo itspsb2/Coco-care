@@ -26,7 +26,7 @@ export function createApp() {
       credentials: true,
     }),
   )
-  app.use(express.json())
+  app.use(express.json({ limit: '15mb' }))
 
   app.use((req, _res, next) => {
     console.log(`${req.method} ${req.path}`)

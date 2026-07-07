@@ -3,10 +3,13 @@ import { classifySymptoms } from '../src/services/symptom.service.js'
 
 describe('symptom.service', () => {
   it('classifies bud rot symptoms', () => {
-    const result = classifySymptoms({
-      'Rotting crown region': true,
-      'Foul smell': true,
-    })
+    const result = classifySymptoms(
+      {
+        'Rotting crown region': true,
+        'Foul smell': true,
+      },
+      'bud',
+    )
     expect(result.disease).toBe('Bud Rot Disease')
     expect(result.confidence).toBeGreaterThan(0.5)
   })
