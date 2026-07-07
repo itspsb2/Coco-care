@@ -3,6 +3,8 @@ import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { DashboardLayout } from './components/DashboardLayout'
 import { Dashboard } from './pages/Dashboard'
 import { DiseaseDetection } from './pages/DiseaseDetection'
+import { LeafDiseaseDiagnosis } from './pages/LeafDiseaseDiagnosis'
+import { SymptomDiseaseDiagnosis } from './pages/SymptomDiseaseDiagnosis'
 import { AIChatbot } from './pages/AIChatbot'
 import { DiseaseHeatmap } from './pages/DiseaseHeatmap'
 import { Notifications } from './pages/Notifications'
@@ -33,6 +35,8 @@ export const router = createBrowserRouter([
         children: [
           { index: true, Component: Dashboard },
           { path: 'disease-detection', Component: DiseaseDetection },
+          { path: 'disease-detection/leaves', Component: LeafDiseaseDiagnosis },
+          { path: 'disease-detection/symptoms/:category', Component: SymptomDiseaseDiagnosis },
           { path: 'chatbot', Component: AIChatbot },
           { path: 'heatmap', Component: DiseaseHeatmap },
           { path: 'notifications', Component: Notifications },

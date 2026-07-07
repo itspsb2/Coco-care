@@ -71,7 +71,7 @@ export function Dashboard() {
   const firstName = (user?.name ?? 'Farmer').split(' ')[0]
 
   const quickLinks = [
-    { label: 'Disease Detection', href: '/app/disease-detection', icon: Microscope, color: 'from-green-500 to-[#2d5f2e]' },
+    { label: 'Coconut Disease Diagnosis', href: '/app/disease-detection', icon: Microscope, color: 'from-green-500 to-[#2d5f2e]' },
     { label: 'AI Chatbot', href: '/app/chatbot', icon: MessageSquare, color: 'from-emerald-500 to-teal-600' },
     { label: 'Heatmap', href: '/app/heatmap', icon: Map, color: 'from-blue-500 to-cyan-600' },
     { label: 'Notifications', href: '/app/notifications', icon: Bell, color: 'from-amber-500 to-orange-500' },

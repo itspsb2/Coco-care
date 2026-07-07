@@ -124,17 +124,26 @@ export interface LoginPayload {
 
 export interface DiagnosisPayload {
   farmId: string
+  category?: 'leaves' | 'stem' | 'bud' | 'fruit' | 'whole-tree'
   imageUrl?: string
   symptoms: Record<string, string | boolean>
   notes?: string
 }
 
+export interface LeafPrediction {
+  label: string
+  probability: number
+}
+
 export interface DiagnosisResult {
   id: string
+  category?: 'leaves' | 'stem' | 'bud' | 'fruit' | 'whole-tree'
   imageResult: string
   symptomResult: string
   finalResult: string
   confidence: number
   status: 'verified' | 'pending'
   advice: string
+  predictions?: LeafPrediction[]
+  detectedEvidence?: string
 }

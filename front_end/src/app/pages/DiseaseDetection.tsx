@@ -1,323 +1,140 @@
-import { Upload, Camera, Loader2, AlertCircle, CheckCircle, Info, MapPin, Sprout } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { ArrowRight, Brain, ChevronRight, ClipboardList, Microscope, Sparkles } from 'lucide-react'
 import { Link } from 'react-router'
-import { useQuery } from '@tanstack/react-query'
-import { farmApi, diagnosisApi } from '@/api/services'
-import type { DiagnosisResult, Farm } from '@/types'
-
-const diseases = [
-  { name: 'Weligama Coconut Leaf Wilt Disease', symptoms: ['Yellowing leaves', 'Flaccid leaf appearance', 'Reduced nut production', 'Drooping leaflets'] },
-  { name: 'Stem Bleeding Disease', symptoms: ['Dark reddish brown liquid from trunk', 'Cracked bark', 'Stem wounds', 'Internal rotting'] },
-  { name: 'Bud Rot Disease', symptoms: ['Rotting crown region', 'Foul smell', 'Young leaf decay', 'Blackened bud'] },
-  { name: 'Coconut Caterpillar Damage', symptoms: ['Damaged leaf surface', 'Brown dried leaves', 'Holes in leaflets', 'Visible caterpillars'] },
-]
-
-function FarmSelector({
-  farms,
-  selectedFarmId,
-  onSelect,
-}: {
-  farms: Farm[]
-  selectedFarmId: string
-  onSelect: (id: string) => void
-}) {
-  if (farms.length <= 1) {
-    const farm = farms[0]
-    if (!farm) return null
-    return (
-      <div className="flex items-center gap-2 rounded-xl border border-green-100 bg-green-50/60 px-4 py-3 text-sm">
-        <Sprout className="h-4 w-4 shrink-0 text-[#2d5f2e]" />
-        <span className="font-medium text-gray-900">{farm.name}</span>
-        <span className="text-gray-500">·</span>
-        <span className="flex items-center gap-1 text-gray-600">
-          <MapPin className="h-3.5 w-3.5" />
-          {farm.location}
-        </span>
-      </div>
-    )
-  }
-
-  return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {farms.map((farm) => {
-        const selected = farm.id === selectedFarmId
-        return (
-          <button
-            key={farm.id}
-            type="button"
-            onClick={() => onSelect(farm.id)}
-            className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
-              selected
-                ? 'border-[#2d5f2e] bg-green-50 ring-1 ring-[#2d5f2e]/20'
-                : 'border-green-100 bg-white hover:border-green-200 hover:bg-green-50/50'
-            }`}
-          >
-            <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                selected ? 'bg-[#2d5f2e] text-white' : 'bg-green-100 text-[#2d5f2e]'
-              }`}
-            >
-              <Sprout className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <div className="font-medium text-gray-900">{farm.name}</div>
-              <div className="flex items-center gap-1 text-sm text-gray-500">
-                <MapPin className="h-3.5 w-3.5 shrink-0" />
-                {farm.location}
-              </div>
-            </div>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
+import { motion } from 'motion/react'
+import { CATEGORY_META, DIAGNOSIS_CATEGORIES, getCategoryPath } from '@/app/diagnosis/categories'
 
 export function DiseaseDetection() {
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null)
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([])
-  const [selectedFarmId, setSelectedFarmId] = useState('')
-  const [scanning, setScanning] = useState(false)
-  const [result, setResult] = useState<DiagnosisResult | null>(null)
-  const [error, setError] = useState('')
-
-  const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ['farmer', 'profile'],
-    queryFn: farmApi.profile,
-  })
-
-  const farms = profile?.farms ?? []
-
-  useEffect(() => {
-    if (farms.length === 0) {
-      setSelectedFarmId('')
-      return
-    }
-    if (!selectedFarmId || !farms.some((f) => f.id === selectedFarmId)) {
-      setSelectedFarmId(farms[0].id)
-    }
-  }, [farms, selectedFarmId])
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = () => setUploadedImage(reader.result as string)
-      reader.readAsDataURL(file)
-      setResult(null)
-      setError('')
-    }
-  }
-
-  const toggleSymptom = (symptom: string) => {
-    setSelectedSymptoms((prev) =>
-      prev.includes(symptom) ? prev.filter((s) => s !== symptom) : [...prev, symptom],
-    )
-  }
-
-  const handleScan = async () => {
-    if (!selectedFarmId) {
-      setError('Select a farm before running diagnosis.')
-      return
-    }
-    setScanning(true)
-    setError('')
-    try {
-      const symptoms: Record<string, boolean> = {}
-      selectedSymptoms.forEach((s) => { symptoms[s] = true })
-
-      const diagnosis = await diagnosisApi.submit({
-        farmId: selectedFarmId,
-        imageUrl: uploadedImage ?? undefined,
-        symptoms,
-      })
-      setResult(diagnosis)
-    } catch {
-      setError('Diagnosis failed. Ensure you are logged in and the backend is running.')
-    } finally {
-      setScanning(false)
-    }
-  }
-
-  const adviceLines = result?.advice
-    ? result.advice.split(/[.!]\s+/).filter(Boolean)
-    : []
-
-  const canScan = Boolean(uploadedImage && selectedFarmId && !scanning)
-
-  if (profileLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-[#2d5f2e]" />
-      </div>
-    )
-  }
+  const aiCount = DIAGNOSIS_CATEGORIES.filter((c) => CATEGORY_META[c].usesMl).length
+  const symptomCount = DIAGNOSIS_CATEGORIES.length - aiCount
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl text-[#1a2e1a] mb-2">AI Disease Diagnosis</h1>
-        <p className="text-[#6b7c6b]">Upload coconut images and select symptoms for accurate disease detection.</p>
+    <div className="mx-auto max-w-3xl pb-8">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45 }}
+        className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-[#1a2e1a] via-[#2d5f2e] to-[#3d7a3f] px-6 py-8 text-white shadow-lg sm:px-10 sm:py-10"
+      >
+        <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-emerald-300/20 blur-2xl" />
+
+        <div className="relative">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur-sm">
+            <Microscope className="h-3.5 w-3.5" />
+            Step 1 · Choose diagnosis area
+          </div>
+
+          <h1 className="mb-3 text-3xl font-bold tracking-tight sm:text-4xl">
+            Coconut Disease Diagnosis
+          </h1>
+          <p className="max-w-xl text-sm leading-relaxed text-green-100 sm:text-base">
+            Select which part of your coconut palm shows symptoms. Leaf diseases are classified
+            with our trained AI model; all other areas use a guided symptom questionnaire.
+          </p>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <div className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm backdrop-blur-sm">
+              <Brain className="h-4 w-4 text-emerald-200" />
+              <span>
+                <strong className="font-semibold">{aiCount}</strong> AI-powered
+              </span>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm backdrop-blur-sm">
+              <ClipboardList className="h-4 w-4 text-amber-200" />
+              <span>
+                <strong className="font-semibold">{symptomCount}</strong> symptom-based
+              </span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      <div className="relative">
+        <div
+          aria-hidden
+          className="absolute bottom-8 left-7 top-8 hidden w-px bg-gradient-to-b from-emerald-200 via-green-100 to-transparent sm:block"
+        />
+
+        <div className="flex flex-col gap-4">
+          {DIAGNOSIS_CATEGORIES.map((category, index) => {
+            const meta = CATEGORY_META[category]
+            const Icon = meta.icon
+            const isAi = meta.usesMl
+
+            return (
+              <motion.div
+                key={category}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.08 * index }}
+              >
+                <Link
+                  to={getCategoryPath(category)}
+                  className={`group relative block overflow-hidden rounded-2xl border bg-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
+                    isAi
+                      ? 'border-emerald-200 shadow-md shadow-emerald-100/60 ring-1 ring-emerald-100'
+                      : 'border-green-100 shadow-sm hover:border-green-200'
+                  }`}
+                >
+                  {isAi ? (
+                    <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-[#2d5f2e] to-emerald-500" />
+                  ) : null}
+
+                  <div className="flex items-center gap-4 p-5 sm:gap-5 sm:p-6">
+                    <div className="relative shrink-0">
+                      <div
+                        className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${meta.accent} text-white shadow-md transition-transform duration-300 group-hover:scale-105 sm:h-16 sm:w-16`}
+                      >
+                        <Icon className="h-7 w-7 sm:h-8 sm:w-8" />
+                      </div>
+                      <span className="absolute -bottom-1.5 -right-1.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#1a2e1a] text-[10px] font-bold text-white">
+                        {index + 1}
+                      </span>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                        <h2 className="text-lg font-semibold text-[#1a2e1a] sm:text-xl">
+                          {meta.label}
+                        </h2>
+                        {isAi ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
+                            <Sparkles className="h-3 w-3" />
+                            AI Model
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                            Symptom Form
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm leading-relaxed text-gray-600">{meta.description}</p>
+                      <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-[#2d5f2e] opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                        Start diagnosis
+                        <ArrowRight className="h-4 w-4" />
+                      </p>
+                    </div>
+
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-50 text-[#2d5f2e] transition-all duration-300 group-hover:bg-[#2d5f2e] group-hover:text-white sm:h-11 sm:w-11">
+                      <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            )
+          })}
+        </div>
       </div>
 
-      {farms.length === 0 ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
-          <Sprout className="mx-auto mb-3 h-10 w-10 text-amber-600" />
-          <h2 className="text-lg font-semibold text-amber-900 mb-2">No farms registered</h2>
-          <p className="text-sm text-amber-800 mb-4">
-            Add a farm to your profile before submitting a disease diagnosis.
-          </p>
-          <Link
-            to="/app/profile"
-            className="inline-flex items-center gap-2 rounded-lg bg-[#2d5f2e] px-4 py-2 text-sm text-white hover:bg-[#1a2e1a]"
-          >
-            Go to Profile
-          </Link>
-        </div>
-      ) : null}
-
-      {error && (
-        <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">{error}</div>
-      )}
-
-      {farms.length > 0 ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-          <h2 className="text-xl text-[#1a2e1a] mb-4">
-            {farms.length > 1 ? 'Select farm for this diagnosis' : 'Diagnosis farm'}
-          </h2>
-          <FarmSelector
-            farms={farms}
-            selectedFarmId={selectedFarmId}
-            onSelect={setSelectedFarmId}
-          />
-        </div>
-      ) : null}
-
-      {farms.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-              <h2 className="text-xl text-[#1a2e1a] mb-4">Upload Image</h2>
-              <div className="border-2 border-dashed border-green-200 rounded-xl p-8 text-center hover:border-green-400 transition-colors">
-                {uploadedImage ? (
-                  <div className="relative">
-                    <img src={uploadedImage} alt="Uploaded" className="w-full h-64 object-cover rounded-lg" />
-                    <button onClick={() => setUploadedImage(null)} className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Remove</button>
-                  </div>
-                ) : (
-                  <>
-                    <Upload className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                    <h3 className="text-lg text-gray-900 mb-2">Drag and drop your image here</h3>
-                    <div className="flex gap-3 justify-center">
-                      <label className="px-4 py-2 bg-[#2d5f2e] text-white rounded-lg hover:bg-[#1a2e1a] cursor-pointer">
-                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                        Choose File
-                      </label>
-                      <label className="px-4 py-2 border-2 border-[#2d5f2e] text-[#2d5f2e] rounded-lg hover:bg-green-50 cursor-pointer flex items-center gap-2">
-                        <Camera className="w-4 h-4" />
-                        Camera
-                        <input type="file" accept="image/*" capture="environment" onChange={handleImageUpload} className="hidden" />
-                      </label>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-              <h2 className="text-xl text-[#1a2e1a] mb-4">Select Symptoms (Optional)</h2>
-              <div className="space-y-4">
-                {diseases.map((disease) => (
-                  <div key={disease.name}>
-                    <h3 className="text-sm text-gray-900 mb-2">{disease.name}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {disease.symptoms.map((symptom) => (
-                        <button
-                          key={symptom}
-                          onClick={() => toggleSymptom(symptom)}
-                          className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                            selectedSymptoms.includes(symptom) ? 'bg-[#2d5f2e] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                        >
-                          {symptom}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={handleScan}
-              disabled={!canScan}
-              className="w-full py-4 bg-[#2d5f2e] text-white rounded-lg hover:bg-[#1a2e1a] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-            >
-              {scanning ? (<><Loader2 className="w-5 h-5 animate-spin" />Analyzing Image...</>) : 'Start AI Diagnosis'}
-            </button>
-          </div>
-
-          <div>
-            {scanning && (
-              <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6 text-center py-12">
-                <Loader2 className="w-12 h-12 animate-spin text-[#2d5f2e] mx-auto mb-4" />
-                <h3 className="text-xl text-gray-900 mb-2">AI Scanning in Progress</h3>
-              </div>
-            )}
-
-            {result && !scanning && (
-              <div className="space-y-4">
-                <div className="bg-gradient-to-br from-[#2d5f2e] to-[#1a2e1a] rounded-2xl shadow-sm p-6 text-white">
-                  <div className="flex items-start gap-3 mb-4">
-                    <AlertCircle className="w-6 h-6 flex-shrink-0 mt-1" />
-                    <div>
-                      <h2 className="text-2xl mb-2">Detection Result</h2>
-                      <p className="text-green-100 text-sm capitalize">Status: {result.status}</p>
-                    </div>
-                  </div>
-                  <div className="bg-white/10 rounded-xl p-4">
-                    <div className="text-sm text-green-100 mb-1">Detected Disease</div>
-                    <div className="text-2xl mb-3">{result.finalResult}</div>
-                    <div className="text-xl">{Math.round(result.confidence * 100)}% confidence</div>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <h3 className="text-lg text-gray-900">Recommended Actions</h3>
-                  </div>
-                  <ul className="space-y-2">
-                    {adviceLines.map((line, i) => (
-                      <li key={i} className="flex items-start gap-2 text-gray-700">
-                        <span className="text-green-600 mt-1">•</span>
-                        {line}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Info className="w-5 h-5 text-blue-600" />
-                    <h3 className="text-lg text-gray-900">Analysis Details</h3>
-                  </div>
-                  <p className="text-sm text-gray-700">Image: {result.imageResult}</p>
-                  <p className="text-sm text-gray-700 mt-1">Symptoms: {result.symptomResult}</p>
-                </div>
-              </div>
-            )}
-
-            {!scanning && !result && (
-              <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6 text-center py-12">
-                <AlertCircle className="w-10 h-10 text-green-600 mx-auto mb-4" />
-                <h3 className="text-xl text-gray-900 mb-2">Ready for Diagnosis</h3>
-                <p className="text-gray-600">Select a farm, upload an image, and click &quot;Start AI Diagnosis&quot; to begin.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      ) : null}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="mt-8 text-center text-xs text-gray-500"
+      >
+        Diagnosis results are reviewed by agriculture officers when confidence is below the
+        verification threshold.
+      </motion.p>
     </div>
   )
 }
