@@ -20,7 +20,7 @@ type DemoReport = {
 async function verifyReport(reportId: string, officerId: string) {
   await getPool().query(
     `UPDATE disease_reports
-     SET status = 'verified', reviewed_by = $2, review_comment = $3
+     SET status = 'verified', reviewed_by_officer = $2, review_comment = $3
      WHERE id = $1`,
     [reportId, officerId, 'Verified during seed for demo heatmap data'],
   )
@@ -72,7 +72,7 @@ async function seedMultiRegionHeatmapData(officerId: string) {
       treeCount: number
     },
   ) => {
-    let user = await userRepo.findByUsername(username)
+    let user = await userRepo.findByUsername(username, 'farmer')
     if (!user) {
       user = await userRepo.createUser({
         username,
@@ -243,7 +243,7 @@ async function seed() {
   let officerId: string | null = null
 
   for (const u of users) {
-    let user = await userRepo.findByUsername(u.username)
+    let user = await userRepo.findByUsername(u.username, u.role)
     if (!user) {
       user = await userRepo.createUser({
         username: u.username,
@@ -257,7 +257,7 @@ async function seed() {
       console.log(`Created user: ${u.username}`)
     } else if (u.role === 'officer' && 'assignedRegion' in u && u.assignedRegion && !user.assigned_region) {
       await userRepo.updateUser(user.id, { assignedRegion: u.assignedRegion })
-      user = (await userRepo.findById(user.id))!
+      user = (await userRepo.findById(user.id, 'officer'))!
       console.log(`Updated officer region: ${u.username} → ${u.assignedRegion}`)
     }
 

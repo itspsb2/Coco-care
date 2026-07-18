@@ -16,7 +16,7 @@ export async function markRead(req: AuthRequest, res: Response, next: NextFuncti
   try {
     if (!req.user) throw badRequest('Not authenticated')
     const id = String(req.params.id ?? '')
-    res.json(await notificationsService.markRead(id, req.user.id))
+    res.json(await notificationsService.markRead(id, req.user.id, req.user.role))
   } catch (err) {
     next(err)
   }

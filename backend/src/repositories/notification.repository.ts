@@ -80,12 +80,16 @@ export async function listForUser(
   return rows.map(mapNotification)
 }
 
-export async function markRead(notificationId: string, userId: string): Promise<boolean> {
+export async function markRead(
+  notificationId: string,
+  userId: string,
+  role: UserRole,
+): Promise<boolean> {
   const result = await getPool().query(
-    `INSERT INTO notification_reads (notification_id, user_id)
-     VALUES ($1, $2)
-     ON CONFLICT (notification_id, user_id) DO NOTHING`,
-    [notificationId, userId],
+    `INSERT INTO notification_reads (notification_id, user_id, user_role)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (notification_id, user_id, user_role) DO NOTHING`,
+    [notificationId, userId, role],
   )
   return (result.rowCount ?? 0) >= 0
 }

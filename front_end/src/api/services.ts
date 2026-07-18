@@ -182,7 +182,6 @@ export const adminApi = {
       name?: string
       email?: string | null
       phone?: string | null
-      role?: UserRole
       officerId?: string | null
       assignedRegion?: string | null
     },

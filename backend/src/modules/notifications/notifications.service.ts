@@ -5,7 +5,7 @@ export async function listForUser(userId: string, role: UserRole) {
   return notificationRepo.listForUser(userId, role)
 }
 
-export async function markRead(notificationId: string, userId: string) {
-  await notificationRepo.markRead(notificationId, userId)
+export async function markRead(notificationId: string, userId: string, role: UserRole) {
+  await notificationRepo.markRead(notificationId, userId, role)
   return { ok: true }
 }

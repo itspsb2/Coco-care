@@ -85,9 +85,8 @@ export async function findNearbyFarms(
             f.id AS farm_id,
             (${HAVERSINE_KM})::float AS distance_km
      FROM farms f
-     JOIN users u ON u.id = f.user_id
-     WHERE u.role = 'farmer'
-       AND f.user_id != $3
+     JOIN farmers u ON u.id = f.user_id
+     WHERE f.user_id != $3
        AND u.is_active IS DISTINCT FROM false
        AND (${HAVERSINE_KM}) <= $4`,
     [latitude, longitude, excludeUserId, radiusKm],

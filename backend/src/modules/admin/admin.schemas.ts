@@ -11,11 +11,11 @@ export const adminCreateUserSchema = z.object({
   assignedRegion: z.string().optional(),
 })
 
+// Role changes are not supported (users live in role-specific tables)
 export const adminUpdateUserSchema = z.object({
   name: z.string().min(1).optional(),
   email: z.string().email().optional().nullable().or(z.literal('')),
   phone: z.string().optional().nullable(),
-  role: z.enum(['farmer', 'officer', 'admin']).optional(),
   officerId: z.string().optional().nullable(),
   assignedRegion: z.string().optional().nullable(),
 })

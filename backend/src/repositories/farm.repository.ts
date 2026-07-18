@@ -102,7 +102,7 @@ export async function listAllFarmsWithOwner(): Promise<AdminFarm[]> {
     `SELECT f.id, f.name, f.location, f.latitude, f.longitude, f.acreage, f.tree_count,
             u.id AS owner_id, u.name AS owner_name, u.username AS owner_username
      FROM farms f
-     JOIN users u ON u.id = f.user_id
+     JOIN farmers u ON u.id = f.user_id
      ORDER BY f.created_at DESC`,
   )
   return rows.map((r) => ({

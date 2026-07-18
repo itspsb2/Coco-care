@@ -15,7 +15,7 @@ export async function getMyReports(userId: string) {
 }
 
 export async function getPendingReportsForOfficer(officerId: string) {
-  const officer = await userRepo.findById(officerId)
+  const officer = await userRepo.findById(officerId, 'officer')
   if (!officer?.assigned_region?.trim()) {
     return []
   }
@@ -39,8 +39,9 @@ export async function reviewReport(
   const existing = await reportRepo.findReportById(id)
   if (!existing) throw notFound('Report not found')
 
-  const reviewer = await userRepo.findById(reviewerId)
+  const reviewer = await userRepo.findByIdAnyRole(reviewerId)
   if (!reviewer) throw notFound('Reviewer not found')
+  if (reviewer.role === 'farmer') throw forbidden('Farmers cannot review reports')
 
   if (reviewer.role === 'officer') {
     const assignedRegion = reviewer.assigned_region?.trim()
@@ -56,6 +57,7 @@ export async function reviewReport(
     id,
     action === 'verify' ? 'verified' : 'rejected',
     reviewerId,
+    reviewer.role,
     comment,
   )
 

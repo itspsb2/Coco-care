@@ -17,7 +17,9 @@ export async function auth(req: AuthRequest, _res: Response, next: NextFunction)
     }
     const token = authHeader.slice(7)
     const payload = verifyToken(token)
-    const dbUser = await userRepo.findById(payload.sub)
+    const dbUser = payload.role
+      ? await userRepo.findById(payload.sub, payload.role)
+      : await userRepo.findByIdAnyRole(payload.sub)
     if (!dbUser) throw unauthorized()
     if (dbUser.is_active === false) throw unauthorized('Your account is inactive. Please contact the admin.')
     req.user = toPublicUser(dbUser)

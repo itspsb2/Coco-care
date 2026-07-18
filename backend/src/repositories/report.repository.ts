@@ -27,7 +27,8 @@ interface ReportRow {
   advice: string | null
   status: 'pending' | 'verified' | 'rejected'
   review_comment: string | null
-  reviewed_by: string | null
+  reviewed_by_officer: string | null
+  reviewed_by_admin: string | null
   created_at: Date
   farm_name: string
   region: string
@@ -62,7 +63,8 @@ function mapReport(row: ReportRow): DiseaseReport {
 const REPORT_SELECT = `
   SELECT dr.id, dr.farm_id, dr.user_id, dr.image_url, dr.symptoms,
          dr.image_result, dr.symptom_result, dr.final_result, dr.confidence,
-         dr.advice, dr.status, dr.review_comment, dr.reviewed_by, dr.created_at,
+         dr.advice, dr.status, dr.review_comment,
+         dr.reviewed_by_officer, dr.reviewed_by_admin, dr.created_at,
          f.name AS farm_name, f.location AS region
   FROM disease_reports dr
   JOIN farms f ON f.id = dr.farm_id
@@ -164,11 +166,16 @@ export async function updateReportReview(
   id: string,
   status: 'verified' | 'rejected',
   reviewedBy: string,
+  reviewerRole: 'officer' | 'admin',
   comment?: string,
 ): Promise<DiseaseReport> {
+  const reviewerColumn =
+    reviewerRole === 'officer' ? 'reviewed_by_officer' : 'reviewed_by_admin'
+  const otherColumn =
+    reviewerRole === 'officer' ? 'reviewed_by_admin' : 'reviewed_by_officer'
   const result = await getPool().query(
     `UPDATE disease_reports
-     SET status = $2, reviewed_by = $3, review_comment = $4
+     SET status = $2, ${reviewerColumn} = $3, ${otherColumn} = NULL, review_comment = $4
      WHERE id = $1`,
     [id, status, reviewedBy, comment ?? null],
   )

@@ -5,7 +5,7 @@ import * as farmRepo from '../../repositories/farm.repository.js'
 import { notFound } from '../../utils/errors.js'
 
 export async function getProfile(userId: string) {
-  const user = await userRepo.findById(userId)
+  const user = await userRepo.findById(userId, 'farmer')
   if (!user) throw notFound('User not found')
   const farms = await farmRepo.findFarmsByUserId(userId)
   return { user: toPublicUser(user), farms }

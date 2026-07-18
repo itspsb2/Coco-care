@@ -31,7 +31,7 @@ export async function createUser(input: {
   officerId?: string
   assignedRegion?: string
 }) {
-  const existing = await userRepo.findByUsername(input.username)
+  const existing = await userRepo.findByUsernameAnyRole(input.username)
   if (existing) throw badRequest('Username already exists')
 
   const passwordHash = await hashPassword(input.password)
@@ -54,11 +54,12 @@ export async function updateUser(
     name?: string
     email?: string | null
     phone?: string | null
-    role?: UserRole
     officerId?: string | null
     assignedRegion?: string | null
   },
 ) {
+  // Role changes are not supported anymore (users live in role-specific
+  // tables) — create a new user with the desired role instead.
   const email = input.email === '' ? null : input.email
   const user = await userRepo.updateUser(id, { ...input, email })
   if (!user) throw notFound('User not found')
@@ -66,7 +67,7 @@ export async function updateUser(
 }
 
 export async function resetPassword(id: string, password: string) {
-  const existing = await userRepo.findById(id)
+  const existing = await userRepo.findByIdAnyRole(id)
   if (!existing) throw notFound('User not found')
   const passwordHash = await hashPassword(password)
   await userRepo.setPassword(id, passwordHash)
@@ -84,7 +85,7 @@ export async function setUserActive(id: string, isActive: boolean, actorId: stri
 
 export async function removeUser(id: string, actorId: string) {
   if (id === actorId) throw forbidden('You cannot delete your own account')
-  const existing = await userRepo.findById(id)
+  const existing = await userRepo.findByIdAnyRole(id)
   if (!existing) throw notFound('User not found')
   await userRepo.deleteUser(id)
   return { ok: true }

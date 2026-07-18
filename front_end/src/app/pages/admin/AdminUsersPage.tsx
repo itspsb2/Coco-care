@@ -139,7 +139,6 @@ export function AdminUsersPage() {
           name: form.name,
           email: form.email || null,
           phone: form.phone || null,
-          role: form.role,
           assignedRegion: form.assignedRegion || null,
         },
       })
@@ -300,18 +299,25 @@ export function AdminUsersPage() {
                   value={form.phone}
                   onChange={(v) => setForm({ ...form, phone: v })}
                 />
-                <label className="block text-sm">
-                  <span className="text-gray-600">Role</span>
-                  <select
-                    value={form.role}
-                    onChange={(e) => setForm({ ...form, role: e.target.value as UserRole })}
-                    className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg"
-                  >
-                    <option value="farmer">Farmer</option>
-                    <option value="officer">Officer</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </label>
+                {mode === 'create' ? (
+                  <label className="block text-sm">
+                    <span className="text-gray-600">Role</span>
+                    <select
+                      value={form.role}
+                      onChange={(e) => setForm({ ...form, role: e.target.value as UserRole })}
+                      className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg"
+                    >
+                      <option value="farmer">Farmer</option>
+                      <option value="officer">Officer</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </label>
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    Role: <span className="capitalize">{form.role}</span> (cannot be changed —
+                    create a new user instead)
+                  </p>
+                )}
                 <Field
                   label="Assigned region"
                   value={form.assignedRegion}
