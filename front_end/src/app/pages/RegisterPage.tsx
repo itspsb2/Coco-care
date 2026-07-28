@@ -3,6 +3,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import loginLogo from "@/imports/login-logo.png";
 import { useState } from "react";
 import { motion } from "motion/react";
+import { isAxiosError } from "axios";
 import { useAuth, getRoleHomePath } from "@/contexts/AuthContext";
 import { SRI_LANKA_DISTRICTS } from '@/constants/districts'
 
@@ -43,12 +44,17 @@ export function RegisterPage() {
         username: formData.nic.trim(),
         name: formData.fullName.trim(),
         phone: formData.mobile.trim(),
+        assignedRegion: formData.district.trim(),
         password: formData.password,
         ...(emailTrimmed ? { email: emailTrimmed } : {}),
       });
       navigate(getRoleHomePath(user.role));
-    } catch {
-      setError("Registration failed. That username may already be taken.");
+    } catch (err) {
+      if (isAxiosError<{ message?: string }>(err)) {
+        setError(err.response?.data?.message ?? "Registration failed. Please check your details and try again.");
+      } else {
+        setError("Registration failed. Please check your details and try again.");
+      }
     } finally {
       setLoading(false);
     }

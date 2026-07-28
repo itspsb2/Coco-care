@@ -146,4 +146,7 @@ export interface DiagnosisResult {
   advice: string
   predictions?: LeafPrediction[]
   detectedEvidence?: string
+  matchLevel?: 'high' | 'moderate' | 'uncertain'
+  secondaryConditions?: string[]
+  officerAlert?: string
 }
