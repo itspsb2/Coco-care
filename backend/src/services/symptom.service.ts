@@ -109,8 +109,18 @@ const ADVICE: Record<string, string> = {
     'Remove affected fronds. Apply recommended fungicide per CRI guidelines. Monitor nearby trees weekly.',
   'Stem Bleeding Disease':
     'Remove affected bark and apply Bordeaux paste. Improve drainage around the tree base.',
+  'Basal Stem Rot—Ganoderma':
+    'Isolate the palm, avoid wounding nearby trunks, and consult an officer. Severely affected palms may need removal.',
   'Ganoderma Butt Rot':
     'Remove and destroy infected trees. Avoid wounding trunks and improve soil drainage around remaining palms.',
+  'Red Palm Weevil Infestation':
+    'Treat promptly per CRI weevil control guidance. Monitor nearby palms and seal unused wounds or holes.',
+  'Termite Damage':
+    'Remove mud tubes, treat the colony per recommended practice, and clear nearby dead wood harbouring termites.',
+  'Mechanical Trunk Injury':
+    'Keep the wound clean and dry, avoid secondary infection, and monitor healing. Protect from further injury.',
+  'Healthy Coconut Trunk':
+    'No strong disease signals were selected. Continue routine monitoring and good farm hygiene.',
   'Bud Rot Disease':
     'Remove infected tissues immediately. Apply Bordeaux mixture and improve crown drainage.',
   'Crown Wilt':

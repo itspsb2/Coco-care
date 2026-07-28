@@ -32,7 +32,7 @@ export const CATEGORY_META: Record<
   },
   stem: {
     label: 'Coconut Stem & Trunk',
-    description: 'Answer symptom questions to assess trunk and stem diseases.',
+    description: 'Answer the guided stem and trunk form to identify likely conditions.',
     icon: TreePine,
     usesMl: false,
     accent: 'from-amber-500 to-orange-600',
@@ -74,19 +74,55 @@ export const CATEGORY_DISEASES: Record<Exclude<DiagnosisCategory, 'leaves'>, Cat
     {
       name: 'Stem Bleeding Disease',
       symptoms: [
-        'Dark reddish brown liquid from trunk',
-        'Cracked bark',
-        'Stem wounds',
-        'Internal rotting',
+        'Reddish-brown liquid from trunk',
+        'Vertical cracks on trunk',
+        'Soft or rotten tissue under bark',
+        'Dark stain running downward',
       ],
     },
     {
-      name: 'Ganoderma Butt Rot',
+      name: 'Red Palm Weevil Infestation',
       symptoms: [
-        'Wilting despite adequate water',
-        'Ganoderma conks at tree base',
-        'Discolored lower fronds',
-        'Softening trunk base',
+        'Round holes on trunk or leaf bases',
+        'Chewed fibres from holes',
+        'Sawdust-like frass',
+        'Crown bending or collapsing',
+      ],
+    },
+    {
+      name: 'Basal Stem Rot—Ganoderma',
+      symptoms: [
+        'Damage near soil level',
+        'Soft or rotten trunk base',
+        'Mushroom-like fungal brackets',
+        'Palm leaning or unstable',
+      ],
+    },
+    {
+      name: 'Termite Damage',
+      symptoms: [
+        'Mud tubes on trunk',
+        'Live termites under bark',
+        'Soil-like material on trunk',
+        'Eaten outer trunk tissue',
+      ],
+    },
+    {
+      name: 'Mechanical Trunk Injury',
+      symptoms: [
+        'Visible cut or climbing wound',
+        'Damage limited to one area',
+        'Clean wound edges',
+        'Wound dry and healing',
+      ],
+    },
+    {
+      name: 'Healthy Coconut Trunk',
+      symptoms: [
+        'Trunk firm and dry',
+        'No bleeding patches',
+        'No holes or chewed fibres',
+        'No fungal brackets or mud tubes',
       ],
     },
   ],
@@ -167,5 +203,6 @@ export function isDiagnosisCategory(value: string): value is DiagnosisCategory {
 
 export function getCategoryPath(category: DiagnosisCategory): string {
   if (category === 'leaves') return '/app/disease-detection/leaves'
+  if (category === 'stem') return '/app/disease-detection/stem'
   return `/app/disease-detection/symptoms/${category}`
 }

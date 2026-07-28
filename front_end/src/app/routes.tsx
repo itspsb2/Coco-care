@@ -4,6 +4,7 @@ import { DashboardLayout } from './components/DashboardLayout'
 import { Dashboard } from './pages/Dashboard'
 import { DiseaseDetection } from './pages/DiseaseDetection'
 import { LeafDiseaseDiagnosis } from './pages/LeafDiseaseDiagnosis'
+import { StemDiseaseDiagnosis } from './pages/StemDiseaseDiagnosis'
 import { SymptomDiseaseDiagnosis } from './pages/SymptomDiseaseDiagnosis'
 import { AIChatbot } from './pages/AIChatbot'
 import { DiseaseHeatmap } from './pages/DiseaseHeatmap'
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
           { index: true, Component: Dashboard },
           { path: 'disease-detection', Component: DiseaseDetection },
           { path: 'disease-detection/leaves', Component: LeafDiseaseDiagnosis },
+          { path: 'disease-detection/stem', Component: StemDiseaseDiagnosis },
           { path: 'disease-detection/symptoms/:category', Component: SymptomDiseaseDiagnosis },
           { path: 'chatbot', Component: AIChatbot },
           { path: 'heatmap', Component: DiseaseHeatmap },

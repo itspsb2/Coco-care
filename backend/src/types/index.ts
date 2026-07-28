@@ -146,7 +146,11 @@ export interface DiagnosisResult {
   advice: string
   predictions?: LeafPrediction[]
   detectedEvidence?: string
-  matchLevel?: 'high' | 'moderate' | 'uncertain'
+  matchLevel?: 'high' | 'moderate' | 'low' | 'uncertain'
   secondaryConditions?: string[]
   officerAlert?: string
+  /** Top condition raw symptom match (0–100). */
+  symptomMatch?: number
+  /** Per-condition raw symptom matches (0–100). */
+  symptomMatches?: Record<string, number>
 }

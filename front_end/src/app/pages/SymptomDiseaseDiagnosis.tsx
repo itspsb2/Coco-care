@@ -22,8 +22,8 @@ export function SymptomDiseaseDiagnosis() {
   const [error, setError] = useState('')
 
   const category =
-    categoryParam && isDiagnosisCategory(categoryParam) && categoryParam !== 'leaves'
-      ? (categoryParam as Exclude<DiagnosisCategory, 'leaves'>)
+    categoryParam && isDiagnosisCategory(categoryParam) && categoryParam !== 'leaves' && categoryParam !== 'stem'
+      ? (categoryParam as Exclude<DiagnosisCategory, 'leaves' | 'stem'>)
       : null
 
   const { data: profile, isLoading: profileLoading } = useQuery({
@@ -43,6 +43,9 @@ export function SymptomDiseaseDiagnosis() {
     }
   }, [farms, selectedFarmId])
 
+  if (categoryParam === 'stem') {
+    return <Navigate to="/app/disease-detection/stem" replace />
+  }
   const toggleSymptom = (symptom: string) => {
     setSelectedSymptoms((prev) =>
       prev.includes(symptom) ? prev.filter((s) => s !== symptom) : [...prev, symptom],

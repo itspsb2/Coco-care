@@ -9,6 +9,11 @@ import {
   getMatchLevelLabel,
   scoreLeafQuestionnaire,
 } from '../../services/leafQuestionnaire.service.js'
+import {
+  getStemAdvice,
+  getStemMatchLevelLabel,
+  scoreStemQuestionnaire,
+} from '../../services/stemQuestionnaire.service.js'
 import { fuseDiagnosis } from '../../services/fusion.service.js'
 import { env } from '../../config/env.js'
 import { notFound, forbidden, badRequest } from '../../utils/errors.js'
@@ -109,6 +114,58 @@ export async function submitDiagnosis(
       matchLevel,
       secondaryConditions,
       officerAlert,
+    }
+  }
+
+  if (category === 'stem') {
+    const hasAnswers = Object.values(payload.symptoms).some(
+      (v) => v === true || (typeof v === 'string' && v.trim().length > 0),
+    )
+    if (!hasAnswers) {
+      throw badRequest('Complete the stem and trunk symptom form before submitting')
+    }
+
+    const scored = scoreStemQuestionnaire(payload.symptoms)
+    const matchLabel = getStemMatchLevelLabel(scored.matchLevel)
+    const secondaryNote =
+      scored.secondaryConditions.length > 0
+        ? ` Also consider: ${scored.secondaryConditions.join('; ')}.`
+        : ''
+    const safetyNote = scored.safetyWarning ? ` ${scored.safetyWarning}` : ''
+    const advice = `${matchLabel}. Most likely condition: ${scored.finalResult}. Symptom match: ${Math.round(scored.symptomMatch)}%.${secondaryNote}${safetyNote} ${getStemAdvice(scored.finalResult)} Contact a coconut cultivation officer for confirmation. Never treat this as a confirmed disease.`
+
+    const status = resolveStatus(scored.confidence)
+
+    const report = await reportRepo.createReport({
+      farmId: payload.farmId,
+      userId,
+      imageUrl: imageUrl?.startsWith('data:')
+        ? await uploadImage(imageUrl, `diagnosis/${userId}/${Date.now()}.jpg`)
+        : imageUrl,
+      symptoms: payload.symptoms,
+      imageResult: 'Symptom questionnaire only',
+      symptomResult: scored.finalResult,
+      finalResult: scored.finalResult,
+      confidence: scored.confidence,
+      advice,
+      status,
+    })
+
+    return {
+      id: report.id,
+      category,
+      imageResult: 'Symptom questionnaire only',
+      symptomResult: scored.finalResult,
+      finalResult: scored.finalResult,
+      confidence: scored.confidence,
+      status,
+      advice,
+      predictions: scored.predictions,
+      matchLevel: scored.matchLevel,
+      secondaryConditions: scored.secondaryConditions,
+      officerAlert: scored.safetyWarning,
+      symptomMatch: scored.symptomMatch,
+      symptomMatches: scored.symptomMatches,
     }
   }
 
