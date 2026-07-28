@@ -1,22 +1,40 @@
 import { z } from 'zod'
 
+const trimmedRequiredString = z.preprocess(
+  (val) => (typeof val === 'string' ? val.trim() : val),
+  z.string().min(1),
+)
+
+const trimmedOptionalString = z.preprocess(
+  (val) => {
+    if (typeof val !== 'string') return val
+    const trimmed = val.trim()
+    return trimmed === '' ? undefined : trimmed
+  },
+  z.string().optional(),
+)
+
 export const loginSchema = z.object({
-  username: z.string().min(1),
+  username: trimmedRequiredString,
   password: z.string().min(1),
 })
 
 export const registerSchema = z.object({
   role: z.enum(['farmer', 'officer', 'admin']),
-  name: z.string().optional(),
-  username: z.string().min(1),
+  name: trimmedOptionalString,
+  username: trimmedRequiredString,
   email: z.preprocess(
-    (val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
+    (val) => {
+      if (typeof val !== 'string') return val
+      const trimmed = val.trim()
+      return trimmed === '' ? undefined : trimmed.toLowerCase()
+    },
     z.string().email().optional(),
   ),
-  phone: z.string().min(1),
+  phone: trimmedRequiredString,
   password: z.string().min(6),
-  officerId: z.string().optional(),
-  assignedRegion: z.string().optional(),
+  officerId: trimmedOptionalString,
+  assignedRegion: trimmedOptionalString,
   farms: z
     .array(
       z.object({

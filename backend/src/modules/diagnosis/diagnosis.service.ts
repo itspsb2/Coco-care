@@ -5,6 +5,10 @@ import * as reportRepo from '../../repositories/report.repository.js'
 import { uploadImage } from '../../services/s3.service.js'
 import { classifyImage, getLeafAdvice } from '../../services/azureVision.service.js'
 import { classifySymptoms, getAdviceForDisease } from '../../services/symptom.service.js'
+import {
+  getMatchLevelLabel,
+  scoreLeafQuestionnaire,
+} from '../../services/leafQuestionnaire.service.js'
 import { fuseDiagnosis } from '../../services/fusion.service.js'
 import { env } from '../../config/env.js'
 import { notFound, forbidden, badRequest } from '../../utils/errors.js'
@@ -39,8 +43,44 @@ export async function submitDiagnosis(
       imageUrl = await uploadImage(imageUrl, `diagnosis/${userId}/${Date.now()}.jpg`)
     }
 
-    const advice = getLeafAdvice(vision.disease)
-    const status = resolveStatus(vision.confidence)
+    const hasSymptomAnswers = Object.values(payload.symptoms).some(
+      (v) => v === true || (typeof v === 'string' && v.trim().length > 0),
+    )
+
+    let finalResult = vision.disease
+    let finalConfidence = vision.confidence
+    let symptomResult = 'ML classification only'
+    let refinedPredictions = vision.predictions
+    let matchLevel: 'high' | 'moderate' | 'uncertain' | undefined
+    let secondaryConditions: string[] | undefined
+    let officerAlert: string | undefined
+    let advice = getLeafAdvice(finalResult)
+
+    if (hasSymptomAnswers) {
+      const scored = scoreLeafQuestionnaire(payload.symptoms, vision.predictions ?? [])
+      refinedPredictions = scored.predictions
+      finalResult = scored.finalResult
+      finalConfidence = scored.confidence
+      symptomResult = scored.finalResult
+      matchLevel = scored.matchLevel
+      secondaryConditions = scored.secondaryConditions
+      officerAlert = scored.officerAlert
+
+      const matchLabel = getMatchLevelLabel(scored.matchLevel)
+      const secondaryNote =
+        scored.secondaryConditions.length > 0
+          ? ` Also consider: ${scored.secondaryConditions.join('; ')}.`
+          : ''
+      const officerNote = scored.officerAlert ? ` ${scored.officerAlert}.` : ''
+      advice = `${matchLabel}. Most likely condition: ${scored.finalResult}.${secondaryNote}${officerNote} ${getLeafAdvice(scored.finalResult)} Never treat this as a confirmed disease until an agriculture officer verifies it.`
+    } else if (vision.confidence < 0.8) {
+      matchLevel = vision.confidence >= 0.6 ? 'moderate' : 'uncertain'
+      advice = `${getMatchLevelLabel(matchLevel)}. Complete the symptom questionnaire to improve accuracy. ${advice}`
+    } else {
+      matchLevel = 'high'
+    }
+
+    const status = resolveStatus(finalConfidence)
 
     const report = await reportRepo.createReport({
       farmId: payload.farmId,
@@ -48,9 +88,9 @@ export async function submitDiagnosis(
       imageUrl,
       symptoms: payload.symptoms,
       imageResult: vision.disease,
-      symptomResult: 'ML classification only',
-      finalResult: vision.disease,
-      confidence: vision.confidence,
+      symptomResult,
+      finalResult,
+      confidence: finalConfidence,
       advice,
       status,
     })
@@ -59,13 +99,16 @@ export async function submitDiagnosis(
       id: report.id,
       category,
       imageResult: vision.disease,
-      symptomResult: 'ML classification only',
-      finalResult: vision.disease,
-      confidence: vision.confidence,
+      symptomResult,
+      finalResult,
+      confidence: finalConfidence,
       status,
       advice,
-      predictions: vision.predictions,
+      predictions: refinedPredictions,
       detectedEvidence: vision.detectedEvidence,
+      matchLevel,
+      secondaryConditions,
+      officerAlert,
     }
   }
 

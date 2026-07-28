@@ -1,4 +1,15 @@
-import { ArrowLeft, Camera, ImageIcon, Leaf, Loader2, Sparkles, Upload, AlertCircle } from 'lucide-react'
+import {
+  ArrowLeft,
+  Camera,
+  ImageIcon,
+  Leaf,
+  Loader2,
+  Sparkles,
+  Upload,
+  AlertCircle,
+  ClipboardList,
+  UserRound,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { motion } from 'motion/react'
@@ -9,6 +20,40 @@ import { LeafPredictionPanel } from '@/app/diagnosis/LeafPredictionPanel'
 import { LeafDiseaseDetailCard } from '@/app/diagnosis/LeafDiseaseDetailCard'
 import { LEAF_PANEL_BASE } from '@/app/diagnosis/panelLayout'
 import { compressImageForUpload } from '@/utils/compressImage'
+import {
+  EMPTY_LEAF_QUESTIONNAIRE,
+  LEAF_AREA_OPTIONS,
+  LEAF_CONFIDENCE_REFINE_THRESHOLD,
+  LEAF_SYMPTOM_GROUPS,
+  getMatchLevelLabel,
+  isQuestionnaireReady,
+  questionnaireToSymptomsPayload,
+  type LeafQuestionnaireState,
+} from '@/app/diagnosis/leafSymptomQuestionnaire'
+
+function ChoiceButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+        active
+          ? 'bg-[#2d5f2e] text-white'
+          : 'bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
 
 export function LeafDiseaseDiagnosis() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
@@ -16,6 +61,8 @@ export function LeafDiseaseDiagnosis() {
   const [scanning, setScanning] = useState(false)
   const [result, setResult] = useState<DiagnosisResult | null>(null)
   const [error, setError] = useState('')
+  const [questionnaire, setQuestionnaire] = useState<LeafQuestionnaireState>(EMPTY_LEAF_QUESTIONNAIRE)
+  const [refining, setRefining] = useState(false)
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['farmer', 'profile'],
@@ -30,6 +77,10 @@ export function LeafDiseaseDiagnosis() {
     }
   }, [farms])
 
+  const resetForm = () => {
+    setQuestionnaire(EMPTY_LEAF_QUESTIONNAIRE)
+  }
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -39,6 +90,7 @@ export function LeafDiseaseDiagnosis() {
       const compressed = await compressImageForUpload(file)
       setUploadedImage(compressed)
       setResult(null)
+      resetForm()
     } catch {
       setError('Could not process that image. Try a different photo.')
     }
@@ -58,6 +110,7 @@ export function LeafDiseaseDiagnosis() {
 
     setScanning(true)
     setError('')
+    resetForm()
     try {
       const diagnosis = await diagnosisApi.submit({
         farmId,
@@ -72,6 +125,49 @@ export function LeafDiseaseDiagnosis() {
       setError(message ?? 'Classification failed. Please try again.')
     } finally {
       setScanning(false)
+    }
+  }
+
+  const toggleSymptom = (id: string) => {
+    setQuestionnaire((prev) => ({
+      ...prev,
+      selectedSymptoms: prev.selectedSymptoms.includes(id)
+        ? prev.selectedSymptoms.filter((s) => s !== id)
+        : [...prev.selectedSymptoms, id],
+    }))
+  }
+
+  const handleRefineDiagnosis = async () => {
+    if (!farmId) {
+      setError('Add a farm in your profile before refining diagnosis.')
+      return
+    }
+    if (!uploadedImage) {
+      setError('Upload a coconut leaf image before refining diagnosis.')
+      return
+    }
+    if (!isQuestionnaireReady(questionnaire)) {
+      setError('Select leaf area and at least 2 visible symptoms to refine diagnosis.')
+      return
+    }
+
+    setRefining(true)
+    setError('')
+    try {
+      const symptoms = questionnaireToSymptomsPayload(questionnaire)
+      const diagnosis = await diagnosisApi.submit({
+        farmId,
+        category: 'leaves',
+        imageUrl: uploadedImage,
+        symptoms,
+      })
+      setResult(diagnosis)
+    } catch (err) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message
+      setError(message ?? 'Refinement failed. Please try again.')
+    } finally {
+      setRefining(false)
     }
   }
 
@@ -99,6 +195,22 @@ export function LeafDiseaseDiagnosis() {
       </div>
     )
   }
+
+  const showQuestionnaire =
+    result && !scanning && result.confidence < LEAF_CONFIDENCE_REFINE_THRESHOLD
+  const showDetailCard =
+    result &&
+    !scanning &&
+    result.predictions?.length &&
+    result.confidence >= LEAF_CONFIDENCE_REFINE_THRESHOLD
+  const showOfficerCard =
+    result &&
+    !scanning &&
+    result.confidence < LEAF_CONFIDENCE_REFINE_THRESHOLD &&
+    (result.matchLevel === 'moderate' ||
+      result.matchLevel === 'uncertain' ||
+      Boolean(result.officerAlert) ||
+      Boolean(result.symptomResult && result.symptomResult !== 'ML classification only'))
 
   return (
     <div className="space-y-6">
@@ -167,14 +279,12 @@ export function LeafDiseaseDiagnosis() {
                   alt="Uploaded coconut leaf"
                   className="h-full w-full object-contain p-2"
                 />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-3 opacity-0 transition-opacity group-hover:opacity-100">
-                  <p className="text-center text-xs text-white">Leaf image ready for classification</p>
-                </div>
                 <button
                   type="button"
                   onClick={() => {
                     setUploadedImage(null)
                     setResult(null)
+                    resetForm()
                   }}
                   className="absolute right-3 top-3 rounded-lg bg-red-500/90 px-3 py-1.5 text-sm font-medium text-white shadow-sm backdrop-blur-sm hover:bg-red-600"
                 >
@@ -244,11 +354,314 @@ export function LeafDiseaseDiagnosis() {
         </motion.div>
       </div>
 
-      {result && !scanning && result.predictions?.length ? (
+      {showQuestionnaire ? (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 shadow-sm sm:p-6"
+        >
+          <div className="mb-5 flex items-start gap-3">
+            <div className="mt-0.5 rounded-lg bg-amber-100 p-2 text-amber-700">
+              <ClipboardList className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-amber-900">
+                COCO CARE – Coconut Leaf Symptom Questionnaire
+              </h3>
+              <p className="mt-1 text-sm text-amber-800">
+                Answer the questions below about what you see on the leaf. Your answers help refine
+                the diagnosis when the image result needs more support.
+              </p>
+              <p className="mt-2 text-xs text-amber-700/90">
+                Results are guidance only and should be verified by an agriculture officer before
+                treatment decisions.
+              </p>
+            </div>
+          </div>
+
+          {/* Step 1 */}
+          <section className="mb-6">
+            <h4 className="mb-2 text-sm font-bold uppercase tracking-wide text-[#1a2e1a]">
+              Step 1 — Select the affected leaf area
+            </h4>
+            <p className="mb-3 text-xs text-gray-600">Allow one selection.</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {LEAF_AREA_OPTIONS.map((option) => {
+                const active = questionnaire.leafArea === option.id
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() =>
+                      setQuestionnaire((prev) => ({ ...prev, leafArea: option.id }))
+                    }
+                    className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+                      active
+                        ? 'border-[#2d5f2e] bg-[#2d5f2e] text-white'
+                        : 'border-amber-100 bg-white text-gray-800 hover:border-amber-200'
+                    }`}
+                  >
+                    <div className="text-sm font-semibold">{option.label}</div>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+
+          {/* Step 2 */}
+          <section className="mb-6">
+            <h4 className="mb-2 text-sm font-bold uppercase tracking-wide text-[#1a2e1a]">
+              Step 2 — Select all visible symptoms
+            </h4>
+            <div className="space-y-4">
+              {LEAF_SYMPTOM_GROUPS.map((group) => (
+                <div
+                  key={group.title}
+                  className="rounded-xl border border-amber-100 bg-white/90 p-4"
+                >
+                  <h5 className="text-sm font-semibold text-[#1a2e1a]">{group.title}</h5>
+                  {group.note ? (
+                    <p className="mt-1 text-xs text-gray-500">{group.note}</p>
+                  ) : null}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {group.symptoms.map((symptom) => {
+                      const selected = questionnaire.selectedSymptoms.includes(symptom.id)
+                      return (
+                        <button
+                          key={symptom.id}
+                          type="button"
+                          onClick={() => toggleSymptom(symptom.id)}
+                          className={`rounded-full px-3 py-1.5 text-left text-xs transition-colors ${
+                            selected
+                              ? 'bg-[#2d5f2e] text-white'
+                              : 'bg-gray-50 text-gray-700 ring-1 ring-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          <span className="font-medium">{symptom.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Step 3 */}
+          <section className="mb-5">
+            <h4 className="mb-2 text-sm font-bold uppercase tracking-wide text-[#1a2e1a]">
+              Step 3 — Additional questions
+            </h4>
+            <p className="mb-3 text-xs text-gray-600">
+              These questions help distinguish similar conditions.
+            </p>
+            <div className="space-y-3">
+              <div className="rounded-xl border border-amber-100 bg-white px-4 py-3">
+                <p className="mb-2 text-sm text-gray-800">
+                  Can you see separate spots with defined borders?
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <ChoiceButton
+                    active={questionnaire.qSpotsBordered === 'yes'}
+                    onClick={() =>
+                      setQuestionnaire((p) => ({ ...p, qSpotsBordered: 'yes' }))
+                    }
+                  >
+                    Yes
+                  </ChoiceButton>
+                  <ChoiceButton
+                    active={questionnaire.qSpotsBordered === 'no'}
+                    onClick={() => setQuestionnaire((p) => ({ ...p, qSpotsBordered: 'no' }))}
+                  >
+                    No
+                  </ChoiceButton>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-amber-100 bg-white px-4 py-3">
+                <p className="mb-2 text-sm text-gray-800">
+                  Is the yellowing uneven rather than uniformly affecting an old leaf?
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <ChoiceButton
+                    active={questionnaire.qUnevenYellowing === 'yes'}
+                    onClick={() =>
+                      setQuestionnaire((p) => ({ ...p, qUnevenYellowing: 'yes' }))
+                    }
+                  >
+                    Yes
+                  </ChoiceButton>
+                  <ChoiceButton
+                    active={questionnaire.qUnevenYellowing === 'no'}
+                    onClick={() =>
+                      setQuestionnaire((p) => ({ ...p, qUnevenYellowing: 'no' }))
+                    }
+                  >
+                    No
+                  </ChoiceButton>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-amber-100 bg-white px-4 py-3">
+                <p className="mb-2 text-sm text-gray-800">
+                  Are the leaflets visibly bent or hanging downward?
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <ChoiceButton
+                    active={questionnaire.qLeafletsBent === 'slightly'}
+                    onClick={() =>
+                      setQuestionnaire((p) => ({ ...p, qLeafletsBent: 'slightly' }))
+                    }
+                  >
+                    Slightly
+                  </ChoiceButton>
+                  <ChoiceButton
+                    active={questionnaire.qLeafletsBent === 'severely'}
+                    onClick={() =>
+                      setQuestionnaire((p) => ({ ...p, qLeafletsBent: 'severely' }))
+                    }
+                  >
+                    Severely
+                  </ChoiceButton>
+                  <ChoiceButton
+                    active={questionnaire.qLeafletsBent === 'no'}
+                    onClick={() => setQuestionnaire((p) => ({ ...p, qLeafletsBent: 'no' }))}
+                  >
+                    No
+                  </ChoiceButton>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-amber-100 bg-white px-4 py-3">
+                <p className="mb-2 text-sm text-gray-800">
+                  Can you see silk, frass or caterpillars underneath?
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <ChoiceButton
+                    active={questionnaire.qSilkFrass === 'yes'}
+                    onClick={() => setQuestionnaire((p) => ({ ...p, qSilkFrass: 'yes' }))}
+                  >
+                    Yes
+                  </ChoiceButton>
+                  <ChoiceButton
+                    active={questionnaire.qSilkFrass === 'no'}
+                    onClick={() => setQuestionnaire((p) => ({ ...p, qSilkFrass: 'no' }))}
+                  >
+                    No
+                  </ChoiceButton>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-amber-100 bg-white px-4 py-3">
+                <p className="mb-2 text-sm text-gray-800">
+                  Is the youngest spear leaf rotten or unable to open?
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <ChoiceButton
+                    active={questionnaire.qSpearRotten === 'yes'}
+                    onClick={() => setQuestionnaire((p) => ({ ...p, qSpearRotten: 'yes' }))}
+                  >
+                    Yes
+                  </ChoiceButton>
+                  <ChoiceButton
+                    active={questionnaire.qSpearRotten === 'no'}
+                    onClick={() => setQuestionnaire((p) => ({ ...p, qSpearRotten: 'no' }))}
+                  >
+                    No
+                  </ChoiceButton>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-amber-100 bg-white px-4 py-3">
+                <p className="mb-2 text-sm text-gray-800">
+                  Are symptoms present on more than one palm nearby?
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <ChoiceButton
+                    active={questionnaire.qNearbyPalms === 'yes'}
+                    onClick={() => setQuestionnaire((p) => ({ ...p, qNearbyPalms: 'yes' }))}
+                  >
+                    Yes
+                  </ChoiceButton>
+                  <ChoiceButton
+                    active={questionnaire.qNearbyPalms === 'no'}
+                    onClick={() => setQuestionnaire((p) => ({ ...p, qNearbyPalms: 'no' }))}
+                  >
+                    No
+                  </ChoiceButton>
+                  <ChoiceButton
+                    active={questionnaire.qNearbyPalms === 'unsure'}
+                    onClick={() =>
+                      setQuestionnaire((p) => ({ ...p, qNearbyPalms: 'unsure' }))
+                    }
+                  >
+                    Not sure
+                  </ChoiceButton>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handleRefineDiagnosis}
+              disabled={refining || !isQuestionnaireReady(questionnaire)}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#2d5f2e] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1a2e1a] disabled:cursor-not-allowed disabled:bg-gray-400"
+            >
+              {refining ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Updating diagnosis…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  Apply answers
+                </>
+              )}
+            </button>
+            <p className="text-sm text-amber-900/80">
+              Symptoms selected:{' '}
+              <span className="font-semibold">{questionnaire.selectedSymptoms.length}</span>
+            </p>
+          </div>
+          <p className="mt-3 text-xs text-amber-800">
+            Never treat the result as a confirmed disease until an agriculture officer verifies it.
+          </p>
+        </motion.div>
+      ) : null}
+
+      {showOfficerCard ? (
+        <div className="rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4">
+          <div className="flex items-start gap-3">
+            <UserRound className="mt-0.5 h-5 w-5 shrink-0 text-orange-700" />
+            <div>
+              <h4 className="text-sm font-semibold text-orange-900">
+                {getMatchLevelLabel(result?.matchLevel, result?.confidence ?? 0)}
+              </h4>
+              <p className="mt-1 text-sm text-orange-800">
+                Most likely condition:{' '}
+                <span className="font-semibold">{result?.finalResult}</span>. Please contact your
+                agricultural officer for field verification
+                {result?.officerAlert ? `. ${result.officerAlert}` : ''}.
+              </p>
+              {result?.secondaryConditions?.length ? (
+                <p className="mt-2 text-sm text-orange-800">
+                  Also consider: {result.secondaryConditions.join('; ')}.
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showDetailCard ? (
         <LeafDiseaseDetailCard
-          diseaseName={result.finalResult}
-          confidence={result.confidence}
-          detectedEvidence={result.detectedEvidence}
+          diseaseName={result!.finalResult}
+          confidence={result!.confidence}
+          detectedEvidence={result!.detectedEvidence}
         />
       ) : null}
     </div>

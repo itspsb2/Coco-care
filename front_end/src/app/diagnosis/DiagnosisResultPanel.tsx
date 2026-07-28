@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle, Info } from 'lucide-react'
 import type { DiagnosisResult } from '@/types'
+import { formatPercentage } from '@/app/diagnosis/formatPercentage'
 
 export function DiagnosisResultPanel({
   result,
@@ -25,7 +26,7 @@ export function DiagnosisResultPanel({
         <div className="rounded-xl bg-white/10 p-4">
           <div className="mb-1 text-sm text-green-100">Detected Disease</div>
           <div className="mb-3 text-2xl">{result.finalResult}</div>
-          <div className="text-xl">{Math.round(result.confidence * 100)}% confidence</div>
+          <div className="text-xl">{formatPercentage(result.confidence)}% confidence</div>
         </div>
       </div>
 

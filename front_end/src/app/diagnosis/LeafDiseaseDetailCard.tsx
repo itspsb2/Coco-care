@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { motion } from 'motion/react'
 import { getLeafDiseaseInfo } from '@/app/diagnosis/leafDiseaseInfo'
+import { formatPercentage, toPercentageNumber } from '@/app/diagnosis/formatPercentage'
 
 function buildDescriptionParagraphs(
   description: string[],
@@ -79,7 +80,8 @@ export function LeafDiseaseDetailCard({
   const info = getLeafDiseaseInfo(diseaseName)
   if (!info) return null
 
-  const confidencePercent = Math.round(confidence * 100)
+  const confidencePercentValue = toPercentageNumber(confidence)
+  const confidencePercent = formatPercentage(confidence)
   const descriptionParagraphs = buildDescriptionParagraphs(info.description, info.causalOrganism)
   const isHealthy = info.category === 'Healthy'
 
@@ -127,8 +129,8 @@ export function LeafDiseaseDetailCard({
           </div>
 
           <div className="flex shrink-0 items-center gap-4 self-start rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
-            <div className="relative h-14 w-14">
-              <svg className="h-14 w-14 -rotate-90" viewBox="0 0 56 56">
+            <div className="relative h-16 w-16">
+              <svg className="h-16 w-16 -rotate-90" viewBox="0 0 56 56">
                 <circle cx="28" cy="28" r="24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="4" />
                 <circle
                   cx="28"
@@ -138,16 +140,17 @@ export function LeafDiseaseDetailCard({
                   stroke={isHealthy ? '#86efac' : '#fde68a'}
                   strokeWidth="4"
                   strokeLinecap="round"
-                  strokeDasharray={`${(confidencePercent / 100) * 150.8} 150.8`}
+                  strokeDasharray={`${(confidencePercentValue / 100) * 150.8} 150.8`}
                 />
               </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">
-                {confidencePercent}%
+              <span className="absolute inset-0 flex items-center justify-center">
+                <CheckCircle2 className="h-4 w-4 text-white/90" />
               </span>
             </div>
-            <div>
+            <div className="min-w-[140px]">
               <p className="text-xs text-emerald-200/80">Model confidence</p>
-              <p className="text-sm font-semibold">Top match</p>
+              <p className="text-2xl font-bold leading-tight tabular-nums">{confidencePercent}%</p>
+              <p className="text-sm font-semibold text-emerald-100">Top match</p>
             </div>
           </div>
         </div>

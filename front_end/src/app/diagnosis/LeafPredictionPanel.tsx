@@ -1,7 +1,12 @@
-import { AlertCircle, CheckCircle2, Leaf, Loader2, TrendingUp } from 'lucide-react'
+import { CheckCircle2, Leaf, Loader2, TrendingUp } from 'lucide-react'
 import { motion } from 'motion/react'
 import type { DiagnosisResult } from '@/types'
 import { LEAF_PANEL_BASE } from '@/app/diagnosis/panelLayout'
+import { formatPercentage, toPercentageNumber } from '@/app/diagnosis/formatPercentage'
+import {
+  LEAF_CONFIDENCE_REFINE_THRESHOLD,
+  getMatchLevelLabel,
+} from '@/app/diagnosis/leafSymptomQuestionnaire'
 
 const BAR_COLORS = [
   'from-emerald-500 to-emerald-600',
@@ -53,6 +58,7 @@ export function LeafPredictionPanel({
 
   const sorted = [...result.predictions].sort((a, b) => b.probability - a.probability)
   const top = sorted[0]
+  const matchLabel = getMatchLevelLabel(result.matchLevel, result.confidence)
 
   return (
     <motion.div
@@ -64,7 +70,7 @@ export function LeafPredictionPanel({
       <div className="mb-4 flex shrink-0 items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold text-[#1a2e1a]">Disease Predictions</h2>
-          <p className="mt-0.5 text-sm text-gray-500">Model probability scores</p>
+          <p className="mt-0.5 text-sm text-gray-500">All diagnosis percentage outputs</p>
         </div>
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50 text-[#2d5f2e]">
           <Leaf className="h-4 w-4" />
@@ -77,23 +83,37 @@ export function LeafPredictionPanel({
           <div className="relative">
             <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-emerald-200">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              Top prediction
+              Most likely condition
             </div>
-            <div className="text-2xl font-bold leading-snug">{top.label}</div>
+            <div className="text-2xl font-bold leading-snug">{result.finalResult || top.label}</div>
             {result.detectedEvidence ? (
               <p className="mt-2 text-sm text-emerald-100">{result.detectedEvidence}</p>
             ) : null}
-            <div className="mt-2 inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-sm font-semibold backdrop-blur-sm">
-              {Math.round(top.probability * 100)}% confidence
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-sm font-semibold backdrop-blur-sm">
+                {formatPercentage(result.confidence)}% confidence
+              </span>
+              <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-emerald-100">
+                {matchLabel}
+              </span>
             </div>
+            {result.confidence < LEAF_CONFIDENCE_REFINE_THRESHOLD ? (
+              <p className="mt-2 text-xs text-amber-100">
+                Complete the symptom questionnaire below to recalculate percentage outputs.
+              </p>
+            ) : null}
+            <p className="mt-2 text-[11px] text-emerald-100/80">
+              Not a confirmed disease — awaiting agriculture officer verification when needed.
+            </p>
           </div>
         </div>
       ) : null}
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-0.5">
         {sorted.map((prediction, index) => {
-          const percent = Math.round(prediction.probability * 100)
-          const isTop = prediction.label === top?.label
+          const percentValue = toPercentageNumber(prediction.probability)
+          const percent = formatPercentage(prediction.probability)
+          const isTop = prediction.label === (result.finalResult || top?.label)
 
           return (
             <div
@@ -121,7 +141,7 @@ export function LeafPredictionPanel({
               <div className="h-2 overflow-hidden rounded-full bg-white/80">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${Math.max(percent, 2)}%` }}
+                  animate={{ width: `${Math.max(percentValue, 2)}%` }}
                   transition={{ duration: 0.6, delay: index * 0.05 }}
                   className={`h-full rounded-full bg-gradient-to-r ${BAR_COLORS[index % BAR_COLORS.length]}`}
                 />
