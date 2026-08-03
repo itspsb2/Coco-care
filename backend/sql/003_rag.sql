@@ -1,4 +1,5 @@
--- RAG knowledge base (JSONB embeddings — works without pgvector extension)
+-- RAG knowledge base
+-- embedding column uses pgvector vector(768) type (enabled via 009_pgvector.sql migration)
 CREATE TABLE IF NOT EXISTS knowledge_documents (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title       VARCHAR(255) NOT NULL,
@@ -12,9 +13,10 @@ CREATE TABLE IF NOT EXISTS knowledge_chunks (
   document_id   UUID NOT NULL REFERENCES knowledge_documents(id) ON DELETE CASCADE,
   chunk_index   INTEGER NOT NULL,
   content       TEXT NOT NULL,
-  embedding     JSONB NOT NULL,
+  embedding     vector(768) NOT NULL,
   metadata      JSONB DEFAULT '{}',
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_document_id ON knowledge_chunks(document_id);
+

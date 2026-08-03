@@ -111,31 +111,19 @@ export async function clearAllKnowledge(): Promise<void> {
 }
 
 export async function insertChunk(input: CreateKnowledgeChunkInput): Promise<void> {
+  // Format the float array as a PostgreSQL vector literal: '[0.1,0.2,...]'
+  const vectorLiteral = `[${input.embedding.join(',')}]`
   await getPool().query(
     `INSERT INTO knowledge_chunks (document_id, chunk_index, content, embedding, metadata)
-     VALUES ($1, $2, $3, $4::jsonb, $5)`,
+     VALUES ($1, $2, $3, $4::vector, $5)`,
     [
       input.documentId,
       input.chunkIndex,
       input.content,
-      JSON.stringify(input.embedding),
+      vectorLiteral,
       JSON.stringify(input.metadata ?? {}),
     ],
   )
-}
-
-function cosineSimilarity(a: number[], b: number[]): number {
-  let dot = 0
-  let normA = 0
-  let normB = 0
-  const len = Math.min(a.length, b.length)
-  for (let i = 0; i < len; i++) {
-    dot += a[i] * b[i]
-    normA += a[i] * a[i]
-    normB += b[i] * b[i]
-  }
-  const denom = Math.sqrt(normA) * Math.sqrt(normB)
-  return denom === 0 ? 0 : dot / denom
 }
 
 function metaFields(metadata: unknown): { category?: string; slug?: string } {
@@ -147,43 +135,48 @@ function metaFields(metadata: unknown): { category?: string; slug?: string } {
   }
 }
 
+/**
+ * Performs SQL-native cosine similarity search using the pgvector `<=>` operator.
+ * PostgreSQL handles sorting and limiting inside the database engine, returning
+ * only the top `limit` chunks — no full table scan or in-memory JS math needed.
+ */
 export async function vectorSearch(
   embedding: number[],
   limit: number,
 ): Promise<KnowledgeChunk[]> {
+  const vectorLiteral = `[${embedding.join(',')}]`
+
   const { rows } = await getPool().query<{
     id: string
     document_id: string
     content: string
-    embedding: number[] | string
     metadata: unknown
     title: string
+    score: number
   }>(
-    `SELECT kc.id, kc.document_id, kc.content, kc.embedding, kc.metadata, kd.title
+    `SELECT kc.id, kc.document_id, kc.content, kc.metadata, kd.title,
+            (1 - (kc.embedding <=> $1::vector))::float AS score
      FROM knowledge_chunks kc
-     JOIN knowledge_documents kd ON kd.id = kc.document_id`,
+     JOIN knowledge_documents kd ON kd.id = kc.document_id
+     ORDER BY kc.embedding <=> $1::vector
+     LIMIT $2`,
+    [vectorLiteral, limit],
   )
 
-  return rows
-    .map((r) => {
-      const emb = Array.isArray(r.embedding)
-        ? r.embedding
-        : (typeof r.embedding === 'string' ? JSON.parse(r.embedding) : [])
-      const meta =
-        typeof r.metadata === 'string' ? JSON.parse(r.metadata) : r.metadata
-      const { category, slug } = metaFields(meta)
-      return {
-        id: r.id,
-        documentId: r.document_id,
-        content: r.content,
-        score: cosineSimilarity(embedding, emb as number[]),
-        sourceTitle: r.title,
-        category,
-        slug,
-      }
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
+  return rows.map((r) => {
+    const meta =
+      typeof r.metadata === 'string' ? JSON.parse(r.metadata) : r.metadata
+    const { category, slug } = metaFields(meta)
+    return {
+      id: r.id,
+      documentId: r.document_id,
+      content: r.content,
+      score: r.score,
+      sourceTitle: r.title,
+      category,
+      slug,
+    }
+  })
 }
 
 export async function countChunks(): Promise<number> {
