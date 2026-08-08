@@ -55,6 +55,14 @@ export async function resetPassword(req: AuthRequest, res: Response, next: NextF
   }
 }
 
+export async function getUserPassword(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    res.json(await adminService.getUserPassword(paramId(req)))
+  } catch (err) {
+    next(err)
+  }
+}
+
 export async function deactivateUser(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     if (!req.user) throw badRequest('Not authenticated')

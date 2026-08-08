@@ -22,9 +22,24 @@ export function LoginPage() {
       const user = await login({ username, password });
       navigate(getRoleHomePath(user.role));
     } catch (err) {
-      const message = (err as { response?: { data?: { message?: string } } })?.response?.data
-        ?.message;
-      setError(message ?? "Invalid NIC number or password. Please try again.");
+      const axiosErr = err as {
+        code?: string
+        message?: string
+        response?: { data?: { message?: string } }
+      }
+      const apiMessage = axiosErr.response?.data?.message
+      if (apiMessage) {
+        setError(apiMessage)
+      } else if (
+        axiosErr.code === 'ERR_NETWORK' ||
+        axiosErr.message?.toLowerCase().includes('network')
+      ) {
+        setError(
+          'Cannot reach the server. Make sure the backend is running on http://localhost:3000.',
+        )
+      } else {
+        setError('Invalid username or password. Please try again.')
+      }
     } finally {
       setLoading(false);
     }

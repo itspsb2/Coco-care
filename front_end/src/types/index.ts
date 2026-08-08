@@ -10,6 +10,8 @@ export interface User {
   isActive?: boolean
   officerId?: string
   assignedRegion?: string
+  /** Present on admin user list — last admin-assigned password. */
+  password?: string | null
 }
 
 export interface AdminFarm {
@@ -204,9 +206,18 @@ export type WeatherIcon = 'sun' | 'partly' | 'rain' | 'cloud'
 
 export interface WeatherDay {
   day: string
+  date: string
   high: number
   low: number
-  rain: number
+  /** @deprecated prefer rainChance — kept for older clients */
+  rain?: number
+  rainChance: number
+  rainMm: number
+  humidity: number
+  windSpeed: number
+  windDirection: string
+  feelsLike: number
+  description: string
   icon: WeatherIcon
 }
 
@@ -219,6 +230,9 @@ export interface WeatherForecast {
     humidity: number
     windSpeed: number
     windDirection: string
+    rainChance: number
+    pressure: number
+    visibilityKm: number | null
     icon: WeatherIcon
   }
   days: WeatherDay[]
