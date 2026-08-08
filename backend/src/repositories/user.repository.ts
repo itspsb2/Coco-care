@@ -5,6 +5,8 @@ export interface DbUser {
   id: string
   username: string
   password_hash: string
+  /** Last password set by an admin (for admin support view only). */
+  admin_password: string | null
   name: string
   email: string | null
   phone: string | null
@@ -29,7 +31,7 @@ function selectFor(role: UserRole): string {
     role === 'officer'
       ? 'officer_id, assigned_region'
       : 'NULL::varchar AS officer_id, NULL::varchar AS assigned_region'
-  return `SELECT id, username, password_hash, name, email, phone, '${role}'::text AS role,
+  return `SELECT id, username, password_hash, admin_password, name, email, phone, '${role}'::text AS role,
           ${officerCols}, is_active, created_at, updated_at
           FROM ${TABLE_BY_ROLE[role]}`
 }
@@ -50,9 +52,19 @@ export function toPublicUser(row: DbUser): User {
   }
 }
 
+/** Admin user list includes the recoverable admin-assigned password. */
+export function toAdminUser(row: DbUser): User & { password: string | null } {
+  return {
+    ...toPublicUser(row),
+    password: row.admin_password ?? null,
+  }
+}
+
 export interface CreateUserInput {
   username: string
   passwordHash: string
+  /** Plain password kept for admin support view only. */
+  adminPassword?: string
   name: string
   email?: string
   phone?: string
@@ -107,12 +119,13 @@ export async function findByIdAnyRole(id: string): Promise<DbUser | null> {
 export async function createUser(input: CreateUserInput): Promise<DbUser> {
   if (input.role === 'officer') {
     const { rows } = await getPool().query<{ id: string }>(
-      `INSERT INTO officers (username, password_hash, name, email, phone, officer_id, assigned_region)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO officers (username, password_hash, admin_password, name, email, phone, officer_id, assigned_region)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id`,
       [
         input.username,
         input.passwordHash,
+        input.adminPassword ?? null,
         input.name,
         input.email ?? null,
         input.phone ?? null,
@@ -125,12 +138,13 @@ export async function createUser(input: CreateUserInput): Promise<DbUser> {
 
   const table = TABLE_BY_ROLE[input.role]
   const { rows } = await getPool().query<{ id: string }>(
-    `INSERT INTO ${table} (username, password_hash, name, email, phone)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO ${table} (username, password_hash, admin_password, name, email, phone)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING id`,
     [
       input.username,
       input.passwordHash,
+      input.adminPassword ?? null,
       input.name,
       input.email ?? null,
       input.phone ?? null,
@@ -192,14 +206,28 @@ export async function updateUser(id: string, input: UpdateUserInput): Promise<Db
   return findById(id, existing.role)
 }
 
-export async function setPassword(id: string, passwordHash: string): Promise<boolean> {
+export async function setPassword(
+  id: string,
+  passwordHash: string,
+  adminPassword?: string,
+): Promise<boolean> {
   const existing = await findByIdAnyRole(id)
   if (!existing) return false
   const result = await getPool().query(
-    `UPDATE ${TABLE_BY_ROLE[existing.role]} SET password_hash = $2, updated_at = NOW() WHERE id = $1`,
-    [id, passwordHash],
+    `UPDATE ${TABLE_BY_ROLE[existing.role]}
+     SET password_hash = $2,
+         admin_password = COALESCE($3, admin_password),
+         updated_at = NOW()
+     WHERE id = $1`,
+    [id, passwordHash, adminPassword ?? null],
   )
   return (result.rowCount ?? 0) > 0
+}
+
+export async function getAdminPassword(id: string): Promise<string | null> {
+  const existing = await findByIdAnyRole(id)
+  if (!existing) return null
+  return existing.admin_password
 }
 
 export async function setActive(id: string, isActive: boolean): Promise<DbUser | null> {

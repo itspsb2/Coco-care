@@ -1,6 +1,5 @@
 import type { UserRole } from '../../types/index.js'
 import * as userRepo from '../../repositories/user.repository.js'
-import { toPublicUser } from '../../repositories/user.repository.js'
 import * as reportRepo from '../../repositories/report.repository.js'
 import * as farmRepo from '../../repositories/farm.repository.js'
 import * as knowledgeRepo from '../../repositories/knowledge.repository.js'
@@ -18,7 +17,7 @@ export async function getUsers(filters?: { role?: string; q?: string }) {
       ? (filters.role as UserRole)
       : undefined
   const users = await userRepo.listAllUsers({ role, q: filters?.q })
-  return users.map(toPublicUser)
+  return users.map(userRepo.toAdminUser)
 }
 
 export async function createUser(input: {
@@ -38,6 +37,7 @@ export async function createUser(input: {
   const user = await userRepo.createUser({
     username: input.username,
     passwordHash,
+    adminPassword: input.password,
     name: input.name,
     email: input.email || undefined,
     phone: input.phone,
@@ -45,7 +45,7 @@ export async function createUser(input: {
     officerId: input.officerId,
     assignedRegion: input.assignedRegion,
   })
-  return toPublicUser(user)
+  return userRepo.toAdminUser(user)
 }
 
 export async function updateUser(
@@ -63,15 +63,24 @@ export async function updateUser(
   const email = input.email === '' ? null : input.email
   const user = await userRepo.updateUser(id, { ...input, email })
   if (!user) throw notFound('User not found')
-  return toPublicUser(user)
+  return userRepo.toAdminUser(user)
 }
 
 export async function resetPassword(id: string, password: string) {
   const existing = await userRepo.findByIdAnyRole(id)
   if (!existing) throw notFound('User not found')
   const passwordHash = await hashPassword(password)
-  await userRepo.setPassword(id, passwordHash)
+  await userRepo.setPassword(id, passwordHash, password)
   return { ok: true }
+}
+
+export async function getUserPassword(id: string) {
+  const existing = await userRepo.findByIdAnyRole(id)
+  if (!existing) throw notFound('User not found')
+  return {
+    password: existing.admin_password,
+    hasPassword: existing.admin_password != null && existing.admin_password.length > 0,
+  }
 }
 
 export async function setUserActive(id: string, isActive: boolean, actorId: string) {
@@ -80,7 +89,7 @@ export async function setUserActive(id: string, isActive: boolean, actorId: stri
   }
   const user = await userRepo.setActive(id, isActive)
   if (!user) throw notFound('User not found')
-  return toPublicUser(user)
+  return userRepo.toAdminUser(user)
 }
 
 export async function removeUser(id: string, actorId: string) {

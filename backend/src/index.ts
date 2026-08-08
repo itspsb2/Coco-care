@@ -13,8 +13,8 @@ async function main() {
     try {
       await warmupGeminiEmbedding()
     } catch (err) {
-      console.error('Failed to warm up Gemini embeddings (required for RAG chat):', err)
-      process.exit(1)
+      // Don't block the whole API (auth, diagnosis, Azure, etc.) if embeddings are down.
+      console.error('Failed to warm up Gemini embeddings (RAG chat may fail):', err)
     }
   }
 

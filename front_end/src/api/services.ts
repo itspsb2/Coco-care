@@ -195,6 +195,12 @@ export const adminApi = {
     })
     return data
   },
+  getUserPassword: async (id: string) => {
+    const { data } = await apiClient.get<{ password: string | null; hasPassword: boolean }>(
+      `/admin/users/${id}/password`,
+    )
+    return data
+  },
   deactivateUser: async (id: string) => {
     const { data } = await apiClient.post<User>(`/admin/users/${id}/deactivate`)
     return data

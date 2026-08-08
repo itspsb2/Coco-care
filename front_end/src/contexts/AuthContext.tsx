@@ -44,27 +44,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const cachedUser = localStorage.getItem(USER_KEY)
-    const token = localStorage.getItem(TOKEN_KEY)
+    let cancelled = false
 
-    if (cachedUser && token) {
-      try {
-        setUser(JSON.parse(cachedUser) as User)
-      } catch {
-        clearSession()
-      } finally {
-        setLoading(false)
+    async function restoreSession() {
+      const token = localStorage.getItem(TOKEN_KEY)
+      if (!token) {
+        if (!cancelled) setLoading(false)
+        return
       }
-      return
+
+      // Prefer a live server validation so old tokens (e.g. after JWT_SECRET
+      // rotation) never leave the UI in a half-broken fetch state.
+      try {
+        const me = await authApi.me()
+        if (cancelled) return
+        persistSession(token, me)
+        setUser(me)
+      } catch {
+        if (cancelled) return
+        clearSession()
+        setUser(null)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
     }
 
-    if (!token) {
-      setLoading(false)
-      return
+    void restoreSession()
+    return () => {
+      cancelled = true
     }
-
-    clearSession()
-    setLoading(false)
   }, [])
 
   const login = useCallback(async (payload: LoginPayload) => {

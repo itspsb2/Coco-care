@@ -11,11 +11,14 @@ import {
   Wind,
   Cloud,
   Loader2,
+  Thermometer,
+  Gauge,
+  Eye,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/contexts/AuthContext'
 import { farmApi, reportsApi, diseaseMapApi, weatherApi } from '@/api/services'
-import type { DiseaseReport, WeatherForecast, WeatherIcon } from '@/types'
+import type { DiseaseReport, WeatherDay, WeatherForecast, WeatherIcon } from '@/types'
 
 export function Dashboard() {
   const { user } = useAuth()
@@ -203,20 +206,8 @@ function WeatherForecastCard({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
         <div>
           <h2 className="text-xl text-[#1a2e1a]">Weather Forecast</h2>
-          <p className="text-sm text-gray-500">{displayRegion}, Sri Lanka · live outlook</p>
+          <p className="text-sm text-gray-500">{displayRegion}, Sri Lanka · 5–6 day outlook</p>
         </div>
-        {weather && (
-          <div className="flex items-center gap-4 text-sm text-gray-600">
-            <span className="flex items-center gap-1">
-              <Wind className="w-4 h-4 text-blue-500" />
-              {weather.current.windSpeed} km/h {weather.current.windDirection}
-            </span>
-            <span className="flex items-center gap-1">
-              <Droplets className="w-4 h-4 text-blue-500" />
-              {weather.current.humidity}% humidity
-            </span>
-          </div>
-        )}
       </div>
 
       {loading ? (
@@ -230,53 +221,165 @@ function WeatherForecastCard({
             <p className="text-xs text-red-600 max-w-md mx-auto">{errorMessage}</p>
           )}
           <p className="text-xs">
-            Ensure the backend is running and a valid <code className="text-gray-700">OPENWEATHER_API_KEY</code> is set in <code className="text-gray-700">backend/.env</code>.
+            Ensure the backend is running and a valid{' '}
+            <code className="text-gray-700">OPENWEATHER_API_KEY</code> is set in{' '}
+            <code className="text-gray-700">backend/.env</code>.
           </p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-            <div className="lg:col-span-1 p-5 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl flex items-center gap-4">
-              <WeatherIconDisplay icon={weather.current.icon} className="w-14 h-14 shrink-0" />
-              <div>
-                <div className="text-3xl font-semibold text-gray-900">{weather.current.temp}°C</div>
-                <div className="text-sm text-gray-600 capitalize">{weather.current.description}</div>
-                <div className="text-xs text-gray-500 mt-1">Feels like {weather.current.feelsLike}°C</div>
+          {/* Current conditions */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6">
+            <div className="lg:col-span-4 p-5 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl">
+              <div className="flex items-center gap-4 mb-4">
+                <WeatherIconDisplay icon={weather.current.icon} className="w-14 h-14 shrink-0" />
+                <div>
+                  <div className="text-3xl font-semibold text-gray-900">
+                    {weather.current.temp}°C
+                  </div>
+                  <div className="text-sm text-gray-600 capitalize">
+                    {weather.current.description}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Feels like {weather.current.feelsLike}°C
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <DetailChip
+                  icon={<Thermometer className="w-3.5 h-3.5 text-orange-500" />}
+                  label="Temperature"
+                  value={`${weather.current.temp}°C`}
+                />
+                <DetailChip
+                  icon={<Droplets className="w-3.5 h-3.5 text-blue-500" />}
+                  label="Humidity"
+                  value={`${weather.current.humidity}%`}
+                />
+                <DetailChip
+                  icon={<Wind className="w-3.5 h-3.5 text-sky-600" />}
+                  label="Wind"
+                  value={`${weather.current.windSpeed} km/h ${weather.current.windDirection}`}
+                />
+                <DetailChip
+                  icon={<CloudRain className="w-3.5 h-3.5 text-blue-600" />}
+                  label="Rain chance"
+                  value={`${weather.current.rainChance ?? 0}%`}
+                />
+                <DetailChip
+                  icon={<Gauge className="w-3.5 h-3.5 text-gray-500" />}
+                  label="Pressure"
+                  value={`${weather.current.pressure} hPa`}
+                />
+                <DetailChip
+                  icon={<Eye className="w-3.5 h-3.5 text-gray-500" />}
+                  label="Visibility"
+                  value={
+                    weather.current.visibilityKm != null
+                      ? `${weather.current.visibilityKm} km`
+                      : '—'
+                  }
+                />
               </div>
             </div>
 
-            <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+            <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
               {weather.days.map((day) => (
-                <ForecastDay key={day.day} {...day} />
+                <ForecastDay key={`${day.day}-${day.date ?? day.high}`} day={day} />
               ))}
             </div>
           </div>
+
+          {weather.farmingTip && (
+            <div className="rounded-xl border border-amber-100 bg-amber-50/70 px-4 py-3 text-sm text-amber-950">
+              <span className="font-medium">Farming tip: </span>
+              {weather.farmingTip}
+            </div>
+          )}
         </>
       )}
     </div>
   )
 }
 
-function ForecastDay({
-  day,
-  high,
-  low,
-  rain,
+function DetailChip({
   icon,
+  label,
+  value,
 }: {
-  day: string
-  high: number
-  low: number
-  rain: number
-  icon: WeatherIcon
+  icon: React.ReactNode
+  label: string
+  value: string
 }) {
   return (
-    <div className="p-3 bg-gray-50 rounded-lg text-center">
-      <div className="text-xs font-medium text-gray-600 mb-2">{day}</div>
-      <WeatherIconDisplay icon={icon} />
-      <div className="text-sm font-semibold text-gray-900">{high}°</div>
-      <div className="text-xs text-gray-500">{low}°</div>
-      <div className="text-xs text-blue-600 mt-1">{rain}%</div>
+    <div className="flex items-start gap-2 rounded-lg bg-white/70 border border-blue-100/80 px-2.5 py-2">
+      <span className="mt-0.5">{icon}</span>
+      <div className="min-w-0">
+        <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
+        <div className="font-medium text-gray-900 truncate">{value}</div>
+      </div>
+    </div>
+  )
+}
+
+function ForecastDay({ day }: { day: WeatherDay }) {
+  const rainChance = day.rainChance ?? day.rain ?? 0
+  const rainMm = day.rainMm ?? 0
+  const humidity = day.humidity ?? 0
+  const windSpeed = day.windSpeed ?? 0
+  const windDirection = day.windDirection ?? '—'
+  const feelsLike = day.feelsLike ?? Math.round((day.high + day.low) / 2)
+
+  return (
+    <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-green-100 transition-colors">
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div>
+          <div className="text-sm font-semibold text-gray-900">{day.day}</div>
+          <div className="text-xs text-gray-500 capitalize">{day.description ?? '—'}</div>
+        </div>
+        <WeatherIconDisplay icon={day.icon} className="w-8 h-8" />
+      </div>
+
+      <div className="flex items-baseline gap-2 mb-3">
+        <span className="text-2xl font-semibold text-gray-900">{day.high}°</span>
+        <span className="text-sm text-gray-500">{day.low}° low</span>
+      </div>
+
+      <div className="space-y-1.5 text-xs text-gray-700">
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex items-center gap-1.5 text-gray-500">
+            <Thermometer className="w-3.5 h-3.5 text-orange-500" />
+            Feels like
+          </span>
+          <span className="font-medium">{feelsLike}°C</span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex items-center gap-1.5 text-gray-500">
+            <CloudRain className="w-3.5 h-3.5 text-blue-600" />
+            Rain
+          </span>
+          <span className="font-medium text-blue-700">
+            {rainChance}%
+            {rainMm > 0 ? ` · ${rainMm} mm` : ''}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex items-center gap-1.5 text-gray-500">
+            <Droplets className="w-3.5 h-3.5 text-blue-500" />
+            Humidity
+          </span>
+          <span className="font-medium">{humidity}%</span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex items-center gap-1.5 text-gray-500">
+            <Wind className="w-3.5 h-3.5 text-sky-600" />
+            Wind
+          </span>
+          <span className="font-medium">
+            {windSpeed} km/h {windDirection}
+          </span>
+        </div>
+      </div>
     </div>
   )
 }

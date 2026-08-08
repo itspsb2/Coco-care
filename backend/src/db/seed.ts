@@ -77,6 +77,7 @@ async function seedMultiRegionHeatmapData(officerId: string) {
       user = await userRepo.createUser({
         username,
         passwordHash,
+        adminPassword: DEFAULT_PASSWORD,
         name,
         phone,
         role: 'farmer',
@@ -248,6 +249,7 @@ async function seed() {
       user = await userRepo.createUser({
         username: u.username,
         passwordHash,
+        adminPassword: DEFAULT_PASSWORD,
         name: u.name,
         phone: u.phone ?? undefined,
         email: 'email' in u ? u.email : undefined,

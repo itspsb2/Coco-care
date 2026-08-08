@@ -293,7 +293,7 @@ export function LandingPage() {
                   </div>
                   <div>
                     <div className="text-[10px] text-[#6b7c6b]">AI Diagnosis</div>
-                    <div className="text-xs font-bold text-[#1a2e0a]">Bud Rot Detected</div>
+                    <div className="text-xs font-bold text-[#1a2e0a]">Leaf Rot Disease Detected</div>
                   </div>
                 </div>
                 <div className="h-1.5 rounded-full bg-green-100 overflow-hidden">

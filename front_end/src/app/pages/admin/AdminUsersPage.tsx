@@ -1,6 +1,18 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Loader2, Plus, Pencil, KeyRound, UserX, UserCheck, Trash2 } from 'lucide-react'
+import {
+  Loader2,
+  Plus,
+  Pencil,
+  KeyRound,
+  UserX,
+  UserCheck,
+  Trash2,
+  Eye,
+  EyeOff,
+  Copy,
+  Check,
+} from 'lucide-react'
 import { adminApi } from '@/api/services'
 import { useAuth } from '@/contexts/AuthContext'
 import type { User, UserRole } from '@/types'
@@ -34,6 +46,8 @@ export function AdminUsersPage() {
   const [selected, setSelected] = useState<User | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [error, setError] = useState('')
+  const [revealedIds, setRevealedIds] = useState<Record<string, boolean>>({})
+  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin', 'users', roleFilter, q],
@@ -64,7 +78,10 @@ export function AdminUsersPage() {
   const passwordMutation = useMutation({
     mutationFn: ({ id, password }: { id: string; password: string }) =>
       adminApi.resetPassword(id, password),
-    onSuccess: () => closeDialog(),
+    onSuccess: () => {
+      invalidate()
+      closeDialog()
+    },
     onError: (err: unknown) => setError(apiError(err)),
   })
 
@@ -118,6 +135,22 @@ export function AdminUsersPage() {
     setError('')
   }
 
+  const toggleReveal = (id: string) => {
+    setRevealedIds((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
+
+  const copyPassword = async (user: User) => {
+    const value = user.password
+    if (!value) return
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopiedId(user.id)
+      window.setTimeout(() => setCopiedId((cur) => (cur === user.id ? null : cur)), 1500)
+    } catch {
+      // ignore clipboard errors
+    }
+  }
+
   const submit = () => {
     setError('')
     if (mode === 'create') {
@@ -161,7 +194,9 @@ export function AdminUsersPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl text-[#1a2e1a] mb-2">User Management</h1>
-          <p className="text-[#6b7c6b]">Create, edit, deactivate, or remove platform accounts.</p>
+          <p className="text-[#6b7c6b]">
+            Create, edit, deactivate, or remove platform accounts.
+          </p>
         </div>
         <button
           type="button"
@@ -192,13 +227,13 @@ export function AdminUsersPage() {
         </select>
       </div>
 
-      <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-green-100 overflow-x-auto">
         {isLoading ? (
           <div className="p-12 flex justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-[#2d5f2e]" />
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[920px]">
             <thead className="bg-green-50 border-b border-green-100">
               <tr>
                 <th className="text-left p-4 text-gray-600">Name</th>
@@ -206,12 +241,15 @@ export function AdminUsersPage() {
                 <th className="text-left p-4 text-gray-600">Role</th>
                 <th className="text-left p-4 text-gray-600">Status</th>
                 <th className="text-left p-4 text-gray-600">Phone</th>
+                <th className="text-left p-4 text-gray-600">Password</th>
                 <th className="text-right p-4 text-gray-600">Actions</th>
               </tr>
             </thead>
             <tbody>
               {users.map((u) => {
                 const inactive = u.isActive === false
+                const known = Boolean(u.password)
+                const revealed = Boolean(revealedIds[u.id])
                 return (
                   <tr key={u.id} className="border-b border-gray-100">
                     <td className="p-4 text-gray-900">{u.name}</td>
@@ -231,6 +269,32 @@ export function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="p-4 text-gray-700">{u.phone ?? '—'}</td>
+                    <td className="p-4">
+                      {known ? (
+                        <div className="flex items-center gap-1.5 min-w-[140px]">
+                          <code className="font-mono text-xs text-gray-800 bg-gray-50 border border-gray-100 rounded-md px-2 py-1 max-w-[140px] truncate">
+                            {revealed ? u.password : '••••••••'}
+                          </code>
+                          <IconButton
+                            title={revealed ? 'Hide password' : 'Show password'}
+                            onClick={() => toggleReveal(u.id)}
+                          >
+                            {revealed ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </IconButton>
+                          <IconButton title="Copy password" onClick={() => void copyPassword(u)}>
+                            {copiedId === u.id ? (
+                              <Check className="w-4 h-4 text-emerald-600" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </IconButton>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400" title="Reset password to record one">
+                          Not stored
+                        </span>
+                      )}
+                    </td>
                     <td className="p-4">
                       <div className="flex justify-end gap-1">
                         <IconButton title="Edit" onClick={() => openEdit(u)}>
@@ -273,7 +337,7 @@ export function AdminUsersPage() {
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>
               {mode === 'password'
-                ? `Set a new password for ${selected?.username}`
+                ? `Enter a new password for ${selected?.name ?? selected?.username ?? 'this user'}.`
                 : 'Fill in the account details below.'}
             </DialogDescription>
           </DialogHeader>
@@ -313,10 +377,15 @@ export function AdminUsersPage() {
                     </select>
                   </label>
                 ) : (
-                  <p className="text-sm text-gray-500">
-                    Role: <span className="capitalize">{form.role}</span> (cannot be changed —
-                    create a new user instead)
-                  </p>
+                  <label className="block text-sm">
+                    <span className="text-gray-600">Role</span>
+                    <input
+                      type="text"
+                      value={form.role.charAt(0).toUpperCase() + form.role.slice(1)}
+                      readOnly
+                      className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 capitalize"
+                    />
+                  </label>
                 )}
                 <Field
                   label="Assigned region"
