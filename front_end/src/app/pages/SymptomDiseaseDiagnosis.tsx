@@ -26,6 +26,13 @@ export function SymptomDiseaseDiagnosis() {
       ? (categoryParam as Exclude<DiagnosisCategory, 'leaves'>)
       : null
 
+  if (categoryParam === 'stem') {
+    return <Navigate to="/app/disease-detection/stem" replace />
+  }
+  if (categoryParam === 'bud') {
+    return <Navigate to="/app/disease-detection/bud" replace />
+  }
+
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['farmer', 'profile'],
     queryFn: farmApi.profile,

@@ -161,6 +161,7 @@ export interface StemDiagnosisDetail {
   referralPriority?: string
   disclaimer: string
   rbbCrossCheckRpw?: boolean
+  suggestLeafModule?: boolean
 }
 
 export interface DiagnosisResult {
@@ -178,4 +179,5 @@ export interface DiagnosisResult {
   secondaryConditions?: string[]
   officerAlert?: string
   stemDetail?: StemDiagnosisDetail
+  budDetail?: StemDiagnosisDetail
 }

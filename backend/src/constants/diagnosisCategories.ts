@@ -73,19 +73,37 @@ export const CATEGORY_DISEASES: Record<Exclude<DiagnosisCategory, 'leaves'>, Cat
     {
       name: 'Bud Rot Disease',
       symptoms: [
-        'Rotting crown region',
-        'Foul smell',
-        'Young leaf decay',
-        'Blackened bud',
+        'Wilting / pullable spear leaf',
+        'Soft rotten bud tissue',
+        'Foul smell from crown',
+        'Lower leaves still green',
       ],
     },
     {
-      name: 'Crown Wilt',
+      name: 'Red Palm Weevil Infestation',
       symptoms: [
-        'Crown leaves wilting',
-        'Young leaves drying',
-        'Stunted new frond growth',
-        'Brown discoloration at crown',
+        'Crown holes with frass',
+        'Brown viscous fluid',
+        'Internal crunching',
+        'Fibrous cocoons / tilting bud',
+      ],
+    },
+    {
+      name: 'Black / Rhinoceros Beetle Damage',
+      symptoms: [
+        'Bud entry hole with frass',
+        'V-shaped leaf cuts',
+        'Crooked young leaves',
+        'Broken flag leaf',
+      ],
+    },
+    {
+      name: 'Plesispa Beetle Infestation',
+      symptoms: [
+        'Brown patches on bud leaves',
+        'Superficial young-leaf feeding',
+        'Primarily seedlings / young palms',
+        'No deep crown boring',
       ],
     },
   ],

@@ -38,11 +38,11 @@ function SeverityBadge({ severity }: { severity: string }) {
 }
 
 export function StemDiagnosisResultPanel({ result }: { result: DiagnosisResult }) {
-  const d = result.stemDetail
+  const d = result.stemDetail ?? result.budDetail
   if (!d) {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
-        Diagnosis completed, but detailed stem report was not returned. Summary: {result.finalResult} (
+        Diagnosis completed, but detailed report was not returned. Summary: {result.finalResult} (
         {formatPercentage(result.confidence)} match).
       </div>
     )
@@ -96,6 +96,18 @@ export function StemDiagnosisResultPanel({ result }: { result: DiagnosisResult }
             <span>
               Black beetle damage can leave entry points for Red Palm Weevil — also check for holes,
               viscous fluid, crunching sounds, and cocoons.
+            </span>
+          </div>
+        )}
+        {d.suggestLeafModule && (
+          <div className="mt-3 flex gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-950">
+            <Info className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>
+              If damage is mainly on leaflet surfaces rather than the spear or bud, try the{' '}
+              <a href="/app/disease-detection/leaves" className="font-semibold underline">
+                Leaf diagnosis module
+              </a>
+              .
             </span>
           </div>
         )}

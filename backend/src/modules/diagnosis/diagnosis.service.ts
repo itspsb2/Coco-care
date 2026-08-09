@@ -13,6 +13,10 @@ import {
   getMatchLevelLabel as getStemMatchLevelLabel,
   scoreStemQuestionnaire,
 } from '../../services/stemQuestionnaire.service.js'
+import {
+  getBudMatchLevelLabel,
+  scoreBudQuestionnaire,
+} from '../../services/budQuestionnaire.service.js'
 import { fuseDiagnosis } from '../../services/fusion.service.js'
 import { env } from '../../config/env.js'
 import { notFound, forbidden, badRequest } from '../../utils/errors.js'
@@ -182,6 +186,80 @@ export async function submitDiagnosis(
         referralPriority: scored.referralPriority,
         disclaimer: scored.disclaimer,
         rbbCrossCheckRpw: scored.rbbCrossCheckRpw,
+      },
+    }
+  }
+
+  if (category === 'bud') {
+    const answered = Object.values(payload.symptoms).some(
+      (v) => v === true || (typeof v === 'string' && v.trim().length > 0 && v !== 'unsure'),
+    )
+    if (!answered) {
+      throw badRequest('Answer the bud & crown symptom questions before submitting')
+    }
+
+    const scored = scoreBudQuestionnaire(payload.symptoms)
+    const status = resolveStatus(scored.confidence)
+    const matchLabel = getBudMatchLevelLabel(scored.matchLevel)
+    const leafHint = scored.suggestLeafModule
+      ? ' If damage is mainly on older leaflets rather than the spear/bud, also try the Leaf diagnosis module.'
+      : ''
+    const advice = scored.inconclusive
+      ? `${matchLabel}. ${scored.finalResult}. ${scored.whatToDoNow}${leafHint} ${scored.disclaimer}`
+      : `${matchLabel}. Most likely: ${scored.finalResult} (${Math.round(scored.confidence * 100)}% symptom match, ${scored.severity} severity). ${scored.whatToDoNow}${leafHint} ${scored.disclaimer}`
+
+    if (imageUrl?.startsWith('data:')) {
+      imageUrl = await uploadImage(imageUrl, `diagnosis/${userId}/${Date.now()}.jpg`)
+    }
+
+    const report = await reportRepo.createReport({
+      farmId: payload.farmId,
+      userId,
+      imageUrl,
+      symptoms: payload.symptoms,
+      imageResult: 'Bud & crown questionnaire',
+      symptomResult: scored.finalResult,
+      finalResult: scored.finalResult,
+      confidence: scored.confidence,
+      advice,
+      status,
+    })
+
+    return {
+      id: report.id,
+      category,
+      imageResult: 'Bud & crown questionnaire',
+      symptomResult: scored.finalResult,
+      finalResult: scored.finalResult,
+      confidence: scored.confidence,
+      status,
+      advice,
+      predictions: scored.predictions,
+      matchLevel: scored.matchLevel,
+      secondaryConditions: scored.secondaryConditions,
+      officerAlert: scored.officerAlert,
+      budDetail: {
+        code: scored.code,
+        typeLabel: scored.typeLabel,
+        matchScore: Math.round(scored.confidence * 1000) / 10,
+        matchBandLabel: scored.matchBandLabel,
+        differentiation: scored.differentiation,
+        severity: scored.severity,
+        severityScore: scored.severityScore,
+        inconclusive: scored.inconclusive,
+        evidence: scored.evidence,
+        rankings: scored.rankings,
+        cause: scored.cause,
+        riskFactors: scored.riskFactors,
+        whatHappensIfWorse: scored.whatHappensIfWorse,
+        whatToDoNow: scored.whatToDoNow,
+        prevention: scored.prevention,
+        management: scored.management,
+        officerReferral: scored.officerReferral,
+        referralPriority: scored.referralPriority,
+        disclaimer: scored.disclaimer,
+        rbbCrossCheckRpw: scored.rbbCrossCheckRpw,
+        suggestLeafModule: scored.suggestLeafModule,
       },
     }
   }

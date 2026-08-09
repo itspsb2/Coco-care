@@ -41,7 +41,8 @@ export const CATEGORY_META: Record<
   },
   bud: {
     label: 'Coconut Bud & Crown',
-    description: 'Use the symptom questionnaire for bud and crown issues.',
+    description:
+      'Guided CRI-aligned questionnaire for bud rot, weevil, beetle, and Plesispa damage.',
     icon: Sprout,
     usesMl: false,
     accent: 'from-lime-500 to-green-600',
@@ -122,19 +123,37 @@ export const CATEGORY_DISEASES: Record<Exclude<DiagnosisCategory, 'leaves'>, Cat
     {
       name: 'Bud Rot Disease',
       symptoms: [
-        'Rotting crown region',
-        'Foul smell',
-        'Young leaf decay',
-        'Blackened bud',
+        'Wilting / pullable spear leaf',
+        'Soft rotten bud tissue',
+        'Foul smell from crown',
+        'Lower leaves still green',
       ],
     },
     {
-      name: 'Crown Wilt',
+      name: 'Red Palm Weevil Infestation',
       symptoms: [
-        'Crown leaves wilting',
-        'Young leaves drying',
-        'Stunted new frond growth',
-        'Brown discoloration at crown',
+        'Crown holes with frass',
+        'Brown viscous fluid',
+        'Internal crunching',
+        'Fibrous cocoons / tilting bud',
+      ],
+    },
+    {
+      name: 'Black / Rhinoceros Beetle Damage',
+      symptoms: [
+        'Bud entry hole with frass',
+        'V-shaped leaf cuts',
+        'Crooked young leaves',
+        'Broken flag leaf',
+      ],
+    },
+    {
+      name: 'Plesispa Beetle Infestation',
+      symptoms: [
+        'Brown patches on bud leaves',
+        'Superficial young-leaf feeding',
+        'Primarily seedlings / young palms',
+        'No deep crown boring',
       ],
     },
   ],
@@ -196,5 +215,6 @@ export function isDiagnosisCategory(value: string): value is DiagnosisCategory {
 export function getCategoryPath(category: DiagnosisCategory): string {
   if (category === 'leaves') return '/app/disease-detection/leaves'
   if (category === 'stem') return '/app/disease-detection/stem'
+  if (category === 'bud') return '/app/disease-detection/bud'
   return `/app/disease-detection/symptoms/${category}`
 }
