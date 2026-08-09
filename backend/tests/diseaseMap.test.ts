@@ -22,7 +22,7 @@ afterAll(async () => {
 describe('Disease map API', () => {
   const testFn = dbReady ? it : it.skip
 
-  testFn('GET /api/disease-map/heatmap returns verified outbreak points', async () => {
+  testFn('GET /api/disease-map/heatmap returns visible outbreak points', async () => {
     const login = await request(app)
       .post('/auth/login')
       .send({ username: 'akeel', password: 'password' })
@@ -41,6 +41,7 @@ describe('Disease map API', () => {
         lng: expect.any(Number),
         weight: expect.any(Number),
         diseaseType: expect.any(String),
+        verificationStatus: expect.stringMatching(/^(verified|ai_suspected)$/),
       })
     }
   })
@@ -48,7 +49,7 @@ describe('Disease map API', () => {
   testFn('GET /api/disease-map/stats returns summary shape', async () => {
     const login = await request(app)
       .post('/auth/login')
-      .send({ username: 'officer1', password: 'password' })
+      .send({ username: 'officer1', password: 'officer123' })
 
     const token = login.body.token as string
 
@@ -97,7 +98,7 @@ describe('Disease map API', () => {
   testFn('GET /api/disease-map/stats respects district filter', async () => {
     const login = await request(app)
       .post('/auth/login')
-      .send({ username: 'officer1', password: 'password' })
+      .send({ username: 'officer1', password: 'officer123' })
 
     const token = login.body.token as string
 
@@ -145,6 +146,69 @@ describe('Disease map API', () => {
     expect(res.body.length).toBe(0)
   })
 
+  testFn('GET /api/disease-map/heatmap applies strict AI-suspected threshold', async () => {
+    const login = await request(app)
+      .post('/auth/login')
+      .send({ username: 'akeel', password: 'password' })
+
+    const token = login.body.token as string
+    const suffix = Date.now()
+    const farmer = await getPool().query<{ id: string }>(
+      `SELECT id FROM farmers WHERE username = 'akeel' LIMIT 1`,
+    )
+    const farm = await getPool().query<{ id: string }>(
+      `SELECT id FROM farms WHERE user_id = $1 LIMIT 1`,
+      [farmer.rows[0].id],
+    )
+
+    const insertReport = async (
+      disease: string,
+      confidence: number,
+      status: 'pending' | 'rejected',
+    ) => {
+      await getPool().query(
+        `INSERT INTO disease_reports (
+           farm_id, user_id, symptoms, image_result, symptom_result,
+           final_result, confidence, advice, status
+         ) VALUES ($1, $2, '{}'::jsonb, 'Test', 'Test', $3, $4, 'Test advice', $5)`,
+        [farm.rows[0].id, farmer.rows[0].id, disease, confidence, status],
+      )
+    }
+
+    const highDisease = `AI Threshold High ${suffix}`
+    const boundaryDisease = `AI Threshold Boundary ${suffix}`
+    const rejectedDisease = `AI Threshold Rejected ${suffix}`
+    await insertReport(highDisease, 0.91, 'pending')
+    await insertReport(boundaryDisease, 0.9, 'pending')
+    await insertReport(rejectedDisease, 0.99, 'rejected')
+
+    const high = await request(app)
+      .get('/api/disease-map/heatmap')
+      .query({ diseaseType: highDisease })
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(high.status).toBe(200)
+    expect(high.body).toHaveLength(1)
+    expect(high.body[0]).toMatchObject({
+      diseaseType: highDisease,
+      verificationStatus: 'ai_suspected',
+    })
+
+    const boundary = await request(app)
+      .get('/api/disease-map/heatmap')
+      .query({ diseaseType: boundaryDisease })
+      .set('Authorization', `Bearer ${token}`)
+    expect(boundary.status).toBe(200)
+    expect(boundary.body).toHaveLength(0)
+
+    const rejected = await request(app)
+      .get('/api/disease-map/heatmap')
+      .query({ diseaseType: rejectedDisease })
+      .set('Authorization', `Bearer ${token}`)
+    expect(rejected.status).toBe(200)
+    expect(rejected.body).toHaveLength(0)
+  })
+
   testFn('GET /api/disease-map/alerts returns farmer alerts list', async () => {
     const login = await request(app)
       .post('/auth/login')
@@ -160,7 +224,7 @@ describe('Disease map API', () => {
     expect(Array.isArray(res.body)).toBe(true)
   })
 
-  testFn('verify report creates nearby disease alert for another farmer', async () => {
+  testFn('high-confidence pending report creates AI alert and verification upgrades it', async () => {
     const suffix = Date.now()
     const adminLogin = await request(app)
       .post('/auth/login')
@@ -207,15 +271,45 @@ describe('Disease map API', () => {
       .set('Authorization', `Bearer ${akeelToken}`)
       .send({
         farmId: kurunegalaFarm.id,
-        symptoms: { leafDiscoloration: true },
+        category: 'bud',
+        symptoms: {
+          'Rotting crown region': true,
+          'Foul smell': true,
+          'Young leaf decay': true,
+        },
         notes: 'Test outbreak for alert flow',
       })
     expect(diagnosis.status).toBe(200)
+    expect(diagnosis.body.status).toBe('pending')
     const reportId = diagnosis.body.id as string
+
+    const suspectedAlertsRes = await request(app)
+      .get('/api/disease-map/alerts')
+      .set('Authorization', `Bearer ${nearbyFarmerToken}`)
+
+    expect(suspectedAlertsRes.status).toBe(200)
+    const suspected = suspectedAlertsRes.body.filter(
+      (a: { reportId: string }) => a.reportId === reportId,
+    )
+    expect(suspected).toHaveLength(1)
+    expect(suspected[0].alertType).toBe('ai_suspected')
+    expect(suspected[0].message).toMatch(/not been officer verified yet/i)
+
+    const heatmapBeforeReview = await request(app)
+      .get('/api/disease-map/heatmap')
+      .set('Authorization', `Bearer ${nearbyFarmerToken}`)
+
+    expect(heatmapBeforeReview.status).toBe(200)
+    const suspectedPoint = heatmapBeforeReview.body.find(
+      (p: { diseaseType: string; verificationStatus: string }) =>
+        p.diseaseType === diagnosis.body.finalResult &&
+        p.verificationStatus === 'ai_suspected',
+    )
+    expect(suspectedPoint).toBeDefined()
 
     const officerLogin = await request(app)
       .post('/auth/login')
-      .send({ username: 'officer1', password: 'password' })
+      .send({ username: 'officer1', password: 'officer123' })
     const officerToken = officerLogin.body.token as string
 
     const review = await request(app)
@@ -229,9 +323,14 @@ describe('Disease map API', () => {
       .set('Authorization', `Bearer ${nearbyFarmerToken}`)
 
     expect(alertsRes.status).toBe(200)
-    const matching = alertsRes.body.find((a: { reportId: string }) => a.reportId === reportId)
-    expect(matching).toBeDefined()
+    const matchingAlerts = alertsRes.body.filter(
+      (a: { reportId: string }) => a.reportId === reportId,
+    )
+    expect(matchingAlerts).toHaveLength(1)
+    const matching = matchingAlerts[0]
     expect(matching.read).toBe(false)
+    expect(matching.alertType).toBe('verified')
+    expect(matching.message).toMatch(/^Verified outbreak/i)
 
     const markRead = await request(app)
       .patch(`/api/disease-map/alerts/${matching.id}/read`)

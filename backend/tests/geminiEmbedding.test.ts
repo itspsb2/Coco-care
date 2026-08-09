@@ -33,7 +33,7 @@ describe('geminiEmbedding.service', () => {
     })
 
     it('returns false when key is missing', async () => {
-      delete process.env.GEMINI_API_KEY
+      process.env.GEMINI_API_KEY = ''
       const { isGeminiEmbeddingReady } = await loadService()
       expect(isGeminiEmbeddingReady()).toBe(false)
     })
@@ -63,7 +63,7 @@ describe('geminiEmbedding.service', () => {
     })
 
     it('throws service unavailable when key is missing', async () => {
-      delete process.env.GEMINI_API_KEY
+      process.env.GEMINI_API_KEY = ''
       const { embedText } = await loadService()
       await expect(embedText('test')).rejects.toMatchObject({
         message: expect.stringContaining('GEMINI_API_KEY'),

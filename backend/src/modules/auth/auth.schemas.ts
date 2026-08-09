@@ -19,6 +19,11 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 })
 
+export const passwordChangeSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(6),
+})
+
 export const registerSchema = z.object({
   role: z.enum(['farmer', 'officer', 'admin']),
   name: trimmedOptionalString,

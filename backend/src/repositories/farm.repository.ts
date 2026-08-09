@@ -11,6 +11,8 @@ export interface CreateFarmInput {
   treeCount: number
 }
 
+export type UpdateFarmInput = Omit<CreateFarmInput, 'userId'>
+
 interface FarmRow {
   id: string
   user_id: string
@@ -53,6 +55,18 @@ export async function findFarmById(id: string): Promise<Farm | null> {
   return rows[0] ? mapFarm(rows[0]) : null
 }
 
+export async function findFarmByIdForUser(
+  id: string,
+  userId: string,
+): Promise<Farm | null> {
+  const { rows } = await getPool().query<FarmRow>(
+    `SELECT id, user_id, name, location, latitude, longitude, acreage, tree_count, created_at
+     FROM farms WHERE id = $1 AND user_id = $2`,
+    [id, userId],
+  )
+  return rows[0] ? mapFarm(rows[0]) : null
+}
+
 export async function createFarm(input: CreateFarmInput): Promise<Farm> {
   const { rows } = await getPool().query<FarmRow>(
     `INSERT INTO farms (user_id, name, location, latitude, longitude, acreage, tree_count)
@@ -69,6 +83,54 @@ export async function createFarm(input: CreateFarmInput): Promise<Farm> {
     ],
   )
   return mapFarm(rows[0])
+}
+
+export async function updateFarmForUser(
+  id: string,
+  userId: string,
+  input: UpdateFarmInput,
+): Promise<Farm | null> {
+  const { rows } = await getPool().query<FarmRow>(
+    `UPDATE farms
+     SET name = $3,
+         location = $4,
+         latitude = $5,
+         longitude = $6,
+         acreage = $7,
+         tree_count = $8
+     WHERE id = $1 AND user_id = $2
+     RETURNING id, user_id, name, location, latitude, longitude, acreage, tree_count, created_at`,
+    [
+      id,
+      userId,
+      input.name,
+      input.location,
+      input.latitude,
+      input.longitude,
+      input.acreage,
+      input.treeCount,
+    ],
+  )
+  return rows[0] ? mapFarm(rows[0]) : null
+}
+
+export async function countLinkedRecordsForFarm(id: string): Promise<number> {
+  const { rows } = await getPool().query<{ total: string }>(
+    `SELECT (
+       (SELECT COUNT(*) FROM disease_reports WHERE farm_id = $1) +
+       (SELECT COUNT(*) FROM disease_alerts WHERE farm_id = $1)
+     )::text AS total`,
+    [id],
+  )
+  return Number(rows[0]?.total ?? 0)
+}
+
+export async function deleteFarmForUser(id: string, userId: string): Promise<boolean> {
+  const result = await getPool().query(
+    `DELETE FROM farms WHERE id = $1 AND user_id = $2`,
+    [id, userId],
+  )
+  return (result.rowCount ?? 0) > 0
 }
 
 export interface AdminFarmRow {
@@ -137,13 +199,19 @@ export async function getRegionSummary(): Promise<RegionSummary[]> {
   }>(
     `SELECT f.location AS region,
             COUNT(*) FILTER (WHERE dr.status = 'pending')::text AS pending,
-            COUNT(*) FILTER (WHERE dr.status = 'verified')::text AS verified,
+            COUNT(*) FILTER (
+              WHERE dr.status = 'verified'
+                AND (dr.reviewed_by_officer IS NOT NULL OR dr.reviewed_by_admin IS NOT NULL)
+            )::text AS verified,
             COUNT(*) FILTER (WHERE dr.status = 'rejected')::text AS rejected,
             COUNT(*)::text AS total
      FROM farms f
      LEFT JOIN disease_reports dr ON dr.farm_id = f.id
      GROUP BY f.location
-     ORDER BY COUNT(*) FILTER (WHERE dr.status = 'verified') DESC, f.location`,
+     ORDER BY COUNT(*) FILTER (
+       WHERE dr.status = 'verified'
+         AND (dr.reviewed_by_officer IS NOT NULL OR dr.reviewed_by_admin IS NOT NULL)
+     ) DESC, f.location`,
   )
   return rows.map((r) => ({
     region: r.region,

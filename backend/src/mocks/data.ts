@@ -58,11 +58,11 @@ export const mockReports: DiseaseReport[] = [
 ]
 
 export const mockHeatmap: HeatmapPoint[] = [
-  { lat: 7.48, lng: 80.37, weight: 0.8, diseaseType: 'Weligama Wilt' },
-  { lat: 7.29, lng: 80.62, weight: 0.6, diseaseType: 'Bud Rot' },
-  { lat: 7.95, lng: 81.0, weight: 0.9, diseaseType: 'Stem Bleeding' },
-  { lat: 7.1, lng: 79.9, weight: 0.5, diseaseType: 'Caterpillar' },
-  { lat: 7.6, lng: 80.1, weight: 0.7, diseaseType: 'Weligama Wilt' },
+  { lat: 7.48, lng: 80.37, weight: 0.8, diseaseType: 'Weligama Wilt', verificationStatus: 'verified' },
+  { lat: 7.29, lng: 80.62, weight: 0.6, diseaseType: 'Bud Rot', verificationStatus: 'verified' },
+  { lat: 7.95, lng: 81.0, weight: 0.9, diseaseType: 'Stem Bleeding', verificationStatus: 'verified' },
+  { lat: 7.1, lng: 79.9, weight: 0.5, diseaseType: 'Caterpillar', verificationStatus: 'verified' },
+  { lat: 7.6, lng: 80.1, weight: 0.7, diseaseType: 'Weligama Wilt', verificationStatus: 'verified' },
 ]
 
 export let chatHistory: ChatMessage[] = [
