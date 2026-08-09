@@ -17,6 +17,10 @@ import {
   getBudMatchLevelLabel,
   scoreBudQuestionnaire,
 } from '../../services/budQuestionnaire.service.js'
+import {
+  getFruitMatchLevelLabel,
+  scoreFruitQuestionnaire,
+} from '../../services/fruitQuestionnaire.service.js'
 import { fuseDiagnosis } from '../../services/fusion.service.js'
 import { env } from '../../config/env.js'
 import { notFound, forbidden, badRequest } from '../../utils/errors.js'
@@ -259,6 +263,79 @@ export async function submitDiagnosis(
         referralPriority: scored.referralPriority,
         disclaimer: scored.disclaimer,
         rbbCrossCheckRpw: scored.rbbCrossCheckRpw,
+        suggestLeafModule: scored.suggestLeafModule,
+      },
+    }
+  }
+
+  if (category === 'fruit') {
+    const answered = Object.values(payload.symptoms).some(
+      (v) => v === true || (typeof v === 'string' && v.trim().length > 0 && v !== 'unsure'),
+    )
+    if (!answered) {
+      throw badRequest('Answer the fruit / nut symptom questions before submitting')
+    }
+
+    const scored = scoreFruitQuestionnaire(payload.symptoms)
+    const status = resolveStatus(scored.confidence)
+    const matchLabel = getFruitMatchLevelLabel(scored.matchLevel)
+    const leafHint = scored.suggestLeafModule
+      ? ' Main caterpillar signs are usually on leaves—also use the Leaf diagnosis module.'
+      : ''
+    const advice = scored.inconclusive
+      ? `${matchLabel}. ${scored.finalResult}. ${scored.whatToDoNow}${leafHint} ${scored.disclaimer}`
+      : `${matchLabel}. Most likely: ${scored.finalResult} (${Math.round(scored.confidence * 100)}% symptom match, ${scored.severity} severity). ${scored.whatToDoNow}${leafHint} ${scored.disclaimer}`
+
+    if (imageUrl?.startsWith('data:')) {
+      imageUrl = await uploadImage(imageUrl, `diagnosis/${userId}/${Date.now()}.jpg`)
+    }
+
+    const report = await reportRepo.createReport({
+      farmId: payload.farmId,
+      userId,
+      imageUrl,
+      symptoms: payload.symptoms,
+      imageResult: 'Fruit / nut questionnaire',
+      symptomResult: scored.finalResult,
+      finalResult: scored.finalResult,
+      confidence: scored.confidence,
+      advice,
+      status,
+    })
+
+    return {
+      id: report.id,
+      category,
+      imageResult: 'Fruit / nut questionnaire',
+      symptomResult: scored.finalResult,
+      finalResult: scored.finalResult,
+      confidence: scored.confidence,
+      status,
+      advice,
+      predictions: scored.predictions,
+      matchLevel: scored.matchLevel,
+      secondaryConditions: scored.secondaryConditions,
+      officerAlert: scored.officerAlert,
+      fruitDetail: {
+        code: scored.code,
+        typeLabel: scored.typeLabel,
+        matchScore: Math.round(scored.confidence * 1000) / 10,
+        matchBandLabel: scored.matchBandLabel,
+        differentiation: scored.differentiation,
+        severity: scored.severity,
+        severityScore: scored.severityScore,
+        inconclusive: scored.inconclusive,
+        evidence: scored.evidence,
+        rankings: scored.rankings,
+        cause: scored.cause,
+        riskFactors: scored.riskFactors,
+        whatHappensIfWorse: scored.whatHappensIfWorse,
+        whatToDoNow: scored.whatToDoNow,
+        prevention: scored.prevention,
+        management: scored.management,
+        officerReferral: scored.officerReferral,
+        referralPriority: scored.referralPriority,
+        disclaimer: scored.disclaimer,
         suggestLeafModule: scored.suggestLeafModule,
       },
     }

@@ -32,6 +32,12 @@ export function SymptomDiseaseDiagnosis() {
   if (categoryParam === 'bud') {
     return <Navigate to="/app/disease-detection/bud" replace />
   }
+  if (categoryParam === 'fruit') {
+    return <Navigate to="/app/disease-detection/fruit" replace />
+  }
+  if (categoryParam === 'whole-tree') {
+    return <Navigate to="/app/disease-detection" replace />
+  }
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['farmer', 'profile'],

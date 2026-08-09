@@ -38,7 +38,7 @@ function SeverityBadge({ severity }: { severity: string }) {
 }
 
 export function StemDiagnosisResultPanel({ result }: { result: DiagnosisResult }) {
-  const d = result.stemDetail ?? result.budDetail
+  const d = result.stemDetail ?? result.budDetail ?? result.fruitDetail
   if (!d) {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
@@ -51,6 +51,11 @@ export function StemDiagnosisResultPanel({ result }: { result: DiagnosisResult }
   const topMatch = d.inconclusive
     ? d.rankings[0]?.matchScore ?? Math.round(result.confidence * 100)
     : d.matchScore
+
+  const leafLinkText =
+    result.category === 'fruit' || d.code === 'CC'
+      ? 'The main caterpillar infestation is usually on the leaves — open the'
+      : 'If damage is mainly on leaflet surfaces rather than the spear or bud, try the'
 
   return (
     <div className="space-y-5">
@@ -103,7 +108,7 @@ export function StemDiagnosisResultPanel({ result }: { result: DiagnosisResult }
           <div className="mt-3 flex gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-950">
             <Info className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
-              If damage is mainly on leaflet surfaces rather than the spear or bud, try the{' '}
+              {leafLinkText}{' '}
               <a href="/app/disease-detection/leaves" className="font-semibold underline">
                 Leaf diagnosis module
               </a>

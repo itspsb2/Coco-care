@@ -6,6 +6,7 @@ import { DiseaseDetection } from './pages/DiseaseDetection'
 import { LeafDiseaseDiagnosis } from './pages/LeafDiseaseDiagnosis'
 import { StemDiseaseDiagnosis } from './pages/StemDiseaseDiagnosis'
 import { BudDiseaseDiagnosis } from './pages/BudDiseaseDiagnosis'
+import { FruitDiseaseDiagnosis } from './pages/FruitDiseaseDiagnosis'
 import { SymptomDiseaseDiagnosis } from './pages/SymptomDiseaseDiagnosis'
 import { AIChatbot } from './pages/AIChatbot'
 import { DiseaseHeatmap } from './pages/DiseaseHeatmap'
@@ -40,6 +41,7 @@ export const router = createBrowserRouter([
           { path: 'disease-detection/leaves', Component: LeafDiseaseDiagnosis },
           { path: 'disease-detection/stem', Component: StemDiseaseDiagnosis },
           { path: 'disease-detection/bud', Component: BudDiseaseDiagnosis },
+          { path: 'disease-detection/fruit', Component: FruitDiseaseDiagnosis },
           { path: 'disease-detection/symptoms/:category', Component: SymptomDiseaseDiagnosis },
           { path: 'chatbot', Component: AIChatbot },
           { path: 'heatmap', Component: DiseaseHeatmap },

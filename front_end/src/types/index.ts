@@ -175,7 +175,7 @@ export interface LoginPayload {
 
 export interface DiagnosisPayload {
   farmId: string
-  category?: 'leaves' | 'stem' | 'bud' | 'fruit' | 'whole-tree'
+  category?: 'leaves' | 'stem' | 'bud' | 'fruit'
   imageUrl?: string
   symptoms: Record<string, string | boolean>
   notes?: string
@@ -217,7 +217,7 @@ export interface StemDiagnosisDetail {
 
 export interface DiagnosisResult {
   id: string
-  category?: 'leaves' | 'stem' | 'bud' | 'fruit' | 'whole-tree'
+  category?: 'leaves' | 'stem' | 'bud' | 'fruit'
   imageResult: string
   symptomResult: string
   finalResult: string
@@ -231,6 +231,7 @@ export interface DiagnosisResult {
   officerAlert?: string
   stemDetail?: StemDiagnosisDetail
   budDetail?: StemDiagnosisDetail
+  fruitDetail?: StemDiagnosisDetail
 }
 
 export type WeatherIcon = 'sun' | 'partly' | 'rain' | 'cloud'

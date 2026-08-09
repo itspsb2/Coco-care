@@ -1,4 +1,4 @@
-import { Leaf, TreePine, Sprout, Apple, Trees } from 'lucide-react'
+import { Leaf, TreePine, Sprout, Apple } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export const DIAGNOSIS_CATEGORIES = [
@@ -6,7 +6,6 @@ export const DIAGNOSIS_CATEGORIES = [
   'stem',
   'bud',
   'fruit',
-  'whole-tree',
 ] as const
 
 export type DiagnosisCategory = (typeof DIAGNOSIS_CATEGORIES)[number]
@@ -50,19 +49,12 @@ export const CATEGORY_META: Record<
   },
   fruit: {
     label: 'Coconut Fruit',
-    description: 'Identify fruit-related diseases through guided symptoms.',
+    description:
+      'Guided CRI-aligned questionnaire for coconut mite, scale, rats, and nut-fall stress.',
     icon: Apple,
     usesMl: false,
     accent: 'from-yellow-500 to-amber-600',
     iconBg: 'bg-yellow-50 text-yellow-700',
-  },
-  'whole-tree': {
-    label: 'Whole Tree',
-    description: 'Assess tree-wide symptoms affecting the entire palm.',
-    icon: Trees,
-    usesMl: false,
-    accent: 'from-teal-500 to-cyan-600',
-    iconBg: 'bg-teal-50 text-teal-700',
   },
 }
 
@@ -159,50 +151,48 @@ export const CATEGORY_DISEASES: Record<Exclude<DiagnosisCategory, 'leaves'>, Cat
   ],
   fruit: [
     {
-      name: 'Coconut Mite Damage',
+      name: 'Coconut Mite Infestation',
       symptoms: [
-        'Scarred nuts',
-        'Distorted fruit shape',
-        'Bronze or russet patches on husk',
-        'Reduced nut size',
+        'Pale triangular patch below perianth',
+        'Corky brown scar expanding downward',
+        'Deformed / small nut',
+        'Y-shaped cracks / premature fall',
       ],
     },
     {
-      name: 'Fruit Rot',
+      name: 'Coconut Scale on Nuts',
       symptoms: [
-        'Premature nut drop',
-        'Discolored husk',
-        'Soft rotting nuts',
-        'Foul odor from fallen nuts',
-      ],
-    },
-  ],
-  'whole-tree': [
-    {
-      name: 'Weligama Coconut Leaf Wilt Disease',
-      symptoms: [
-        'Yellowing leaves',
-        'Flaccid leaf appearance',
-        'Reduced nut production',
-        'Drooping leaflets',
+        'Tiny scale insects on nut surface',
+        'Yellow-white encrustation',
+        'Scale outbreak also on nearby leaves',
+        'Worse in dry weather',
       ],
     },
     {
-      name: 'Lethal Yellowing',
+      name: 'Rat / Mammalian Nut Damage',
       symptoms: [
-        'Progressive yellowing from older fronds',
-        'Premature nut drop',
-        'Crown collapse',
-        'Blackened inflorescence',
+        'Clear gnaw / bite marks',
+        'Hole through husk',
+        'Kernel eaten / nut water lost',
+        'Rodent activity near palms',
       ],
     },
     {
-      name: 'Coconut Caterpillar Damage',
+      name: 'Caterpillar-related Nut Surface Damage',
       symptoms: [
-        'Damaged leaf surface',
-        'Brown dried leaves',
-        'Holes in leaflets',
-        'Visible caterpillars',
+        'Shallow epidermis scraping',
+        'Brown dried lower leaves',
+        'Galleries on leaf undersides',
+        'No deep perianth mite scar',
+      ],
+    },
+    {
+      name: 'Premature Nut Fall / Stress',
+      symptoms: [
+        'Many immature nuts falling',
+        'No strong mite scars',
+        'No gnaw marks',
+        'Drought / water stress history',
       ],
     },
   ],
@@ -216,5 +206,6 @@ export function getCategoryPath(category: DiagnosisCategory): string {
   if (category === 'leaves') return '/app/disease-detection/leaves'
   if (category === 'stem') return '/app/disease-detection/stem'
   if (category === 'bud') return '/app/disease-detection/bud'
-  return `/app/disease-detection/symptoms/${category}`
+  if (category === 'fruit') return '/app/disease-detection/fruit'
+  return '/app/disease-detection'
 }

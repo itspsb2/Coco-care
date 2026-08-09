@@ -148,7 +148,7 @@ function flattenCategoryDiseases(category: Exclude<DiagnosisCategory, 'leaves'>)
 
 export function classifySymptoms(
   symptoms: Record<string, string | boolean>,
-  category: DiagnosisCategory = 'whole-tree',
+  category: DiagnosisCategory = 'fruit',
 ): {
   disease: string
   confidence: number
