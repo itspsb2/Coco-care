@@ -60,7 +60,7 @@ export const farmSchema = z.object({
 
 export const diagnosisSchema = z.object({
   farmId: z.string().min(1),
-  category: z.enum(['leaves', 'stem', 'bud', 'fruit', 'whole-tree']).optional(),
+  category: z.enum(['leaves', 'stem', 'bud', 'fruit']).optional(),
   imageUrl: z.string().optional(),
   symptoms: z.record(z.union([z.string(), z.boolean()])),
   notes: z.string().optional(),

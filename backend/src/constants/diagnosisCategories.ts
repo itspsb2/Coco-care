@@ -3,7 +3,6 @@ export const DIAGNOSIS_CATEGORIES = [
   'stem',
   'bud',
   'fruit',
-  'whole-tree',
 ] as const
 
 export type DiagnosisCategory = (typeof DIAGNOSIS_CATEGORIES)[number]
@@ -13,7 +12,6 @@ export const CATEGORY_LABELS: Record<DiagnosisCategory, string> = {
   stem: 'Coconut Stem & Trunk',
   bud: 'Coconut Bud & Crown',
   fruit: 'Coconut Fruit',
-  'whole-tree': 'Whole Tree',
 }
 
 export interface CategoryDisease {
@@ -109,50 +107,48 @@ export const CATEGORY_DISEASES: Record<Exclude<DiagnosisCategory, 'leaves'>, Cat
   ],
   fruit: [
     {
-      name: 'Coconut Mite Damage',
+      name: 'Coconut Mite Infestation',
       symptoms: [
-        'Scarred nuts',
-        'Distorted fruit shape',
-        'Bronze or russet patches on husk',
-        'Reduced nut size',
+        'Pale triangular patch below perianth',
+        'Corky brown scar expanding downward',
+        'Deformed / small nut',
+        'Y-shaped cracks / premature fall',
       ],
     },
     {
-      name: 'Fruit Rot',
+      name: 'Coconut Scale on Nuts',
       symptoms: [
-        'Premature nut drop',
-        'Discolored husk',
-        'Soft rotting nuts',
-        'Foul odor from fallen nuts',
-      ],
-    },
-  ],
-  'whole-tree': [
-    {
-      name: 'Weligama Coconut Leaf Wilt Disease',
-      symptoms: [
-        'Yellowing leaves',
-        'Flaccid leaf appearance',
-        'Reduced nut production',
-        'Drooping leaflets',
+        'Tiny scale insects on nut surface',
+        'Yellow-white encrustation',
+        'Scale outbreak also on nearby leaves',
+        'Worse in dry weather',
       ],
     },
     {
-      name: 'Lethal Yellowing',
+      name: 'Rat / Mammalian Nut Damage',
       symptoms: [
-        'Progressive yellowing from older fronds',
-        'Premature nut drop',
-        'Crown collapse',
-        'Blackened inflorescence',
+        'Clear gnaw / bite marks',
+        'Hole through husk',
+        'Kernel eaten / nut water lost',
+        'Rodent activity near palms',
       ],
     },
     {
-      name: 'Coconut Caterpillar Damage',
+      name: 'Caterpillar-related Nut Surface Damage',
       symptoms: [
-        'Damaged leaf surface',
-        'Brown dried leaves',
-        'Holes in leaflets',
-        'Visible caterpillars',
+        'Shallow epidermis scraping',
+        'Brown dried lower leaves',
+        'Galleries on leaf undersides',
+        'No deep perianth mite scar',
+      ],
+    },
+    {
+      name: 'Premature Nut Fall / Stress',
+      symptoms: [
+        'Many immature nuts falling',
+        'No strong mite scars',
+        'No gnaw marks',
+        'Drought / water stress history',
       ],
     },
   ],
