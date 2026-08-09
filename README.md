@@ -104,6 +104,8 @@ cd backend
 npm run test          # Jest + Supertest (requires a running DB)
 ```
 
+Run the backend test suite after significant changes to catch regressions early.
+
 ---
 
 ## 📄 License
