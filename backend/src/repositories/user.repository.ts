@@ -224,19 +224,6 @@ export async function setPassword(
   return (result.rowCount ?? 0) > 0
 }
 
-export async function clearAdminPassword(id: string): Promise<boolean> {
-  const existing = await findByIdAnyRole(id)
-  if (!existing) return false
-  const result = await getPool().query(
-    `UPDATE ${TABLE_BY_ROLE[existing.role]}
-     SET admin_password = NULL,
-         updated_at = NOW()
-     WHERE id = $1`,
-    [id],
-  )
-  return (result.rowCount ?? 0) > 0
-}
-
 export async function getAdminPassword(id: string): Promise<string | null> {
   const existing = await findByIdAnyRole(id)
   if (!existing) return null

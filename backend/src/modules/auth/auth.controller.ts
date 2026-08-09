@@ -26,12 +26,3 @@ export async function me(req: AuthRequest, res: Response, next: NextFunction) {
     next(err)
   }
 }
-
-export async function changePassword(req: AuthRequest, res: Response, next: NextFunction) {
-  try {
-    if (!req.user) throw new Error('Unauthorized')
-    res.json(await authService.changePassword(req.user.id, req.body))
-  } catch (err) {
-    next(err)
-  }
-}

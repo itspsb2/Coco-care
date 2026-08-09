@@ -6,7 +6,6 @@ interface AlertRow {
   report_id: string
   farm_id: string
   disease_type: string
-  alert_type: 'verified' | 'ai_suspected'
   distance_km: string
   message: string
   read_at: Date | null
@@ -24,7 +23,6 @@ export interface InsertAlertInput {
   farmerUserId: string
   farmId: string
   diseaseType: string
-  alertType: 'verified' | 'ai_suspected'
   distanceKm: number
   message: string
 }
@@ -35,7 +33,6 @@ function mapAlert(row: AlertRow): DiseaseAlert {
     reportId: row.report_id,
     farmId: row.farm_id,
     diseaseType: row.disease_type,
-    alertType: row.alert_type,
     distanceKm: Number(row.distance_km),
     message: row.message,
     read: row.read_at != null,
@@ -54,7 +51,7 @@ const HAVERSINE_KM = `
 
 export async function findAlertsByFarmerId(farmerUserId: string): Promise<DiseaseAlert[]> {
   const { rows } = await getPool().query<AlertRow>(
-    `SELECT id, report_id, farm_id, disease_type, alert_type, distance_km, message, read_at, created_at
+    `SELECT id, report_id, farm_id, disease_type, distance_km, message, read_at, created_at
      FROM disease_alerts
      WHERE farmer_user_id = $1
      ORDER BY created_at DESC`,
@@ -71,7 +68,7 @@ export async function markAlertRead(
     `UPDATE disease_alerts
      SET read_at = COALESCE(read_at, NOW())
      WHERE id = $1 AND farmer_user_id = $2
-     RETURNING id, report_id, farm_id, disease_type, alert_type, distance_km, message, read_at, created_at`,
+     RETURNING id, report_id, farm_id, disease_type, distance_km, message, read_at, created_at`,
     [alertId, farmerUserId],
   )
   return rows[0] ? mapAlert(rows[0]) : null
@@ -97,45 +94,26 @@ export async function findNearbyFarms(
   return rows
 }
 
-export async function upsertAlerts(alerts: InsertAlertInput[]): Promise<number> {
+export async function insertAlertsIgnoreConflicts(alerts: InsertAlertInput[]): Promise<number> {
   if (alerts.length === 0) return 0
 
-  let changed = 0
+  let inserted = 0
   for (const alert of alerts) {
     const result = await getPool().query(
       `INSERT INTO disease_alerts (
-         report_id, farmer_user_id, farm_id, disease_type, alert_type, distance_km, message
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-       ON CONFLICT (report_id, farmer_user_id, farm_id) DO UPDATE
-       SET disease_type = EXCLUDED.disease_type,
-           alert_type = EXCLUDED.alert_type,
-           distance_km = EXCLUDED.distance_km,
-           message = EXCLUDED.message,
-           read_at = CASE
-             WHEN disease_alerts.alert_type <> EXCLUDED.alert_type THEN NULL
-             ELSE disease_alerts.read_at
-           END
-       WHERE EXCLUDED.alert_type = 'verified'
-          OR disease_alerts.alert_type <> 'verified'`,
+         report_id, farmer_user_id, farm_id, disease_type, distance_km, message
+       ) VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (report_id, farmer_user_id, farm_id) DO NOTHING`,
       [
         alert.reportId,
         alert.farmerUserId,
         alert.farmId,
         alert.diseaseType,
-        alert.alertType,
         alert.distanceKm,
         alert.message,
       ],
     )
-    changed += result.rowCount ?? 0
+    inserted += result.rowCount ?? 0
   }
-  return changed
-}
-
-export async function deleteAlertsForReport(reportId: string): Promise<number> {
-  const result = await getPool().query(
-    `DELETE FROM disease_alerts WHERE report_id = $1`,
-    [reportId],
-  )
-  return result.rowCount ?? 0
+  return inserted
 }

@@ -16,7 +16,6 @@ interface AuthContextValue {
   loading: boolean
   login: (payload: LoginPayload) => Promise<User>
   register: (payload: RegisterPayload) => Promise<User>
-  updateUser: (nextUser: User) => void
   logout: () => void
 }
 
@@ -90,20 +89,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return registered
   }, [])
 
-  const updateUser = useCallback((nextUser: User) => {
-    const token = localStorage.getItem(TOKEN_KEY)
-    if (token) persistSession(token, nextUser)
-    setUser(nextUser)
-  }, [])
-
   const logout = useCallback(() => {
     clearSession()
     setUser(null)
   }, [])
 
   const value = useMemo(
-    () => ({ user, loading, login, register, updateUser, logout }),
-    [user, loading, login, register, updateUser, logout],
+    () => ({ user, loading, login, register, logout }),
+    [user, loading, login, register, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

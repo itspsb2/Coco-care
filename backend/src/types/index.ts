@@ -39,14 +39,11 @@ export interface DiseaseReport {
   reviewComment?: string
 }
 
-export type VerificationStatus = 'verified' | 'ai_suspected'
-
 export interface HeatmapPoint {
   lat: number
   lng: number
   weight: number
   diseaseType: string
-  verificationStatus: VerificationStatus
   createdAt?: string
 }
 
@@ -55,7 +52,6 @@ export interface DiseaseAlert {
   reportId: string
   farmId: string
   diseaseType: string
-  alertType: VerificationStatus
   distanceKm: number
   message: string
   read: boolean
@@ -69,7 +65,6 @@ export interface NearbyOutbreak {
   weight: number
   distanceKm: number
   reportId: string
-  verificationStatus: VerificationStatus
   createdAt: string
 }
 

@@ -16,7 +16,6 @@ export async function getHeatmap(filters: reportRepo.HeatmapFilters = {}): Promi
     lng: r.lng,
     weight: r.weight,
     diseaseType: r.disease_type,
-    verificationStatus: r.verification_status,
     createdAt: r.created_at.toISOString(),
   }))
 }
@@ -46,7 +45,6 @@ export async function getNearby(
       weight: r.weight,
       distanceKm: Math.round(Number(r.distance_km) * 100) / 100,
       reportId: r.report_id,
-      verificationStatus: r.verification_status,
       createdAt: r.created_at.toISOString(),
     })
   }
@@ -82,23 +80,10 @@ export async function getStats(filters: reportRepo.HeatmapFilters = {}): Promise
   }
 }
 
-async function createAlertsForReport(
-  reportId: string,
-  alertType: 'verified' | 'ai_suspected',
-): Promise<number> {
+/** Create nearby-farmer alerts after an officer verifies a report. */
+export async function createAlertsForVerifiedReport(reportId: string): Promise<number> {
   const report = await reportRepo.findReportById(reportId)
-  if (!report) return 0
-
-  const confidence = Number(report.confidence ?? 0)
-  const isReviewedVerified =
-    report.status === 'verified' &&
-    (report.reviewed_by_officer != null || report.reviewed_by_admin != null)
-  const isHighConfidencePending =
-    report.status === 'pending' &&
-    confidence > reportRepo.AI_SUSPECTED_CONFIDENCE_THRESHOLD
-
-  if (alertType === 'verified' && !isReviewedVerified) return 0
-  if (alertType === 'ai_suspected' && !isHighConfidencePending) return 0
+  if (!report || report.status !== 'verified') return 0
 
   const farm = await reportRepo.findReportFarmCoords(reportId)
   if (!farm) return 0
@@ -119,29 +104,10 @@ async function createAlertsForReport(
       farmerUserId: n.farmer_user_id,
       farmId: n.farm_id,
       diseaseType,
-      alertType,
       distanceKm,
-      message:
-        alertType === 'verified'
-          ? `Verified outbreak of ${diseaseType} reported approximately ${distanceKm} km from your farm.`
-          : `AI-suspected case of ${diseaseType} reported approximately ${distanceKm} km from your farm. This has not been officer verified yet.`,
+      message: `Verified outbreak of ${diseaseType} reported approximately ${distanceKm} km from your farm.`,
     }
   })
 
-  return alertRepo.upsertAlerts(alerts)
-}
-
-/** Create nearby-farmer alerts after an officer or admin verifies a report. */
-export async function createAlertsForVerifiedReport(reportId: string): Promise<number> {
-  return createAlertsForReport(reportId, 'verified')
-}
-
-/** Create nearby-farmer alerts for high-confidence pending AI reports. */
-export async function createAlertsForSuspectedReport(reportId: string): Promise<number> {
-  return createAlertsForReport(reportId, 'ai_suspected')
-}
-
-/** Remove outbreak alerts when a report is rejected. */
-export async function deleteAlertsForRejectedReport(reportId: string): Promise<number> {
-  return alertRepo.deleteAlertsForReport(reportId)
+  return alertRepo.insertAlertsIgnoreConflicts(alerts)
 }

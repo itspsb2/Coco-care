@@ -43,10 +43,6 @@ export const authApi = {
     const { data } = await apiClient.get<User>('/auth/me')
     return data
   },
-  changePassword: async (payload: { currentPassword: string; newPassword: string }) => {
-    const { data } = await apiClient.patch<{ ok: boolean }>('/auth/password', payload)
-    return data
-  },
 }
 
 export const farmApi = {
@@ -56,24 +52,8 @@ export const farmApi = {
     )
     return data
   },
-  updateProfile: async (payload: { name?: string; email?: string | null; phone?: string | null }) => {
-    const { data } = await apiClient.patch<User>('/farmers/profile', payload)
-    return data
-  },
-  changePassword: async (payload: { currentPassword: string; newPassword: string }) => {
-    const { data } = await apiClient.patch<{ ok: boolean }>('/farmers/password', payload)
-    return data
-  },
   create: async (farm: Omit<Farm, 'id'>) => {
     const { data } = await apiClient.post<Farm>('/farms', farm)
-    return data
-  },
-  update: async (id: string, farm: Omit<Farm, 'id'>) => {
-    const { data } = await apiClient.patch<Farm>(`/farms/${id}`, farm)
-    return data
-  },
-  delete: async (id: string) => {
-    const { data } = await apiClient.delete<{ ok: boolean }>(`/farms/${id}`)
     return data
   },
 }

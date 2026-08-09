@@ -59,13 +59,10 @@ export function Notifications() {
     })
 
     diseaseAlerts.forEach((a) => {
-      const isSuspected = a.alertType === 'ai_suspected'
       items.push({
         id: a.id,
-        type: isSuspected ? 'info' : 'alert',
-        title: isSuspected
-          ? `AI-suspected nearby ${a.diseaseType}`
-          : `Verified nearby ${a.diseaseType}`,
+        type: 'alert',
+        title: `Nearby ${a.diseaseType}`,
         message: a.message,
         time: new Date(a.createdAt).toLocaleString(),
         read: a.read,

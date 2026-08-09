@@ -10,20 +10,7 @@ function riskColor(weight: number) {
 }
 
 function pointKey(point: HeatmapPoint) {
-  return `${point.lat.toFixed(4)},${point.lng.toFixed(4)},${point.diseaseType},${point.verificationStatus},${point.createdAt ?? ''}`
-}
-
-function markerStyle(point: HeatmapPoint) {
-  if (point.verificationStatus === 'ai_suspected') {
-    return {
-      color: '#7c3aed',
-      fillColor: '#f59e0b',
-      dashArray: '4 4',
-    }
-  }
-
-  const color = riskColor(point.weight)
-  return { color, fillColor: color }
+  return `${point.lat.toFixed(4)},${point.lng.toFixed(4)},${point.diseaseType}`
 }
 
 function MapFlyTo({ point }: { point: HeatmapPoint | null }) {
@@ -47,8 +34,6 @@ type OutbreakMarkerProps = {
 function OutbreakMarker({ point, selected, openPopup }: OutbreakMarkerProps) {
   const markerRef = useRef<LeafletCircleMarker>(null)
   const radius = selected ? 14 + point.weight * 10 : 8 + point.weight * 10
-  const style = markerStyle(point)
-  const isSuspected = point.verificationStatus === 'ai_suspected'
 
   useEffect(() => {
     if (openPopup) {
@@ -62,20 +47,16 @@ function OutbreakMarker({ point, selected, openPopup }: OutbreakMarkerProps) {
       center={[point.lat, point.lng]}
       radius={radius}
       pathOptions={{
-        ...style,
+        color: riskColor(point.weight),
+        fillColor: riskColor(point.weight),
         fillOpacity: selected ? 0.85 : 0.65,
-        weight: selected ? 4 : isSuspected ? 3 : 2,
+        weight: selected ? 4 : 2,
       }}
     >
       <Popup>
-        <div className="text-sm space-y-1">
-          <div>
-            <strong>{point.diseaseType}</strong>
-            <span className="text-gray-600"> - {Math.round(point.weight * 100)}% confidence</span>
-          </div>
-          <div className={isSuspected ? 'text-amber-700' : 'text-green-700'}>
-            {isSuspected ? 'AI-suspected, not officer verified' : 'Officer/admin verified'}
-          </div>
+        <div className="text-sm">
+          <strong>{point.diseaseType}</strong>
+          <span className="text-gray-600"> — {Math.round(point.weight * 100)}% confidence</span>
         </div>
       </Popup>
     </CircleMarker>

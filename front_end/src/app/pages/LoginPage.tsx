@@ -4,48 +4,15 @@ import loginLogo from "@/imports/login-logo.png";
 import { useState } from "react";
 import { motion } from "motion/react";
 import { useAuth, getRoleHomePath } from "@/contexts/AuthContext";
-import { authApi } from "@/api/services";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/app/components/ui/dialog";
-
-function getApiErrorMessage(err: unknown, fallback: string) {
-  const axiosErr = err as {
-    code?: string
-    message?: string
-    response?: { data?: { message?: string } }
-  }
-  const apiMessage = axiosErr.response?.data?.message
-  if (apiMessage) return apiMessage
-  if (
-    axiosErr.code === 'ERR_NETWORK' ||
-    axiosErr.message?.toLowerCase().includes('network')
-  ) {
-    return 'Cannot reach the server. Make sure the backend is running on http://localhost:3000.'
-  }
-  return fallback
-}
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login, logout } = useAuth();
+  const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resetOpen, setResetOpen] = useState(false);
-  const [resetUsername, setResetUsername] = useState("");
-  const [resetCurrentPassword, setResetCurrentPassword] = useState("");
-  const [resetNewPassword, setResetNewPassword] = useState("");
-  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
-  const [resetError, setResetError] = useState("");
-  const [resetLoading, setResetLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,52 +22,28 @@ export function LoginPage() {
       const user = await login({ username, password });
       navigate(getRoleHomePath(user.role));
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Invalid username or password. Please try again.'))
+      const axiosErr = err as {
+        code?: string
+        message?: string
+        response?: { data?: { message?: string } }
+      }
+      const apiMessage = axiosErr.response?.data?.message
+      if (apiMessage) {
+        setError(apiMessage)
+      } else if (
+        axiosErr.code === 'ERR_NETWORK' ||
+        axiosErr.message?.toLowerCase().includes('network')
+      ) {
+        setError(
+          'Cannot reach the server. Make sure the backend is running on http://localhost:3000.',
+        )
+      } else {
+        setError('Invalid username or password. Please try again.')
+      }
     } finally {
       setLoading(false);
     }
   };
-
-  const openPasswordReset = () => {
-    setResetUsername(username)
-    setResetCurrentPassword(password)
-    setResetNewPassword('')
-    setResetConfirmPassword('')
-    setResetError('')
-    setResetOpen(true)
-  }
-
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setResetError('')
-    if (resetNewPassword !== resetConfirmPassword) {
-      setResetError('New passwords do not match.')
-      return
-    }
-
-    let didLogin = false
-    setResetLoading(true)
-    try {
-      const user = await login({
-        username: resetUsername,
-        password: resetCurrentPassword,
-      })
-      didLogin = true
-      await authApi.changePassword({
-        currentPassword: resetCurrentPassword,
-        newPassword: resetNewPassword,
-      })
-      setUsername(resetUsername)
-      setPassword(resetNewPassword)
-      setResetOpen(false)
-      navigate(getRoleHomePath(user.role))
-    } catch (err) {
-      if (didLogin) logout()
-      setResetError(getApiErrorMessage(err, 'Could not change password. Please try again.'))
-    } finally {
-      setResetLoading(false)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
@@ -214,14 +157,13 @@ export function LoginPage() {
                 </motion.button>
               </motion.div>
               <div className="text-right mt-2">
-                <motion.button
+                <motion.a 
                   whileHover={{ x: 3 }}
-                  type="button"
-                  onClick={openPasswordReset}
+                  href="#" 
                   className="text-sm text-gray-500 hover:text-[#2d5016] transition-colors inline-block"
                 >
                   Forgot password?
-                </motion.button>
+                </motion.a>
               </div>
             </motion.div>
 
@@ -274,87 +216,6 @@ export function LoginPage() {
           </form>
         </motion.div>
       </div>
-
-      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Change Password</DialogTitle>
-            <DialogDescription>
-              Confirm your account before setting a new password.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form id="login-password-reset-form" onSubmit={handlePasswordReset} className="grid gap-3">
-            <label className="space-y-1">
-              <span className="text-sm text-gray-600">NIC Number</span>
-              <input
-                type="text"
-                value={resetUsername}
-                onChange={(e) => setResetUsername(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e]/30"
-                autoComplete="username"
-                required
-              />
-            </label>
-            <label className="space-y-1">
-              <span className="text-sm text-gray-600">Current password</span>
-              <input
-                type="password"
-                value={resetCurrentPassword}
-                onChange={(e) => setResetCurrentPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e]/30"
-                autoComplete="current-password"
-                required
-              />
-            </label>
-            <label className="space-y-1">
-              <span className="text-sm text-gray-600">New password</span>
-              <input
-                type="password"
-                value={resetNewPassword}
-                onChange={(e) => setResetNewPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e]/30"
-                autoComplete="new-password"
-                minLength={6}
-                required
-              />
-            </label>
-            <label className="space-y-1">
-              <span className="text-sm text-gray-600">Confirm new password</span>
-              <input
-                type="password"
-                value={resetConfirmPassword}
-                onChange={(e) => setResetConfirmPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e]/30"
-                autoComplete="new-password"
-                minLength={6}
-                required
-              />
-            </label>
-            {resetError ? (
-              <p className="text-xs text-red-600">{resetError}</p>
-            ) : null}
-          </form>
-
-          <DialogFooter>
-            <button
-              type="button"
-              onClick={() => setResetOpen(false)}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              form="login-password-reset-form"
-              disabled={resetLoading}
-              className="px-4 py-2 text-sm bg-[#2d5016] text-white rounded-lg hover:bg-[#1a2e1a] disabled:opacity-60"
-            >
-              {resetLoading ? 'Saving...' : 'Change Password'}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

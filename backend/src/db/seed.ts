@@ -225,38 +225,18 @@ async function seedGallePendingReport(farmerId: string, galleFarmId: string) {
 
 async function seed() {
   getPool()
+  const passwordHash = await hashPassword(DEFAULT_PASSWORD)
+
   const users = [
-    {
-      username: 'akeel',
-      password: DEFAULT_PASSWORD,
-      name: 'Akeel Bandara',
-      phone: '0771234567',
-      role: 'farmer' as const,
-    },
+    { username: 'akeel', name: 'Akeel Bandara', phone: '0771234567', role: 'farmer' as const },
     {
       username: 'officer1',
-      password: 'officer123',
       name: 'Officer Silva',
       phone: '0777654321',
       role: 'officer' as const,
       assignedRegion: 'Kurunegala',
     },
-    {
-      username: 'admin',
-      password: DEFAULT_PASSWORD,
-      name: 'System Admin',
-      phone: null,
-      role: 'admin' as const,
-      email: 'admin@cococare.lk',
-    },
-    {
-      username: 'admin1',
-      password: 'admin123',
-      name: 'Admin One',
-      phone: null,
-      role: 'admin' as const,
-      email: 'admin1@cococare.lk',
-    },
+    { username: 'admin', name: 'System Admin', phone: null, role: 'admin' as const, email: 'admin@cococare.lk' },
   ]
 
   let farmerId: string | null = null
@@ -265,7 +245,6 @@ async function seed() {
 
   for (const u of users) {
     let user = await userRepo.findByUsername(u.username, u.role)
-    const passwordHash = await hashPassword(u.password)
     if (!user) {
       user = await userRepo.createUser({
         username: u.username,
@@ -278,13 +257,10 @@ async function seed() {
         assignedRegion: 'assignedRegion' in u ? u.assignedRegion : undefined,
       })
       console.log(`Created user: ${u.username}`)
-    } else {
-      await userRepo.setPassword(user.id, passwordHash)
-      if (u.role === 'officer' && 'assignedRegion' in u && u.assignedRegion && !user.assigned_region) {
-        await userRepo.updateUser(user.id, { assignedRegion: u.assignedRegion })
-        user = (await userRepo.findById(user.id, 'officer'))!
-        console.log(`Updated officer region: ${u.username} → ${u.assignedRegion}`)
-      }
+    } else if (u.role === 'officer' && 'assignedRegion' in u && u.assignedRegion && !user.assigned_region) {
+      await userRepo.updateUser(user.id, { assignedRegion: u.assignedRegion })
+      user = (await userRepo.findById(user.id, 'officer'))!
+      console.log(`Updated officer region: ${u.username} → ${u.assignedRegion}`)
     }
 
     if (u.role === 'farmer') {
@@ -314,7 +290,7 @@ async function seed() {
   }
 
   await closePool()
-  console.log('Seed complete. Demo logins: akeel/password, officer1/officer123, admin/password, admin1/admin123')
+  console.log(`Seed complete. Default password for all users: "${DEFAULT_PASSWORD}"`)
 }
 
 seed().catch((err) => {

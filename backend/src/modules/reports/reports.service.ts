@@ -63,8 +63,6 @@ export async function reviewReport(
 
   if (action === 'verify') {
     await diseaseMapService.createAlertsForVerifiedReport(id)
-  } else {
-    await diseaseMapService.deleteAlertsForRejectedReport(id)
   }
 
   return updated

@@ -20,10 +20,6 @@ export function badRequest(message: string) {
   return createError(message, 400)
 }
 
-export function conflict(message: string) {
-  return createError(message, 409)
-}
-
 export function serviceUnavailable(message: string) {
   return createError(message, 503)
 }

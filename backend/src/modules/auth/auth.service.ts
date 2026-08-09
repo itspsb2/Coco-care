@@ -116,19 +116,3 @@ export async function me(userId: string): Promise<User> {
   if (!user) throw unauthorized()
   return toPublicUser(user)
 }
-
-export async function changePassword(
-  userId: string,
-  payload: { currentPassword: string; newPassword: string },
-) {
-  const user = await userRepo.findByIdAnyRole(userId)
-  if (!user) throw unauthorized()
-
-  const passwordOk = await verifyPassword(payload.currentPassword, user.password_hash)
-  if (!passwordOk) throw badRequest('Current password is incorrect')
-
-  const passwordHash = await hashPassword(payload.newPassword)
-  await userRepo.setPassword(userId, passwordHash)
-  await userRepo.clearAdminPassword(userId)
-  return { ok: true }
-}
