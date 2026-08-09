@@ -186,6 +186,34 @@ export interface LeafPrediction {
   probability: number
 }
 
+export interface StemDiagnosisDetail {
+  code: string
+  typeLabel: string
+  matchScore: number
+  matchBandLabel: string
+  differentiation: string
+  severity: string
+  severityScore: number
+  inconclusive: boolean
+  evidence: string[]
+  rankings: Array<{
+    code: string
+    name: string
+    category: string
+    matchScore: number
+  }>
+  cause: string
+  riskFactors: string[]
+  whatHappensIfWorse: string
+  whatToDoNow: string
+  prevention: string[]
+  management: string[]
+  officerReferral: boolean
+  referralPriority?: string
+  disclaimer: string
+  rbbCrossCheckRpw?: boolean
+}
+
 export interface DiagnosisResult {
   id: string
   category?: 'leaves' | 'stem' | 'bud' | 'fruit' | 'whole-tree'
@@ -200,6 +228,7 @@ export interface DiagnosisResult {
   matchLevel?: 'high' | 'moderate' | 'uncertain'
   secondaryConditions?: string[]
   officerAlert?: string
+  stemDetail?: StemDiagnosisDetail
 }
 
 export type WeatherIcon = 'sun' | 'partly' | 'rain' | 'cloud'

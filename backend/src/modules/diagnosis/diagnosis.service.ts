@@ -9,6 +9,10 @@ import {
   getMatchLevelLabel,
   scoreLeafQuestionnaire,
 } from '../../services/leafQuestionnaire.service.js'
+import {
+  getMatchLevelLabel as getStemMatchLevelLabel,
+  scoreStemQuestionnaire,
+} from '../../services/stemQuestionnaire.service.js'
 import { fuseDiagnosis } from '../../services/fusion.service.js'
 import { env } from '../../config/env.js'
 import { notFound, forbidden, badRequest } from '../../utils/errors.js'
@@ -109,6 +113,76 @@ export async function submitDiagnosis(
       matchLevel,
       secondaryConditions,
       officerAlert,
+    }
+  }
+
+  if (category === 'stem') {
+    const answered = Object.values(payload.symptoms).some(
+      (v) => v === true || (typeof v === 'string' && v.trim().length > 0 && v !== 'unsure'),
+    )
+    if (!answered) {
+      throw badRequest('Answer the stem & trunk symptom questions before submitting')
+    }
+
+    const scored = scoreStemQuestionnaire(payload.symptoms)
+    const status = resolveStatus(scored.confidence)
+    const matchLabel = getStemMatchLevelLabel(scored.matchLevel)
+    const advice = scored.inconclusive
+      ? `${matchLabel}. ${scored.finalResult}. ${scored.whatToDoNow} ${scored.disclaimer}`
+      : `${matchLabel}. Most likely: ${scored.finalResult} (${Math.round(scored.confidence * 100)}% symptom match, ${scored.severity} severity). ${scored.whatToDoNow} ${scored.disclaimer}`
+
+    if (imageUrl?.startsWith('data:')) {
+      imageUrl = await uploadImage(imageUrl, `diagnosis/${userId}/${Date.now()}.jpg`)
+    }
+
+    const report = await reportRepo.createReport({
+      farmId: payload.farmId,
+      userId,
+      imageUrl,
+      symptoms: payload.symptoms,
+      imageResult: 'Stem & trunk questionnaire',
+      symptomResult: scored.finalResult,
+      finalResult: scored.finalResult,
+      confidence: scored.confidence,
+      advice,
+      status,
+    })
+
+    return {
+      id: report.id,
+      category,
+      imageResult: 'Stem & trunk questionnaire',
+      symptomResult: scored.finalResult,
+      finalResult: scored.finalResult,
+      confidence: scored.confidence,
+      status,
+      advice,
+      predictions: scored.predictions,
+      matchLevel: scored.matchLevel,
+      secondaryConditions: scored.secondaryConditions,
+      officerAlert: scored.officerAlert,
+      stemDetail: {
+        code: scored.code,
+        typeLabel: scored.typeLabel,
+        matchScore: Math.round(scored.confidence * 1000) / 10,
+        matchBandLabel: scored.matchBandLabel,
+        differentiation: scored.differentiation,
+        severity: scored.severity,
+        severityScore: scored.severityScore,
+        inconclusive: scored.inconclusive,
+        evidence: scored.evidence,
+        rankings: scored.rankings,
+        cause: scored.cause,
+        riskFactors: scored.riskFactors,
+        whatHappensIfWorse: scored.whatHappensIfWorse,
+        whatToDoNow: scored.whatToDoNow,
+        prevention: scored.prevention,
+        management: scored.management,
+        officerReferral: scored.officerReferral,
+        referralPriority: scored.referralPriority,
+        disclaimer: scored.disclaimer,
+        rbbCrossCheckRpw: scored.rbbCrossCheckRpw,
+      },
     }
   }
 

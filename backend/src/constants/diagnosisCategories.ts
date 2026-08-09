@@ -26,19 +26,46 @@ export const CATEGORY_DISEASES: Record<Exclude<DiagnosisCategory, 'leaves'>, Cat
     {
       name: 'Stem Bleeding Disease',
       symptoms: [
-        'Dark reddish brown liquid from trunk',
-        'Cracked bark',
-        'Stem wounds',
-        'Internal rotting',
+        'Reddish-brown rust liquid',
+        'Longitudinal bark cracks',
+        'Black dried patches',
+        'Brown fibrous decay',
       ],
     },
     {
-      name: 'Ganoderma Butt Rot',
+      name: 'Ganoderma / Basal Stem Rot',
       symptoms: [
-        'Wilting despite adequate water',
-        'Ganoderma conks at tree base',
-        'Discolored lower fronds',
-        'Softening trunk base',
+        'Bracket fungus at base',
+        'Basal bleeding',
+        'Basal tissue decay',
+        'General palm decline',
+      ],
+    },
+    {
+      name: 'Red Palm Weevil Infestation',
+      symptoms: [
+        'Circular trunk/crown holes',
+        'Chewed fibres / frass',
+        'Brown viscous fluid',
+        'Internal crunching sounds',
+      ],
+    },
+    {
+      name: 'Black / Rhinoceros Beetle Damage',
+      symptoms: [
+        'Bud/crown entry hole',
+        'Fresh frass at entrance',
+        'V-shaped leaf cuts',
+        'Malformed young leaves',
+      ],
+    },
+    {
+      name: 'Termite Infestation',
+      symptoms: [
+        'Mud runways on trunk',
+        'Visible termites',
+        'Bark peeling / eaten',
+        'Weak tissue beneath bark',
       ],
     },
   ],
