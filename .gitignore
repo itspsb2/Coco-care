@@ -14,6 +14,7 @@ MLMODEL.md
 # Plans and notes
 *.plan.md
 plans/
+scripts/
 docs/plans/
 fertilizer.md
 leda*.md
