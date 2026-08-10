@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import { env } from './config/env.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import authRoutes from './modules/auth/auth.routes.js'
 import farmerRoutes from './modules/farmer/farmer.routes.js'
@@ -17,12 +18,14 @@ export function createApp() {
 
   app.use(
     cors({
-      origin: [
-        'http://localhost:5173',
-        'http://127.0.0.1:5173',
-        'http://localhost:5174',
-        'http://127.0.0.1:5174',
-      ],
+      origin(origin, callback) {
+        if (!origin || env.frontendOrigins.includes(origin)) {
+          callback(null, true)
+          return
+        }
+
+        callback(new Error(`CORS origin not allowed: ${origin}`))
+      },
       credentials: true,
     }),
   )

@@ -1,10 +1,29 @@
 import 'dotenv/config'
 
+const defaultFrontendOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+]
+
+function parseOrigins(value?: string) {
+  if (!value) return defaultFrontendOrigins
+
+  const origins = value
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+
+  return origins.length > 0 ? origins : defaultFrontendOrigins
+}
+
 export const env = {
   port: Number(process.env.PORT) || 3000,
   databaseUrl: process.env.DATABASE_URL ?? '',
   jwtSecret: process.env.JWT_SECRET ?? 'change-me-in-production',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
+  frontendOrigins: parseOrigins(process.env.FRONTEND_ORIGINS ?? process.env.FRONTEND_ORIGIN),
   awsRegion: process.env.AWS_REGION ?? 'us-east-1',
   awsS3Bucket: process.env.AWS_S3_BUCKET ?? '',
   azureCvEndpoint: process.env.AZURE_CV_ENDPOINT ?? '',

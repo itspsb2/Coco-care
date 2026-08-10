@@ -115,7 +115,7 @@ describe('Officer region filtering', () => {
   testFn('GET /officer/reports/pending returns only reports in assigned region', async () => {
     const login = await request(app)
       .post('/auth/login')
-      .send({ username: 'officer1', password: 'password' })
+      .send({ username: 'officer1', password: 'officer123' })
 
     expect(login.status).toBe(200)
     const token = login.body.token as string
@@ -152,7 +152,7 @@ describe('Officer region filtering', () => {
 
     const officerLogin = await request(app)
       .post('/auth/login')
-      .send({ username: 'officer1', password: 'password' })
+      .send({ username: 'officer1', password: 'officer123' })
 
     const officerToken = officerLogin.body.token as string
 
@@ -201,7 +201,7 @@ describe('Officer region filtering', () => {
   testFn('GET /officer/reports/verified returns confirmed reports from all regions', async () => {
     const login = await request(app)
       .post('/auth/login')
-      .send({ username: 'officer1', password: 'password' })
+      .send({ username: 'officer1', password: 'officer123' })
 
     const token = login.body.token as string
 
@@ -217,5 +217,225 @@ describe('Officer region filtering', () => {
     }
     const regions = res.body.map((r: { region: string }) => String(r.region).toLowerCase())
     expect(regions.some((r: string) => r.includes('kurunegala'))).toBe(true)
+  })
+})
+
+describe('Farmer profile and farm management', () => {
+  async function login(username: string, password: string) {
+    const res = await request(app).post('/auth/login').send({ username, password })
+    expect(res.status).toBe(200)
+    return {
+      token: res.body.token as string,
+      user: res.body.user as { id: string; username: string },
+    }
+  }
+
+  async function createFarmer(suffix: string, password = 'password123') {
+    const admin = await login('admin', 'password')
+    const username = `farmer_${suffix}`
+    const created = await request(app)
+      .post('/admin/users')
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({
+        username,
+        password,
+        name: `Farmer ${suffix}`,
+        email: `${username}@example.com`,
+        phone: '0771112222',
+        role: 'farmer',
+      })
+
+    expect(created.status).toBe(201)
+    const farmer = await login(username, password)
+    return { ...farmer, password }
+  }
+
+  async function createFarm(token: string, suffix: string) {
+    const res = await request(app)
+      .post('/farms')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: `Farm ${suffix}`,
+        location: 'Kurunegala',
+        latitude: 7.4818,
+        longitude: 80.365,
+        acreage: 3.5,
+        treeCount: 120,
+      })
+
+    expect(res.status).toBe(200)
+    return res.body as { id: string }
+  }
+
+  it('allows a farmer to update basic profile fields only', async () => {
+    if (!dbReady) return
+    const suffix = `profile_${Date.now()}`
+    const farmer = await createFarmer(suffix)
+
+    const update = await request(app)
+      .patch('/farmers/profile')
+      .set('Authorization', `Bearer ${farmer.token}`)
+      .send({
+        name: 'Updated Farmer',
+        email: 'updated.farmer@example.com',
+        phone: '0779998888',
+        username: 'ignored_username',
+        role: 'admin',
+      })
+
+    expect(update.status).toBe(200)
+    expect(update.body.name).toBe('Updated Farmer')
+    expect(update.body.email).toBe('updated.farmer@example.com')
+    expect(update.body.phone).toBe('0779998888')
+    expect(update.body.username).toBe(farmer.user.username)
+    expect(update.body.role).toBe('farmer')
+
+    const profile = await request(app)
+      .get('/farmers/profile')
+      .set('Authorization', `Bearer ${farmer.token}`)
+
+    expect(profile.status).toBe(200)
+    expect(profile.body.user.name).toBe('Updated Farmer')
+  })
+
+  it('changes farmer password only with the correct current password', async () => {
+    if (!dbReady) return
+    const suffix = `password_${Date.now()}`
+    const farmer = await createFarmer(suffix, 'oldpassword')
+
+    const wrong = await request(app)
+      .patch('/farmers/password')
+      .set('Authorization', `Bearer ${farmer.token}`)
+      .send({ currentPassword: 'wrongpassword', newPassword: 'newpassword' })
+
+    expect(wrong.status).toBe(400)
+
+    const changed = await request(app)
+      .patch('/farmers/password')
+      .set('Authorization', `Bearer ${farmer.token}`)
+      .send({ currentPassword: 'oldpassword', newPassword: 'newpassword' })
+
+    expect(changed.status).toBe(200)
+    expect(changed.body.ok).toBe(true)
+
+    const oldLogin = await request(app)
+      .post('/auth/login')
+      .send({ username: farmer.user.username, password: 'oldpassword' })
+    expect(oldLogin.status).toBe(401)
+
+    const newLogin = await request(app)
+      .post('/auth/login')
+      .send({ username: farmer.user.username, password: 'newpassword' })
+    expect(newLogin.status).toBe(200)
+  })
+
+  it('changes password through the shared auth password route', async () => {
+    if (!dbReady) return
+    const suffix = `auth_password_${Date.now()}`
+    const farmer = await createFarmer(suffix, 'oldpassword')
+
+    const changed = await request(app)
+      .patch('/auth/password')
+      .set('Authorization', `Bearer ${farmer.token}`)
+      .send({ currentPassword: 'oldpassword', newPassword: 'newpassword' })
+
+    expect(changed.status).toBe(200)
+    expect(changed.body.ok).toBe(true)
+
+    const newLogin = await request(app)
+      .post('/auth/login')
+      .send({ username: farmer.user.username, password: 'newpassword' })
+    expect(newLogin.status).toBe(200)
+  })
+
+  it('allows a farmer to edit only their own farm', async () => {
+    if (!dbReady) return
+    const suffix = `farm_edit_${Date.now()}`
+    const farmer = await createFarmer(`${suffix}_owner`)
+    const otherFarmer = await createFarmer(`${suffix}_other`)
+    const farm = await createFarm(farmer.token, suffix)
+
+    const updated = await request(app)
+      .patch(`/farms/${farm.id}`)
+      .set('Authorization', `Bearer ${farmer.token}`)
+      .send({
+        name: 'Updated Estate',
+        location: 'Matale',
+        latitude: 7.4675,
+        longitude: 80.6234,
+        acreage: 6.25,
+        treeCount: 210,
+      })
+
+    expect(updated.status).toBe(200)
+    expect(updated.body.name).toBe('Updated Estate')
+    expect(updated.body.location).toBe('Matale')
+    expect(updated.body.acreage).toBe(6.25)
+    expect(updated.body.treeCount).toBe(210)
+
+    const forbidden = await request(app)
+      .patch(`/farms/${farm.id}`)
+      .set('Authorization', `Bearer ${otherFarmer.token}`)
+      .send({
+        name: 'Hijacked Estate',
+        location: 'Galle',
+        latitude: 6.0535,
+        longitude: 80.221,
+        acreage: 2,
+        treeCount: 50,
+      })
+
+    expect(forbidden.status).toBe(404)
+  })
+
+  it('deletes a farmer-owned farm with no report or alert history', async () => {
+    if (!dbReady) return
+    const suffix = `farm_delete_${Date.now()}`
+    const farmer = await createFarmer(suffix)
+    const farm = await createFarm(farmer.token, suffix)
+
+    const deleted = await request(app)
+      .delete(`/farms/${farm.id}`)
+      .set('Authorization', `Bearer ${farmer.token}`)
+
+    expect(deleted.status).toBe(200)
+    expect(deleted.body.ok).toBe(true)
+
+    const profile = await request(app)
+      .get('/farmers/profile')
+      .set('Authorization', `Bearer ${farmer.token}`)
+
+    expect(profile.status).toBe(200)
+    expect(profile.body.farms.some((f: { id: string }) => f.id === farm.id)).toBe(false)
+  })
+
+  it('blocks deleting a farm with report history', async () => {
+    if (!dbReady) return
+    const suffix = `farm_block_${Date.now()}`
+    const farmer = await createFarmer(suffix)
+    const farm = await createFarm(farmer.token, suffix)
+
+    await getPool().query(
+      `INSERT INTO disease_reports
+       (farm_id, user_id, symptoms, image_result, symptom_result, final_result, confidence, advice, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')`,
+      [
+        farm.id,
+        farmer.user.id,
+        JSON.stringify({ leafDiscoloration: true }),
+        'Leaf Blight',
+        'Leaf Blight',
+        'Leaf Blight',
+        0.7,
+        'Monitor the farm and contact an officer if symptoms spread.',
+      ],
+    )
+
+    const deleted = await request(app)
+      .delete(`/farms/${farm.id}`)
+      .set('Authorization', `Bearer ${farmer.token}`)
+
+    expect(deleted.status).toBe(409)
+    expect(deleted.body.message).toMatch(/cannot be deleted/i)
   })
 })

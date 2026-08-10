@@ -12,6 +12,10 @@ export function riskLevel(weight: number) {
   return 'low'
 }
 
+function verificationLabel(status: HeatmapPoint['verificationStatus']) {
+  return status === 'ai_suspected' ? 'AI suspected' : 'Verified'
+}
+
 export function DiseaseHeatmap() {
   const [diseaseFilter, setDiseaseFilter] = useState('')
   const [districtFilter, setDistrictFilter] = useState('')
@@ -75,7 +79,9 @@ export function DiseaseHeatmap() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl text-[#1a2e1a] mb-2">Disease Heatmap & Risk Monitoring</h1>
-        <p className="text-[#6b7c6b]">Monitor disease spread across Sri Lanka from verified outbreak data.</p>
+        <p className="text-[#6b7c6b]">
+          Monitor disease spread across Sri Lanka from verified cases and high-confidence AI-suspected reports.
+        </p>
       </div>
 
       <div className="flex gap-4 flex-wrap items-end">
@@ -164,7 +170,7 @@ export function DiseaseHeatmap() {
             <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-sm p-6 text-white">
               <h3 className="text-lg mb-2">High Risk Alerts</h3>
               <div className="text-3xl mb-1">{highRiskCount}</div>
-              <p className="text-red-100 text-sm">Verified reports with confidence ≥ 70%</p>
+              <p className="text-red-100 text-sm">Visible outbreak reports with confidence at least 70%</p>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
@@ -194,13 +200,38 @@ export function DiseaseHeatmap() {
           <h2 className="text-xl text-[#1a2e1a] mb-4">Nearby Outbreak Alerts</h2>
           <div className="space-y-3">
             {nearbyOutbreaks.slice(0, 5).map((outbreak, i) => (
-              <div key={i} className="p-4 bg-red-50 rounded-lg border border-red-200">
+              <div
+                key={i}
+                className={`p-4 rounded-lg border ${
+                  outbreak.verificationStatus === 'ai_suspected'
+                    ? 'bg-amber-50 border-amber-200'
+                    : 'bg-red-50 border-red-200'
+                }`}
+              >
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
+                  <AlertTriangle
+                    className={`w-5 h-5 mt-0.5 ${
+                      outbreak.verificationStatus === 'ai_suspected' ? 'text-amber-600' : 'text-red-600'
+                    }`}
+                  />
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-1">{outbreak.diseaseType}</h4>
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <h4 className="text-sm font-medium text-gray-900">{outbreak.diseaseType}</h4>
+                      <span
+                        className={`px-2 py-0.5 rounded text-xs ${
+                          outbreak.verificationStatus === 'ai_suspected'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-green-100 text-green-700'
+                        }`}
+                      >
+                        {verificationLabel(outbreak.verificationStatus)}
+                      </span>
+                    </div>
                     <p className="text-sm text-gray-700">
-                      {outbreak.distanceKm} km from {outbreak.farmName} — intensity {Math.round(outbreak.weight * 100)}%
+                      {outbreak.distanceKm} km from {outbreak.farmName} - intensity {Math.round(outbreak.weight * 100)}%
+                      {outbreak.verificationStatus === 'ai_suspected'
+                        ? '. This case has not been officer verified yet.'
+                        : ''}
                     </p>
                   </div>
                 </div>
@@ -233,13 +264,24 @@ function OutbreakPointCard({ point, selected, onSelect }: OutbreakPointCardProps
     >
       <div className="flex items-start justify-between mb-1">
         <div className="font-medium text-gray-900 text-sm">{point.diseaseType}</div>
-        <span className={`px-2 py-0.5 rounded text-xs ${
-          risk === 'high' ? 'bg-red-100 text-red-700' :
-          risk === 'medium' ? 'bg-orange-100 text-orange-700' :
-          'bg-green-100 text-green-700'
-        }`}>
-          {risk}
-        </span>
+        <div className="flex flex-wrap justify-end gap-1">
+          <span className={`px-2 py-0.5 rounded text-xs ${
+            risk === 'high' ? 'bg-red-100 text-red-700' :
+            risk === 'medium' ? 'bg-orange-100 text-orange-700' :
+            'bg-green-100 text-green-700'
+          }`}>
+            {risk}
+          </span>
+          <span
+            className={`px-2 py-0.5 rounded text-xs ${
+              point.verificationStatus === 'ai_suspected'
+                ? 'bg-amber-100 text-amber-800'
+                : 'bg-green-100 text-green-700'
+            }`}
+          >
+            {verificationLabel(point.verificationStatus)}
+          </span>
+        </div>
       </div>
       <div className="text-xs text-gray-500">{point.lat.toFixed(2)}, {point.lng.toFixed(2)}</div>
     </button>

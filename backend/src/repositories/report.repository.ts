@@ -194,7 +194,10 @@ export async function countPendingReports(): Promise<number> {
 
 export async function countVerifiedReports(): Promise<number> {
   const { rows } = await getPool().query<{ count: string }>(
-    `SELECT COUNT(*)::text AS count FROM disease_reports WHERE status = 'verified'`,
+    `SELECT COUNT(*)::text AS count
+     FROM disease_reports dr
+     WHERE dr.status = 'verified'
+       AND (dr.reviewed_by_officer IS NOT NULL OR dr.reviewed_by_admin IS NOT NULL)`,
   )
   return Number(rows[0]?.count ?? 0)
 }
@@ -204,6 +207,7 @@ export interface HeatmapRow {
   lng: number
   weight: number
   disease_type: string
+  verification_status: 'verified' | 'ai_suspected'
   created_at: Date
 }
 
@@ -224,6 +228,7 @@ export interface NearbyOutbreakRow {
   weight: number
   distance_km: number
   report_id: string
+  verification_status: 'verified' | 'ai_suspected'
   created_at: Date
 }
 
@@ -241,8 +246,22 @@ const HAVERSINE_KM = `
   )
 `
 
-function buildVerifiedHeatmapConditions(filters: HeatmapFilters = {}) {
-  const conditions = [`dr.status = 'verified'`]
+export const AI_SUSPECTED_CONFIDENCE_THRESHOLD = 0.9
+
+const REVIEWED_VERIFIED_CONDITION = `
+  (dr.status = 'verified' AND (dr.reviewed_by_officer IS NOT NULL OR dr.reviewed_by_admin IS NOT NULL))
+`
+
+const HIGH_CONFIDENCE_PENDING_CONDITION = `
+  (dr.status = 'pending' AND COALESCE(dr.confidence, 0) > ${AI_SUSPECTED_CONFIDENCE_THRESHOLD})
+`
+
+const VISIBLE_OUTBREAK_CONDITION = `
+  (${REVIEWED_VERIFIED_CONDITION} OR ${HIGH_CONFIDENCE_PENDING_CONDITION})
+`
+
+function buildVisibleOutbreakConditions(filters: HeatmapFilters = {}) {
+  const conditions = [VISIBLE_OUTBREAK_CONDITION]
   const params: unknown[] = []
 
   if (filters.diseaseType?.trim()) {
@@ -272,12 +291,16 @@ function buildVerifiedHeatmapConditions(filters: HeatmapFilters = {}) {
 export async function findVerifiedHeatmapPoints(
   filters: HeatmapFilters = {},
 ): Promise<HeatmapRow[]> {
-  const { conditions, params } = buildVerifiedHeatmapConditions(filters)
+  const { conditions, params } = buildVisibleOutbreakConditions(filters)
   const where = `WHERE ${conditions.join(' AND ')}`
   const { rows } = await getPool().query<HeatmapRow>(
     `SELECT f.latitude AS lat, f.longitude AS lng,
             COALESCE(dr.confidence, 0.5)::float AS weight,
             COALESCE(dr.final_result, 'Unknown') AS disease_type,
+            CASE
+              WHEN ${REVIEWED_VERIFIED_CONDITION} THEN 'verified'
+              ELSE 'ai_suspected'
+            END AS verification_status,
             dr.created_at
      FROM disease_reports dr
      JOIN farms f ON f.id = dr.farm_id
@@ -301,14 +324,19 @@ export async function findNearbyOutbreaks(
             COALESCE(dr.confidence, 0.5)::float AS weight,
             MIN((${HAVERSINE_KM})::float) AS distance_km,
             dr.id AS report_id,
+            CASE
+              WHEN ${REVIEWED_VERIFIED_CONDITION} THEN 'verified'
+              ELSE 'ai_suspected'
+            END AS verification_status,
             dr.created_at
      FROM farms ff
-     JOIN disease_reports dr ON dr.status = 'verified'
+     JOIN disease_reports dr ON ${VISIBLE_OUTBREAK_CONDITION}
      JOIN farms f ON f.id = dr.farm_id
      WHERE ff.user_id = $1
        AND dr.user_id != $1
        AND (${HAVERSINE_KM}) <= $2
-     GROUP BY ff.id, ff.name, f.latitude, f.longitude, dr.final_result, dr.confidence, dr.id, dr.created_at
+     GROUP BY ff.id, ff.name, f.latitude, f.longitude, dr.final_result, dr.confidence,
+              dr.id, dr.status, dr.reviewed_by_officer, dr.reviewed_by_admin, dr.created_at
      ORDER BY distance_km ASC, dr.created_at DESC`,
     [farmerUserId, radiusKm],
   )
@@ -327,7 +355,7 @@ export async function findReportFarmCoords(reportId: string): Promise<ReportFarm
 }
 
 export async function getVerifiedStats(highRiskThreshold: number, filters: HeatmapFilters = {}) {
-  const { conditions, params } = buildVerifiedHeatmapConditions(filters)
+  const { conditions, params } = buildVisibleOutbreakConditions(filters)
   const where = `WHERE ${conditions.join(' AND ')}`
 
   const byDisease = await getPool().query<{ disease_type: string; count: string }>(

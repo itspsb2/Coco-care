@@ -22,12 +22,8 @@ import {
   scoreFruitQuestionnaire,
 } from '../../services/fruitQuestionnaire.service.js'
 import { fuseDiagnosis } from '../../services/fusion.service.js'
-import { env } from '../../config/env.js'
+import * as diseaseMapService from '../diseaseMap/diseaseMap.service.js'
 import { notFound, forbidden, badRequest } from '../../utils/errors.js'
-
-function resolveStatus(confidence: number): 'verified' | 'pending' {
-  return confidence >= env.fusionConfidenceThreshold ? 'verified' : 'pending'
-}
 
 export async function submitDiagnosis(
   userId: string,
@@ -92,7 +88,7 @@ export async function submitDiagnosis(
       matchLevel = 'high'
     }
 
-    const status = resolveStatus(finalConfidence)
+    const status = 'pending' as const
 
     const report = await reportRepo.createReport({
       farmId: payload.farmId,
@@ -106,6 +102,8 @@ export async function submitDiagnosis(
       advice,
       status,
     })
+
+    await diseaseMapService.createAlertsForSuspectedReport(report.id)
 
     return {
       id: report.id,
@@ -133,7 +131,7 @@ export async function submitDiagnosis(
     }
 
     const scored = scoreStemQuestionnaire(payload.symptoms)
-    const status = resolveStatus(scored.confidence)
+    const status = 'pending' as const
     const matchLabel = getStemMatchLevelLabel(scored.matchLevel)
     const advice = scored.inconclusive
       ? `${matchLabel}. ${scored.finalResult}. ${scored.whatToDoNow} ${scored.disclaimer}`
@@ -155,6 +153,8 @@ export async function submitDiagnosis(
       advice,
       status,
     })
+
+    await diseaseMapService.createAlertsForSuspectedReport(report.id)
 
     return {
       id: report.id,
@@ -203,7 +203,7 @@ export async function submitDiagnosis(
     }
 
     const scored = scoreBudQuestionnaire(payload.symptoms)
-    const status = resolveStatus(scored.confidence)
+    const status = 'pending' as const
     const matchLabel = getBudMatchLevelLabel(scored.matchLevel)
     const leafHint = scored.suggestLeafModule
       ? ' If damage is mainly on older leaflets rather than the spear/bud, also try the Leaf diagnosis module.'
@@ -228,6 +228,8 @@ export async function submitDiagnosis(
       advice,
       status,
     })
+
+    await diseaseMapService.createAlertsForSuspectedReport(report.id)
 
     return {
       id: report.id,
@@ -277,7 +279,7 @@ export async function submitDiagnosis(
     }
 
     const scored = scoreFruitQuestionnaire(payload.symptoms)
-    const status = resolveStatus(scored.confidence)
+    const status = 'pending' as const
     const matchLabel = getFruitMatchLevelLabel(scored.matchLevel)
     const leafHint = scored.suggestLeafModule
       ? ' Main caterpillar signs are usually on leaves—also use the Leaf diagnosis module.'
@@ -302,6 +304,8 @@ export async function submitDiagnosis(
       advice,
       status,
     })
+
+    await diseaseMapService.createAlertsForSuspectedReport(report.id)
 
     return {
       id: report.id,
@@ -366,8 +370,10 @@ export async function submitDiagnosis(
     finalResult: fused.finalResult,
     confidence: fused.confidence,
     advice,
-    status: fused.status,
+    status: 'pending',
   })
+
+  await diseaseMapService.createAlertsForSuspectedReport(report.id)
 
   return {
     id: report.id,
@@ -376,7 +382,7 @@ export async function submitDiagnosis(
     symptomResult: symptom.disease,
     finalResult: fused.finalResult,
     confidence: fused.confidence,
-    status: fused.status === 'verified' ? 'verified' : 'pending',
+    status: 'pending',
     advice,
   }
 }
