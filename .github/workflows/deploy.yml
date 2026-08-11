@@ -1,0 +1,91 @@
+name: Deploy Coco Care
+
+on:
+  push:
+    branches:
+      - deploy/main-clean
+  workflow_dispatch:
+    inputs:
+      run_seed:
+        description: "Run backend seed script"
+        required: false
+        default: "false"
+      run_rag_ingest:
+        description: "Run RAG ingestion"
+        required: false
+        default: "false"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build backend
+        working-directory: backend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build frontend
+        working-directory: front_end
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy frontend to S3
+        run: |
+          aws s3 sync front_end/dist "s3://${{ secrets.FRONTEND_S3_BUCKET }}" --delete
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}" \
+            --paths "/*"
+
+      - name: Deploy backend on EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd ~/Coco-care
+            git fetch origin deploy/main-clean
+            git checkout deploy/main-clean
+            git reset --hard origin/deploy/main-clean
+
+            cd backend
+            npm ci
+            npm run build
+            npm run db:migrate
+
+            if [ "${{ github.event.inputs.run_seed }}" = "true" ]; then
+              npm run db:seed
+            fi
+
+            if [ "${{ github.event.inputs.run_rag_ingest }}" = "true" ]; then
+              npm run rag:ingest
+            fi
+
+            npm prune --omit=dev
+            pm2 restart coco-care-api --update-env
+            sleep 3
+            curl -fsS http://localhost:3000/health
