@@ -1,5 +1,7 @@
 -- RAG knowledge base
--- embedding column uses pgvector vector(768) type (enabled via 009_pgvector.sql migration)
+-- embedding column uses pgvector vector(768) type
+CREATE EXTENSION IF NOT EXISTS vector;
+
 CREATE TABLE IF NOT EXISTS knowledge_documents (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title       VARCHAR(255) NOT NULL,
