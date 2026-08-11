@@ -20,64 +20,14 @@ import {
   budQuestionnaireToSymptomsPayload,
   isBudQuestionnaireReady,
   type BudQuestionnaireState,
-  type YnUnsure,
 } from '@/app/diagnosis/budSymptomQuestionnaire'
-
-function Choice({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-xl border px-3 py-2.5 text-left text-sm transition-colors ${
-        active
-          ? 'border-[#2d5f2e] bg-emerald-50 font-semibold text-[#1a2e1a] ring-1 ring-[#2d5f2e]/25'
-          : 'border-gray-200 bg-white text-gray-700 hover:border-green-200 hover:bg-green-50/40'
-      }`}
-    >
-      {children}
-    </button>
-  )
-}
-
-function YnRow({
-  label,
-  value,
-  onChange,
-  safety,
-}: {
-  label: string
-  value: YnUnsure
-  onChange: (v: YnUnsure) => void
-  safety?: string
-}) {
-  return (
-    <div className="space-y-2">
-      <p className="text-sm font-medium text-gray-800">{label}</p>
-      {safety && <p className="text-xs text-amber-800">{safety}</p>}
-      <div className="flex flex-wrap gap-2">
-        {(
-          [
-            ['yes', 'Yes'],
-            ['no', 'No'],
-            ['unsure', 'Not sure'],
-          ] as const
-        ).map(([id, text]) => (
-          <Choice key={id} active={value === id} onClick={() => onChange(id)}>
-            {text}
-          </Choice>
-        ))}
-      </div>
-    </div>
-  )
-}
+import {
+  Choice,
+  QuizChoiceGrid,
+  QuizQuestion,
+  YnRow,
+} from '@/app/diagnosis/QuestionnaireChoices'
+import { QuestionnaireStepPager } from '@/app/diagnosis/QuestionnaireStepPager'
 
 export function BudDiseaseDiagnosis() {
   const [step, setStep] = useState(0)
@@ -212,24 +162,7 @@ export function BudDiseaseDiagnosis() {
         </div>
       )}
 
-      <div className="mb-6 flex gap-1.5 overflow-x-auto pb-1">
-        {BUD_STEPS.map((s, i) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setStep(i)}
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-              i === step
-                ? 'bg-[#2d5f2e] text-white'
-                : i < step
-                  ? 'bg-emerald-100 text-emerald-900'
-                  : 'bg-gray-100 text-gray-500'
-            }`}
-          >
-            {i + 1}. {s.title}
-          </button>
-        ))}
-      </div>
+      <QuestionnaireStepPager steps={BUD_STEPS} current={step} onChange={setStep} />
 
       <div className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm sm:p-6">
         <div className="mb-4 flex items-start gap-2">
@@ -241,10 +174,9 @@ export function BudDiseaseDiagnosis() {
         </div>
 
         {step === 0 && (
-          <div className="space-y-6">
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-800">Approximately how old is the palm?</p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="space-y-4">
+            <QuizQuestion label="Approximately how old is the palm?">
+              <QuizChoiceGrid>
                 {[
                   ['lt3', 'Less than 3 years'],
                   ['3to5', '3–5 years'],
@@ -256,13 +188,10 @@ export function BudDiseaseDiagnosis() {
                     {label}
                   </Choice>
                 ))}
-              </div>
-            </div>
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-800">
-                Does the central spear leaf look unhealthy?
-              </p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              </QuizChoiceGrid>
+            </QuizQuestion>
+            <QuizQuestion label="Does the central spear leaf look unhealthy?">
+              <QuizChoiceGrid>
                 {[
                   ['normal', 'Normal'],
                   ['dull', 'Slightly dull'],
@@ -279,8 +208,8 @@ export function BudDiseaseDiagnosis() {
                     {label}
                   </Choice>
                 ))}
-              </div>
-            </div>
+              </QuizChoiceGrid>
+            </QuizQuestion>
             <YnRow
               label="Can the spear leaf be pulled out unusually easily?"
               value={form.bc_q3_pullable}
@@ -290,10 +219,9 @@ export function BudDiseaseDiagnosis() {
         )}
 
         {step === 1 && (
-          <div className="space-y-6">
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-800">Is the base of the spear leaf discoloured?</p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="space-y-4">
+            <QuizQuestion label="Is the base of the spear leaf discoloured?">
+              <QuizChoiceGrid>
                 {[
                   ['no', 'No'],
                   ['yellow', 'Yellow'],
@@ -309,8 +237,8 @@ export function BudDiseaseDiagnosis() {
                     {label}
                   </Choice>
                 ))}
-              </div>
-            </div>
+              </QuizChoiceGrid>
+            </QuizQuestion>
             <YnRow
               label="Is the tissue around the bud soft or rotten?"
               value={form.bc_q5_soft_rot}
@@ -330,12 +258,9 @@ export function BudDiseaseDiagnosis() {
         )}
 
         {step === 2 && (
-          <div className="space-y-6">
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-800">
-                Are there visible holes in or around the crown?
-              </p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="space-y-4">
+            <QuizQuestion label="Are there visible holes in or around the crown?">
+              <QuizChoiceGrid cols={4}>
                 {[
                   ['none', 'None'],
                   ['one', 'One'],
@@ -350,12 +275,11 @@ export function BudDiseaseDiagnosis() {
                     {label}
                   </Choice>
                 ))}
-              </div>
-            </div>
+              </QuizChoiceGrid>
+            </QuizQuestion>
             {(form.bc_q8_holes === 'one' || form.bc_q8_holes === 'several') && (
-              <div>
-                <p className="mb-2 text-sm font-medium text-gray-800">Where is the hole mainly located?</p>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <QuizQuestion label="Where is the hole mainly located?">
+                <QuizChoiceGrid>
                   {[
                     ['bud_base', 'Base of bud'],
                     ['inside_crown', 'Inside crown'],
@@ -370,8 +294,8 @@ export function BudDiseaseDiagnosis() {
                       {label}
                     </Choice>
                   ))}
-                </div>
-              </div>
+                </QuizChoiceGrid>
+              </QuizQuestion>
             )}
             <YnRow
               label="Fresh chewed fibre / frass coming from the hole?"
@@ -387,7 +311,7 @@ export function BudDiseaseDiagnosis() {
         )}
 
         {step === 3 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <YnRow
               label="Chewing / crunching sounds inside the crown or trunk?"
               value={form.bc_q12_crunch}
@@ -423,7 +347,7 @@ export function BudDiseaseDiagnosis() {
         )}
 
         {step === 4 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <YnRow
               label="Brown patches mainly on very young / unopened crown leaves?"
               value={form.bc_q18_brown_patches}
@@ -444,9 +368,8 @@ export function BudDiseaseDiagnosis() {
               value={form.bc_q21_tilt}
               onChange={(v) => patch('bc_q21_tilt', v)}
             />
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-800">Are nearby crown fronds wilting?</p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <QuizQuestion label="Are nearby crown fronds wilting?">
+              <QuizChoiceGrid cols={4}>
                 {[
                   ['none', 'None'],
                   ['few', 'One / few'],
@@ -461,8 +384,8 @@ export function BudDiseaseDiagnosis() {
                     {label}
                   </Choice>
                 ))}
-              </div>
-            </div>
+              </QuizChoiceGrid>
+            </QuizQuestion>
             <YnRow
               label="Lower / older leaves still healthy green while crown is dying?"
               value={form.bc_q23_lower_green}
@@ -482,7 +405,7 @@ export function BudDiseaseDiagnosis() {
         )}
 
         {step === 5 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <YnRow
               label="Prolonged wet / high-humidity weather recently?"
               value={form.bc_q26_humidity}

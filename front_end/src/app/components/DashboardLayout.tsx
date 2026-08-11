@@ -10,43 +10,48 @@ import {
   Menu,
   X,
   LogOut,
-  Zap,
   Phone,
   Mail,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/contexts/AuthContext'
-import { reportsApi } from '@/api/services'
 import { CocoCareLogo } from '@/app/components/CocoCareLogo'
+
+const navigation = [
+  { name: 'Dashboard', shortName: 'Home', href: '/app', icon: LayoutDashboard },
+  {
+    name: 'Coconut Disease Diagnosis',
+    shortName: 'Diagnose',
+    href: '/app/disease-detection',
+    icon: Microscope,
+  },
+  { name: 'AI Chatbot', shortName: 'Chat', href: '/app/chatbot', icon: MessageSquare },
+  { name: 'Heatmap', shortName: 'Map', href: '/app/heatmap', icon: Map },
+  { name: 'Notifications', shortName: 'Alerts', href: '/app/notifications', icon: Bell },
+  { name: 'Profile', shortName: 'Profile', href: '/app/profile', icon: User },
+]
+
+function isNavActive(pathname: string, href: string) {
+  if (href === '/app') return pathname === '/app'
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
 
 export function DashboardLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(true)
   const [profileOpen, setProfileOpen] = useState(false)
-  const [fabOpen, setFabOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
-  const fabRef = useRef<HTMLDivElement>(null)
 
-  const { data: reports = [] } = useQuery({
-    queryKey: ['reports', 'my'],
-    queryFn: reportsApi.my,
-  })
-
-  const navigation = [
-    { name: 'Dashboard', href: '/app', icon: LayoutDashboard },
-    { name: 'Coconut Disease Diagnosis', href: '/app/disease-detection', icon: Microscope },
-    { name: 'AI Chatbot', href: '/app/chatbot', icon: MessageSquare },
-    { name: 'Heatmap', href: '/app/heatmap', icon: Map },
-    { name: 'Notifications', href: '/app/notifications', icon: Bell },
-    { name: 'Profile', href: '/app/profile', icon: User },
-  ]
-
-  const initials = (user?.name ?? 'U').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
-  const sidebarWide = mobileOpen || !collapsed
+  const initials = (user?.name ?? 'U')
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+  const sidebarWide = !collapsed
 
   const handleLogout = () => {
     logout()
@@ -58,162 +63,238 @@ export function DashboardLayout() {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setProfileOpen(false)
       }
-      if (fabRef.current && !fabRef.current.contains(e.target as Node)) {
-        setFabOpen(false)
-      }
     }
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
   }, [])
 
   useEffect(() => {
-    setMobileOpen(false)
+    setMobileDrawerOpen(false)
+    setProfileOpen(false)
   }, [location.pathname])
 
-  const toggleSidebar = () => {
-    if (window.matchMedia('(min-width: 1024px)').matches) {
-      setCollapsed((c) => !c)
-    } else {
-      setMobileOpen((o) => !o)
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (!mobileDrawerOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
     }
-  }
+  }, [mobileDrawerOpen])
+
+  const bottomNav = navigation.filter((item) =>
+    ['/app', '/app/disease-detection', '/app/chatbot', '/app/heatmap', '/app/profile'].includes(
+      item.href,
+    ),
+  )
 
   return (
-    <div
-      className="flex h-screen bg-gray-50 overflow-hidden"
-      style={{ '--sidebar-w': sidebarWide ? '16rem' : '4.5rem' } as React.CSSProperties}
-    >
-      {/* Sidebar */}
+    <div className="flex h-[100dvh] max-h-[100dvh] overflow-hidden bg-gray-50">
+      {/* Desktop sidebar */}
       <aside
         className={`
-          fixed lg:static inset-y-0 left-0 z-50 flex flex-col
-          bg-white border-r border-green-100 shadow-lg lg:shadow-none
-          transition-all duration-300 ease-in-out translate-x-0
-          ${mobileOpen ? 'w-64' : 'w-[4.5rem]'} ${collapsed ? 'lg:w-[4.5rem]' : 'lg:w-64'}
+          hidden lg:flex flex-col shrink-0 bg-white border-r border-green-100
+          transition-[width] duration-300 ease-in-out overflow-hidden
+          ${collapsed ? 'w-[4.5rem]' : 'w-64'}
         `}
       >
         <div
-          className={`border-b border-green-100 flex items-center p-3 shrink-0 min-h-[3.75rem] transition-all duration-300 ${
+          className={`border-b border-green-100 flex items-center p-3 shrink-0 min-h-[3.75rem] ${
             sidebarWide ? 'justify-end' : 'justify-center'
           }`}
         >
           <button
             type="button"
-            onClick={toggleSidebar}
-            className="p-2.5 rounded-xl text-gray-700 hover:bg-green-50 hover:text-[#2d5f2e] transition-all duration-200"
+            onClick={() => setCollapsed((c) => !c)}
+            className="min-h-11 min-w-11 p-2.5 rounded-xl text-gray-700 hover:bg-green-50 hover:text-[#2d5f2e] transition-all"
             aria-label={sidebarWide ? 'Collapse navigation' : 'Expand navigation'}
           >
-            {mobileOpen ? (
-              <X className="w-6 h-6 lg:hidden" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
+            <Menu className="h-6 w-6" />
           </button>
         </div>
-
-        <nav className="flex-1 p-2 space-y-1 overflow-y-auto overflow-x-hidden">
+        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden p-2">
           {navigation.map((item) => {
-            const isActive = location.pathname === item.href
+            const active = isNavActive(location.pathname, item.href)
             return (
               <Link
-                key={item.name}
+                key={item.href}
                 to={item.href}
                 title={sidebarWide ? undefined : item.name}
                 className={`
-                  flex items-center gap-3 rounded-xl transition-all duration-200
-                  ${sidebarWide ? 'px-4 py-3' : 'px-0 py-3 justify-center'}
-                  ${isActive
-                    ? 'bg-[#2d5f2e] text-white shadow-md shadow-green-900/10'
-                    : 'text-gray-700 hover:bg-green-50 hover:text-[#2d5f2e]'}
+                  flex items-center gap-3 rounded-xl transition-all duration-200 min-h-11
+                  ${sidebarWide ? 'px-4 py-3' : 'justify-center px-0 py-3'}
+                  ${
+                    active
+                      ? 'bg-[#2d5f2e] text-white shadow-md shadow-green-900/10'
+                      : 'text-gray-700 hover:bg-green-50 hover:text-[#2d5f2e]'
+                  }
                 `}
               >
-                <item.icon className="w-5 h-5 shrink-0" />
+                <item.icon className="h-5 w-5 shrink-0" />
                 <span
                   className={`whitespace-nowrap transition-all duration-300 ${
-                    sidebarWide ? 'opacity-100 max-w-[12rem]' : 'opacity-0 max-w-0 overflow-hidden'
+                    sidebarWide ? 'max-w-[12rem] opacity-100' : 'max-w-0 overflow-hidden opacity-0'
                   }`}
                 >
                   {item.name}
                 </span>
-                {isActive && sidebarWide && <ChevronRight className="w-4 h-4 ml-auto shrink-0" />}
+                {active && sidebarWide ? (
+                  <ChevronRight className="ml-auto h-4 w-4 shrink-0" />
+                ) : null}
               </Link>
             )
           })}
         </nav>
       </aside>
 
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden backdrop-blur-[1px] transition-opacity"
-          onClick={() => setMobileOpen(false)}
+      {/* Mobile drawer */}
+      <div
+        className={`fixed inset-0 z-50 lg:hidden transition-opacity duration-300 ${
+          mobileDrawerOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+      >
+        <button
+          type="button"
+          className="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
+          aria-label="Close menu"
+          onClick={() => setMobileDrawerOpen(false)}
         />
-      )}
+        <aside
+          className={`absolute inset-y-0 left-0 flex w-[min(18rem,88vw)] flex-col bg-white shadow-2xl transition-transform duration-300 ease-out ${
+            mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
+          <div className="flex h-16 items-center justify-between border-b border-green-100 px-4">
+            <CocoCareLogo to="/app" iconClassName="h-7 w-auto max-w-[120px] object-contain" />
+            <button
+              type="button"
+              onClick={() => setMobileDrawerOpen(false)}
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-gray-700 hover:bg-green-50"
+              aria-label="Close navigation"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+          <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+            {navigation.map((item) => {
+              const active = isNavActive(location.pathname, item.href)
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className={`flex min-h-12 items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
+                    active
+                      ? 'bg-[#2d5f2e] text-white shadow-md'
+                      : 'text-gray-800 hover:bg-green-50 hover:text-[#2d5f2e]'
+                  }`}
+                >
+                  <item.icon className="h-5 w-5 shrink-0" />
+                  <span className="truncate">{item.name}</span>
+                </Link>
+              )
+            })}
+          </nav>
+          <div className="border-t border-green-100 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              <LogOut className="h-5 w-5" />
+              Log out
+            </button>
+          </div>
+        </aside>
+      </div>
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="bg-white border-b border-green-100 px-4 lg:px-6 h-16 flex items-center justify-between shrink-0">
-          <CocoCareLogo to="/app" iconClassName="h-8 w-auto max-w-[130px] object-contain" />
+      {/* Main column */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header
+          className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-green-100 bg-white px-3 sm:h-16 sm:px-4 lg:px-6"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMobileDrawerOpen(true)}
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-gray-700 hover:bg-green-50 lg:hidden"
+              aria-label="Open navigation"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            <CocoCareLogo
+              to="/app"
+              iconClassName="h-7 w-auto max-w-[110px] object-contain sm:h-8 sm:max-w-[130px]"
+            />
+          </div>
 
-          <div className="relative" ref={profileRef}>
+          <div className="relative shrink-0" ref={profileRef}>
             <button
               type="button"
               onClick={() => setProfileOpen((o) => !o)}
-              className="flex items-center gap-2 p-1.5 pr-3 rounded-full hover:bg-green-50 border border-transparent hover:border-green-100 transition-all"
+              className="flex min-h-11 items-center gap-2 rounded-full border border-transparent p-1.5 pr-2 transition-all hover:border-green-100 hover:bg-green-50 sm:pr-3"
+              aria-expanded={profileOpen}
+              aria-label="Account menu"
             >
-              <div className="w-9 h-9 bg-gradient-to-br from-[#8b6f47] to-[#6b5537] rounded-full flex items-center justify-center text-white text-sm font-medium">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#8b6f47] to-[#6b5537] text-sm font-medium text-white">
                 {initials}
               </div>
-              <span className="hidden md:block text-sm font-medium text-gray-800 max-w-[8rem] truncate">
+              <span className="hidden max-w-[8rem] truncate text-sm font-medium text-gray-800 md:block">
                 {user?.name?.split(' ')[0]}
               </span>
             </button>
 
             <div
-              className={`
-                absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-xl border border-green-100
-                origin-top-right transition-all duration-200 z-50
-                ${profileOpen ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'}
-              `}
+              className={`absolute right-0 top-full z-50 mt-2 w-[min(18rem,calc(100vw-1.5rem))] origin-top-right rounded-2xl border border-green-100 bg-white shadow-xl transition-all duration-200 ${
+                profileOpen
+                  ? 'pointer-events-auto scale-100 opacity-100'
+                  : 'pointer-events-none scale-95 opacity-0'
+              }`}
             >
-              <div className="p-5 border-b border-gray-100">
+              <div className="border-b border-gray-100 p-4 sm:p-5">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#2d5f2e] to-[#1a2e1a] rounded-full flex items-center justify-center text-white">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2d5f2e] to-[#1a2e1a] text-white">
                     {initials}
                   </div>
                   <div className="min-w-0">
-                    <div className="font-semibold text-gray-900 truncate">{user?.name}</div>
-                    <div className="text-xs text-gray-500 capitalize">@{user?.username} · {user?.role}</div>
+                    <div className="truncate font-semibold text-gray-900">{user?.name}</div>
+                    <div className="truncate text-xs text-gray-500 capitalize">
+                      @{user?.username} · {user?.role}
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="p-4 space-y-2 text-sm">
-                {user?.phone && (
+              <div className="space-y-2 p-4 text-sm">
+                {user?.phone ? (
                   <div className="flex items-center gap-2 text-gray-600">
-                    <Phone className="w-4 h-4 text-[#2d5f2e]" />
-                    {user.phone}
+                    <Phone className="h-4 w-4 shrink-0 text-[#2d5f2e]" />
+                    <span className="truncate">{user.phone}</span>
                   </div>
-                )}
-                {user?.email && (
+                ) : null}
+                {user?.email ? (
                   <div className="flex items-center gap-2 text-gray-600">
-                    <Mail className="w-4 h-4 text-[#2d5f2e]" />
+                    <Mail className="h-4 w-4 shrink-0 text-[#2d5f2e]" />
                     <span className="truncate">{user.email}</span>
                   </div>
-                )}
+                ) : null}
               </div>
-              <div className="p-3 border-t border-gray-100 flex flex-col gap-1">
+              <div className="flex flex-col gap-1 border-t border-gray-100 p-3">
                 <Link
                   to="/app/profile"
                   onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-green-50 text-sm"
+                  className="flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-green-50"
                 >
-                  <User className="w-4 h-4" />
+                  <User className="h-4 w-4" />
                   View profile
                 </Link>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 text-sm w-full text-left"
+                  className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="h-4 w-4" />
                   Log out
                 </button>
               </div>
@@ -221,60 +302,55 @@ export function DashboardLayout() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6 relative">
+        <main className="relative flex-1 overflow-y-auto overflow-x-hidden p-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:p-4 lg:p-6 lg:pb-6">
           <Outlet />
         </main>
       </div>
 
-      {/* Floating Quick AI Diagnosis */}
-      <div ref={fabRef} className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3">
-        <div
-          className={`
-            relative w-[min(100vw-3rem,20rem)] bg-gradient-to-br from-[#2d5f2e] to-[#1a2e1a] rounded-2xl shadow-2xl p-5 pt-10 text-white
-            origin-bottom-right transition-all duration-300 ease-out
-            ${fabOpen ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-90 translate-y-4 pointer-events-none h-0 p-0 pt-0 overflow-hidden'}
-          `}
-        >
-          {fabOpen && (
-            <>
-              <button
-                type="button"
-                onClick={() => setFabOpen(false)}
-                className="absolute top-3 right-3 p-1 text-white hover:text-green-100 transition-colors"
-                aria-label="Close"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <h3 className="text-lg font-semibold mb-2 pr-6">Quick AI Diagnosis</h3>
-              <p className="text-green-100 text-sm mb-4">
-                Upload a coconut leaf image for instant disease detection.
-              </p>
+      {/* Mobile bottom navigation */}
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-green-100 bg-white/95 backdrop-blur-md lg:hidden"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        aria-label="Primary"
+      >
+        <div className="mx-auto grid max-w-lg grid-cols-5 gap-0.5 px-1 pt-1">
+          {bottomNav.map((item) => {
+            const active = isNavActive(location.pathname, item.href)
+            return (
               <Link
-                to="/app/disease-detection"
-                onClick={() => setFabOpen(false)}
-                className="block w-full py-2.5 bg-white text-[#2d5f2e] rounded-lg hover:bg-green-50 transition-colors text-center text-sm font-medium"
+                key={item.href}
+                to={item.href}
+                className={`flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-medium transition-colors sm:text-[11px] ${
+                  active ? 'text-[#2d5f2e]' : 'text-gray-500 hover:text-gray-800'
+                }`}
               >
-                Upload Image
+                <span
+                  className={`flex h-8 w-8 items-center justify-center rounded-xl ${
+                    active ? 'bg-green-50 text-[#2d5f2e]' : ''
+                  }`}
+                >
+                  <item.icon className="h-5 w-5" strokeWidth={active ? 2.4 : 2} />
+                </span>
+                <span className="truncate max-w-full">{item.shortName}</span>
               </Link>
-              <div className="mt-3 flex items-center gap-2 text-xs text-green-200">
-                <Zap className="w-3.5 h-3.5 text-yellow-300" />
-                <span>{reports.length} diagnoses on record</span>
-              </div>
-            </>
-          )}
+            )
+          })}
         </div>
+      </nav>
 
-        <button
-          type="button"
-          onClick={() => setFabOpen((o) => !o)}
-          className="flex items-center gap-2 rounded-full shadow-lg transition-all duration-300 bg-gradient-to-br from-[#2d5f2e] to-[#1a2e1a] text-white px-5 py-4 hover:scale-105 hover:shadow-xl"
-          aria-expanded={fabOpen}
-          aria-label="Quick AI Diagnosis"
+      {/* Compact FAB — hide on chat (covers composer) and when already on diagnosis hub */}
+      {!location.pathname.startsWith('/app/chatbot') &&
+      location.pathname !== '/app/disease-detection' &&
+      !location.pathname.startsWith('/app/disease-detection/') ? (
+        <Link
+          to="/app/disease-detection"
+          className="fixed z-30 flex items-center gap-2 rounded-full bg-gradient-to-br from-[#2d5f2e] to-[#1a2e1a] text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 px-3.5 py-3.5 sm:bottom-6 sm:right-6 sm:px-5 sm:py-4 lg:bottom-6"
+          aria-label="Coco Disease Diagnosis"
         >
-          <Microscope className="w-6 h-6" />
-          <span className="font-medium text-sm pr-1">AI Diagnosis</span>
-        </button>
-      </div>
+          <Microscope className="h-5 w-5 sm:h-6 sm:w-6" />
+          <span className="hidden pr-1 text-sm font-medium sm:inline">Coco Disease Diagnosis</span>
+        </Link>
+      ) : null}
     </div>
   )
 }

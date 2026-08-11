@@ -95,7 +95,7 @@ export function DiseaseMap({ points, focusedPoint = null }: DiseaseMapProps) {
       center={[7.8731, 80.7718]}
       zoom={7}
       scrollWheelZoom
-      className="h-[500px] w-full rounded-xl z-0"
+      className="z-0 h-[280px] w-full rounded-xl sm:h-[500px]"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

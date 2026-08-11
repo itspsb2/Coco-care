@@ -20,64 +20,14 @@ import {
   isStemQuestionnaireReady,
   questionnaireToSymptomsPayload,
   type StemQuestionnaireState,
-  type YnUnsure,
 } from '@/app/diagnosis/stemSymptomQuestionnaire'
-
-function Choice({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-xl border px-3 py-2.5 text-left text-sm transition-colors ${
-        active
-          ? 'border-[#2d5f2e] bg-emerald-50 font-semibold text-[#1a2e1a] ring-1 ring-[#2d5f2e]/25'
-          : 'border-gray-200 bg-white text-gray-700 hover:border-green-200 hover:bg-green-50/40'
-      }`}
-    >
-      {children}
-    </button>
-  )
-}
-
-function YnRow({
-  label,
-  value,
-  onChange,
-  safety,
-}: {
-  label: string
-  value: YnUnsure
-  onChange: (v: YnUnsure) => void
-  safety?: string
-}) {
-  return (
-    <div className="space-y-2">
-      <p className="text-sm font-medium text-gray-800">{label}</p>
-      {safety && <p className="text-xs text-amber-800">{safety}</p>}
-      <div className="flex flex-wrap gap-2">
-        {(
-          [
-            ['yes', 'Yes'],
-            ['no', 'No'],
-            ['unsure', 'Not sure'],
-          ] as const
-        ).map(([id, text]) => (
-          <Choice key={id} active={value === id} onClick={() => onChange(id)}>
-            {text}
-          </Choice>
-        ))}
-      </div>
-    </div>
-  )
-}
+import {
+  Choice,
+  QuizChoiceGrid,
+  QuizQuestion,
+  YnRow,
+} from '@/app/diagnosis/QuestionnaireChoices'
+import { QuestionnaireStepPager } from '@/app/diagnosis/QuestionnaireStepPager'
 
 export function StemDiseaseDiagnosis() {
   const [step, setStep] = useState(0)
@@ -212,39 +162,22 @@ export function StemDiseaseDiagnosis() {
         </div>
       )}
 
-      {/* Step indicator */}
-      <div className="mb-6 flex gap-1.5 overflow-x-auto pb-1">
-        {STEM_STEPS.map((s, i) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setStep(i)}
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-              i === step
-                ? 'bg-[#2d5f2e] text-white'
-                : i < step
-                  ? 'bg-emerald-100 text-emerald-900'
-                  : 'bg-gray-100 text-gray-500'
-            }`}
-          >
-            {i + 1}. {s.title}
-          </button>
-        ))}
-      </div>
+      <QuestionnaireStepPager steps={STEM_STEPS} current={step} onChange={setStep} />
 
       <div className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm sm:p-6">
-        <div className="mb-4 flex items-start gap-2">
-          <ClipboardList className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+        <div className="mb-5 flex items-start gap-3 border-b border-gray-100 pb-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+            <ClipboardList className="h-5 w-5" />
+          </div>
           <div>
-            <h2 className="font-semibold text-gray-900">{STEM_STEPS[step].title}</h2>
-            <p className="text-xs text-gray-500">{STEM_STEPS[step].hint}</p>
+            <h2 className="text-lg font-semibold text-gray-900">{STEM_STEPS[step].title}</h2>
+            <p className="mt-0.5 text-sm text-gray-500">{STEM_STEPS[step].hint}</p>
           </div>
         </div>
 
         {step === 0 && (
-          <div className="space-y-4">
-            <p className="text-sm font-medium text-gray-800">Approximately how old is the palm?</p>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <QuizQuestion label="Approximately how old is the palm?">
+            <QuizChoiceGrid>
               {[
                 ['lt3', 'Less than 3 years'],
                 ['3to5', '3–5 years'],
@@ -256,15 +189,14 @@ export function StemDiseaseDiagnosis() {
                   {label}
                 </Choice>
               ))}
-            </div>
-          </div>
+            </QuizChoiceGrid>
+          </QuizQuestion>
         )}
 
         {step === 1 && (
-          <div className="space-y-6">
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-800">Is liquid coming from the trunk?</p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="space-y-4">
+            <QuizQuestion label="Is liquid coming from the trunk?">
+              <QuizChoiceGrid>
                 {[
                   ['no', 'No liquid'],
                   ['clear', 'Clear / watery'],
@@ -281,8 +213,8 @@ export function StemDiseaseDiagnosis() {
                     {label}
                   </Choice>
                 ))}
-              </div>
-            </div>
+              </QuizChoiceGrid>
+            </QuizQuestion>
             <YnRow
               label="Does the liquid come through vertical / longitudinal cracks?"
               value={form.q3_longitudinal}
@@ -293,11 +225,8 @@ export function StemDiseaseDiagnosis() {
               value={form.q4_black_patches}
               onChange={(v) => patch('q4_black_patches', v)}
             />
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-800">
-                Tissue under damaged bark (select all that apply)
-              </p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <QuizQuestion label="Tissue under damaged bark (select all that apply)">
+              <QuizChoiceGrid>
                 {(
                   [
                     ['q5_yellow', 'Yellow tissue'],
@@ -309,6 +238,7 @@ export function StemDiseaseDiagnosis() {
                 ).map(([key, label]) => (
                   <Choice
                     key={key}
+                    variant="multi"
                     active={form[key]}
                     onClick={() => {
                       patch(key, !form[key])
@@ -318,16 +248,15 @@ export function StemDiseaseDiagnosis() {
                     {label}
                   </Choice>
                 ))}
-              </div>
-            </div>
+              </QuizChoiceGrid>
+            </QuizQuestion>
           </div>
         )}
 
         {step === 2 && (
-          <div className="space-y-6">
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-800">Where is damage concentrated?</p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="space-y-4">
+            <QuizQuestion label="Where is damage concentrated?">
+              <QuizChoiceGrid>
                 {[
                   ['base', 'Palm base'],
                   ['lower', 'Lower trunk'],
@@ -344,8 +273,8 @@ export function StemDiseaseDiagnosis() {
                     {label}
                   </Choice>
                 ))}
-              </div>
-            </div>
+              </QuizChoiceGrid>
+            </QuizQuestion>
             <YnRow
               label="Hard shelf / bracket / mushroom-like growth at the palm base?"
               value={form.q7_bracket}
@@ -355,10 +284,9 @@ export function StemDiseaseDiagnosis() {
         )}
 
         {step === 3 && (
-          <div className="space-y-6">
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-800">Can you see holes in the trunk or crown?</p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="space-y-4">
+            <QuizQuestion label="Can you see holes in the trunk or crown?">
+              <QuizChoiceGrid cols={4}>
                 {[
                   ['no', 'No'],
                   ['one', 'One hole'],
@@ -369,12 +297,11 @@ export function StemDiseaseDiagnosis() {
                     {label}
                   </Choice>
                 ))}
-              </div>
-            </div>
+              </QuizChoiceGrid>
+            </QuizQuestion>
             {(form.q8_holes === 'one' || form.q8_holes === 'several') && (
-              <div>
-                <p className="mb-2 text-sm font-medium text-gray-800">Where are most holes located?</p>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <QuizQuestion label="Where are most holes located?">
+                <QuizChoiceGrid cols={3}>
                   {[
                     ['trunk', 'Trunk'],
                     ['base', 'Base'],
@@ -388,8 +315,8 @@ export function StemDiseaseDiagnosis() {
                       {label}
                     </Choice>
                   ))}
-                </div>
-              </div>
+                </QuizChoiceGrid>
+              </QuizQuestion>
             )}
             <YnRow
               label="Chewed fibres / frass coming from a hole?"
@@ -416,7 +343,7 @@ export function StemDiseaseDiagnosis() {
         )}
 
         {step === 4 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <YnRow
               label="V-shaped / geometric cuts on newly opened leaves?"
               value={form.q14_vcuts}
@@ -461,10 +388,9 @@ export function StemDiseaseDiagnosis() {
         )}
 
         {step === 5 && (
-          <div className="space-y-6">
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-800">Are leaves yellowing?</p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="space-y-4">
+            <QuizQuestion label="Are leaves yellowing?">
+              <QuizChoiceGrid cols={4}>
                 {[
                   ['none', 'None'],
                   ['few', 'Few'],
@@ -479,16 +405,15 @@ export function StemDiseaseDiagnosis() {
                     {label}
                   </Choice>
                 ))}
-              </div>
-            </div>
+              </QuizChoiceGrid>
+            </QuizQuestion>
             <YnRow
               label="Is the bud / crown weak, withered, tilted, or collapsing?"
               value={form.q22_crown_weak}
               onChange={(v) => patch('q22_crown_weak', v)}
             />
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-800">Has the trunk recently been injured?</p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <QuizQuestion label="Has the trunk recently been injured?">
+              <QuizChoiceGrid>
                 {[
                   ['none', 'None'],
                   ['knife', 'Knife / tool cut'],
@@ -506,8 +431,8 @@ export function StemDiseaseDiagnosis() {
                     {label}
                   </Choice>
                 ))}
-              </div>
-            </div>
+              </QuizChoiceGrid>
+            </QuizQuestion>
             <YnRow
               label="Recently affected by fire?"
               value={form.q24_fire}
@@ -518,11 +443,8 @@ export function StemDiseaseDiagnosis() {
               value={form.q25_lightning}
               onChange={(v) => patch('q25_lightning', v)}
             />
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-800">
-                Serious flooding / waterlogging recently?
-              </p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <QuizQuestion label="Serious flooding / waterlogging recently?">
+              <QuizChoiceGrid cols={4}>
                 {[
                   ['none', 'None'],
                   ['occasional', 'Occasional'],
@@ -537,8 +459,8 @@ export function StemDiseaseDiagnosis() {
                     {label}
                   </Choice>
                 ))}
-              </div>
-            </div>
+              </QuizChoiceGrid>
+            </QuizQuestion>
             <YnRow
               label="Unusually high fertiliser amount applied recently?"
               value={form.q27_fertiliser}
