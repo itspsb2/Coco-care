@@ -8,7 +8,10 @@ export function getPool(): pg.Pool {
     if (!env.databaseUrl) {
       throw new Error('DATABASE_URL is not set')
     }
-    pool = new pg.Pool({ connectionString: env.databaseUrl })
+    pool = new pg.Pool({
+      connectionString: env.databaseUrl,
+      ssl: env.databaseSsl ? { rejectUnauthorized: false } : undefined,
+    })
   }
   return pool
 }

@@ -21,6 +21,7 @@ function parseOrigins(value?: string) {
 export const env = {
   port: Number(process.env.PORT) || 3000,
   databaseUrl: process.env.DATABASE_URL ?? '',
+  databaseSsl: process.env.DATABASE_SSL === 'true',
   jwtSecret: process.env.JWT_SECRET ?? 'change-me-in-production',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   frontendOrigins: parseOrigins(process.env.FRONTEND_ORIGINS ?? process.env.FRONTEND_ORIGIN),
