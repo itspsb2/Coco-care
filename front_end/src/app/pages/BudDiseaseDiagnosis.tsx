@@ -27,6 +27,7 @@ import {
   QuizQuestion,
   YnRow,
 } from '@/app/diagnosis/QuestionnaireChoices'
+import { QuestionnaireStepPager } from '@/app/diagnosis/QuestionnaireStepPager'
 
 export function BudDiseaseDiagnosis() {
   const [step, setStep] = useState(0)
@@ -161,24 +162,7 @@ export function BudDiseaseDiagnosis() {
         </div>
       )}
 
-      <div className="mb-6 flex gap-1.5 overflow-x-auto pb-1">
-        {BUD_STEPS.map((s, i) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setStep(i)}
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-              i === step
-                ? 'bg-[#2d5f2e] text-white'
-                : i < step
-                  ? 'bg-emerald-100 text-emerald-900'
-                  : 'bg-gray-100 text-gray-500'
-            }`}
-          >
-            {i + 1}. {s.title}
-          </button>
-        ))}
-      </div>
+      <QuestionnaireStepPager steps={BUD_STEPS} current={step} onChange={setStep} />
 
       <div className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm sm:p-6">
         <div className="mb-4 flex items-start gap-2">

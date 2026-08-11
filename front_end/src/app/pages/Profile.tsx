@@ -292,93 +292,93 @@ export function Profile() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl text-[#1a2e1a] mb-2">Profile</h1>
-        <p className="text-[#6b7c6b]">Your account and registered farms.</p>
+        <h1 className="mb-1 text-2xl text-[#1a2e1a] sm:mb-2 sm:text-3xl">Profile</h1>
+        <p className="text-sm text-[#6b7c6b] sm:text-base">Your account and registered farms.</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-20 h-20 bg-gradient-to-br from-[#2d5f2e] to-[#1a2e1a] rounded-full flex items-center justify-center text-white text-2xl">
+      <div className="rounded-2xl border border-green-100 bg-white p-4 shadow-sm sm:p-6">
+        <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2d5f2e] to-[#1a2e1a] text-xl text-white sm:h-20 sm:w-20 sm:text-2xl">
               {initials}
             </div>
-            <div>
-              <h2 className="text-2xl text-gray-900">{displayUser?.name}</h2>
-              <p className="text-gray-600 capitalize">
+            <div className="min-w-0">
+              <h2 className="truncate text-xl text-gray-900 sm:text-2xl">{displayUser?.name}</h2>
+              <p className="truncate text-sm text-gray-600 capitalize sm:text-base">
                 {displayUser?.role} · @{displayUser?.username}
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex">
             <button
               type="button"
               onClick={openProfileDialog}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-green-200 text-[#2d5f2e] rounded-lg hover:bg-green-50"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-green-200 px-3 py-2 text-sm text-[#2d5f2e] hover:bg-green-50"
             >
-              <Edit2 className="w-4 h-4" />
+              <Edit2 className="h-4 w-4" />
               Edit
             </button>
             <button
               type="button"
               onClick={openPasswordDialog}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-green-200 text-[#2d5f2e] rounded-lg hover:bg-green-50"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-green-200 px-3 py-2 text-sm text-[#2d5f2e] hover:bg-green-50"
             >
-              <KeyRound className="w-4 h-4" />
+              <KeyRound className="h-4 w-4" />
               Password
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <InfoRow icon={<Phone className="w-4 h-4" />} label="Phone" value={displayUser?.phone ?? 'N/A'} />
-          <InfoRow icon={<Mail className="w-4 h-4" />} label="Email" value={displayUser?.email ?? 'N/A'} />
+        <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+          <InfoRow icon={<Phone className="h-4 w-4" />} label="Phone" value={displayUser?.phone ?? 'N/A'} />
+          <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={displayUser?.email ?? 'N/A'} />
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="rounded-2xl border border-green-100 bg-white p-4 shadow-sm sm:p-6">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-lg text-gray-900">My Farms</h3>
           <button
             type="button"
             onClick={openCreateFarm}
-            className="flex items-center gap-2 px-3 py-2 bg-[#2d5f2e] text-white rounded-lg text-sm hover:bg-[#1a2e1a]"
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#2d5f2e] px-3 py-2 text-sm text-white hover:bg-[#1a2e1a] sm:w-auto"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="h-4 w-4" />
             Add Farm
           </button>
         </div>
 
         <div className="space-y-3">
           {farms.length === 0 ? (
-            <p className="text-gray-500 text-sm">No farms registered yet.</p>
+            <p className="text-sm text-gray-500">No farms registered yet.</p>
           ) : (
             farms.map((farm) => (
               <div
                 key={farm.id}
-                className="p-4 bg-gray-50 rounded-lg flex items-start justify-between gap-3"
+                className="flex items-start justify-between gap-3 rounded-lg bg-gray-50 p-3 sm:p-4"
               >
-                <div className="flex items-start gap-3 min-w-0">
-                  <Home className="w-5 h-5 text-[#2d5f2e] mt-0.5 flex-shrink-0" />
+                <div className="flex min-w-0 items-start gap-3">
+                  <Home className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#2d5f2e]" />
                   <div className="min-w-0">
-                    <div className="font-medium text-gray-900 truncate">{farm.name}</div>
-                    <div className="text-sm text-gray-600 flex items-center gap-1">
-                      <MapPin className="w-3 h-3 flex-shrink-0" />
-                      <span className="truncate">
+                    <div className="truncate font-medium text-gray-900">{farm.name}</div>
+                    <div className="flex items-start gap-1 text-sm text-gray-600">
+                      <MapPin className="mt-0.5 h-3 w-3 flex-shrink-0" />
+                      <span className="break-words">
                         {farm.location} · {farm.acreage} acres · {farm.treeCount} trees
                       </span>
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-1 flex-shrink-0">
+                <div className="flex flex-shrink-0 gap-1">
                   <button
                     type="button"
                     title="Edit farm"
                     onClick={() => openEditFarm(farm)}
-                    className="p-2 text-[#2d5f2e] hover:bg-green-100 rounded-lg"
+                    className="rounded-lg p-2.5 text-[#2d5f2e] hover:bg-green-100"
                   >
-                    <Edit2 className="w-4 h-4" />
+                    <Edit2 className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
@@ -387,9 +387,9 @@ export function Profile() {
                       deleteFarmMutation.reset()
                       setDeleteTarget(farm)
                     }}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                    className="rounded-lg p-2.5 text-red-600 hover:bg-red-50"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               </div>

@@ -117,28 +117,33 @@ export function Notifications() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl text-[#1a2e1a] mb-2">Notifications</h1>
-          <p className="text-[#6b7c6b]">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="mb-1 text-2xl text-[#1a2e1a] sm:mb-2 sm:text-3xl">Notifications</h1>
+          <p className="text-sm text-[#6b7c6b] sm:text-base">
             Admin broadcasts, nearby outbreak alerts, and your report updates.
           </p>
         </div>
         {unreadCount > 0 && (
-          <button onClick={markAllAsRead} className="text-sm text-[#2d5f2e] hover:underline">
+          <button
+            onClick={markAllAsRead}
+            className="min-h-10 shrink-0 self-start text-sm text-[#2d5f2e] hover:underline"
+          >
             Mark all as read
           </button>
         )}
       </div>
 
-      <div className="flex gap-2">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {(['all', 'unread', 'read'] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-lg text-sm capitalize ${
-              filter === f ? 'bg-[#2d5f2e] text-white' : 'bg-white border border-gray-200 text-gray-700'
+            className={`min-h-10 shrink-0 rounded-lg px-4 py-2 text-sm capitalize ${
+              filter === f
+                ? 'bg-[#2d5f2e] text-white'
+                : 'border border-gray-200 bg-white text-gray-700'
             }`}
           >
             {f} {f === 'unread' && unreadCount > 0 ? `(${unreadCount})` : ''}
@@ -148,10 +153,10 @@ export function Notifications() {
 
       {isLoading ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#2d5f2e]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#2d5f2e]" />
         </div>
       ) : visible.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-green-100 p-12 text-center text-gray-500">
+        <div className="rounded-2xl border border-green-100 bg-white p-8 text-center text-gray-500 sm:p-12">
           No notifications to show.
         </div>
       ) : (
@@ -180,35 +185,39 @@ function NotificationCard({
   onDelete: () => void
 }) {
   const icons = {
-    alert: <AlertTriangle className="w-5 h-5 text-red-600" />,
-    success: <CheckCircle className="w-5 h-5 text-green-600" />,
-    info: <Bell className="w-5 h-5 text-blue-600" />,
+    alert: <AlertTriangle className="h-5 w-5 text-red-600" />,
+    success: <CheckCircle className="h-5 w-5 text-green-600" />,
+    info: <Bell className="h-5 w-5 text-blue-600" />,
   }
 
   const canMarkRead = notification.source === 'broadcast' || notification.source === 'disease'
 
   return (
     <div
-      className={`bg-white rounded-xl border p-4 flex gap-4 ${
+      className={`flex gap-3 rounded-xl border bg-white p-3 sm:gap-4 sm:p-4 ${
         notification.read ? 'border-gray-100 opacity-75' : 'border-green-200'
       }`}
     >
-      <div className="mt-0.5">{icons[notification.type]}</div>
-      <div className="flex-1">
+      <div className="mt-0.5 shrink-0">{icons[notification.type]}</div>
+      <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-medium text-gray-900">{notification.title}</h3>
-          <button onClick={onDelete} className="text-gray-400 hover:text-gray-600">
-            <X className="w-4 h-4" />
+          <h3 className="text-sm font-medium text-gray-900 sm:text-base">{notification.title}</h3>
+          <button
+            onClick={onDelete}
+            className="flex min-h-9 min-w-9 shrink-0 items-center justify-center text-gray-400 hover:text-gray-600"
+            aria-label="Dismiss"
+          >
+            <X className="h-4 w-4" />
           </button>
         </div>
-        <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{notification.message}</p>
-        <div className="flex items-center justify-between mt-2">
+        <p className="mt-1 whitespace-pre-wrap text-sm text-gray-600">{notification.message}</p>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <span className="text-xs text-gray-400">{notification.time}</span>
-          {!notification.read && canMarkRead && (
+          {!notification.read && canMarkRead ? (
             <button onClick={onRead} className="text-xs text-[#2d5f2e] hover:underline">
               Mark as read
             </button>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

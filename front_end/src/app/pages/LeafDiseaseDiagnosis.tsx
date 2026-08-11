@@ -620,11 +620,7 @@ export function LeafDiseaseDiagnosis() {
       ) : null}
 
       {showDetailCard ? (
-        <LeafDiseaseDetailCard
-          diseaseName={result!.finalResult}
-          confidence={result!.confidence}
-          detectedEvidence={result!.detectedEvidence}
-        />
+        <LeafDiseaseDetailCard diseaseName={result!.finalResult} />
       ) : null}
     </div>
   )

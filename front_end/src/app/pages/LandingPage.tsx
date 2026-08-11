@@ -67,13 +67,14 @@ export function LandingPage() {
       {/* ── NAV ── */}
       <nav
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-          scrolled ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-green-100" : "bg-transparent"
+          scrolled ? "border-b border-green-100 bg-white/95 shadow-sm backdrop-blur-md" : "bg-transparent"
         }`}
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:h-16 sm:px-8">
           <LandingLogo to="/" light={!scrolled} />
 
-          <div className="hidden md:flex items-center gap-7">
+          <div className="hidden items-center gap-7 md:flex">
             {[["Features", "#features"], ["How It Works", "#how-it-works"], ["About", "#about"]].map(([label, href]) => (
               <a
                 key={label}
@@ -85,22 +86,27 @@ export function LandingPage() {
             ))}
           </div>
 
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden items-center gap-3 md:flex">
             <Link
               to="/login"
-              className={`text-sm font-medium px-4 py-2 rounded-lg transition-colors ${scrolled ? "text-[#2d5016] hover:bg-green-50" : "text-white/85 hover:text-white"}`}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${scrolled ? "text-[#2d5016] hover:bg-green-50" : "text-white/85 hover:text-white"}`}
             >
               Sign In
             </Link>
             <Link
               to="/register"
-              className="text-sm font-bold px-5 py-2.5 bg-[#f4a460] text-[#1a2e0a] rounded-xl hover:bg-[#e8935a] transition-all shadow-sm"
+              className="rounded-xl bg-[#f4a460] px-5 py-2.5 text-sm font-bold text-[#1a2e0a] shadow-sm transition-all hover:bg-[#e8935a]"
             >
               Get Started
             </Link>
           </div>
 
-          <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
+          <button
+            type="button"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-xl md:hidden"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
             {menuOpen
               ? <X size={22} className={scrolled ? "text-[#2d5016]" : "text-white"} />
               : <Menu size={22} className={scrolled ? "text-[#2d5016]" : "text-white"} />
@@ -109,53 +115,60 @@ export function LandingPage() {
         </div>
 
         {menuOpen && (
-          <div className="md:hidden bg-white border-t border-green-100 px-5 py-4 space-y-3 shadow-md">
+          <div className="space-y-1 border-t border-green-100 bg-white px-4 py-4 shadow-md md:hidden">
             {[["Features", "#features"], ["How It Works", "#how-it-works"], ["About", "#about"]].map(([label, href]) => (
-              <a key={label} href={href} className="block text-sm text-[#2d5016] font-medium py-1.5" onClick={() => setMenuOpen(false)}>
+              <a
+                key={label}
+                href={href}
+                className="block min-h-11 rounded-xl px-3 py-3 text-sm font-medium text-[#2d5016] hover:bg-green-50"
+                onClick={() => setMenuOpen(false)}
+              >
                 {label}
               </a>
             ))}
-            <div className="flex gap-3 pt-2">
-              <Link to="/login" className="flex-1 text-center text-sm py-2.5 border border-[#2d5016] text-[#2d5016] rounded-xl">Sign In</Link>
-              <Link to="/register" className="flex-1 text-center text-sm py-2.5 bg-[#2d5016] text-white rounded-xl font-bold">Get Started</Link>
+            <div className="flex gap-3 pt-3">
+              <Link to="/login" className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[#2d5016] text-sm text-[#2d5016]">Sign In</Link>
+              <Link to="/register" className="flex min-h-11 flex-1 items-center justify-center rounded-xl bg-[#2d5016] text-sm font-bold text-white">Get Started</Link>
             </div>
           </div>
         )}
       </nav>
 
       {/* ── HERO ── */}
-      <section className="relative h-screen min-h-[640px] flex items-center overflow-hidden">
-        <img src={HERO_IMAGE} alt="Coconut plantation" className="absolute inset-0 w-full h-full object-cover" />
+      <section className="relative flex min-h-[100svh] min-h-[100dvh] items-center overflow-hidden pt-[env(safe-area-inset-top)]">
+        <img src={HERO_IMAGE} alt="Coconut plantation" className="absolute inset-0 h-full w-full object-cover object-center" />
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a1f05]/88 via-[#1a3d0a]/75 to-[#2d5016]/50" />
         {/* Bottom wave */}
-        <div className="absolute bottom-0 inset-x-0 pointer-events-none">
-          <svg viewBox="0 0 1440 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0">
+          <svg viewBox="0 0 1440 72" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-10 sm:h-auto">
             <path d="M0,40 C320,72 960,8 1440,40 L1440,72 L0,72 Z" fill="white" />
           </svg>
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-5 sm:px-8 w-full pt-16">
+        <div className="relative mx-auto w-full max-w-7xl px-4 pb-16 pt-20 sm:px-8 sm:pb-20 sm:pt-16">
           <div className="max-w-2xl">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 bg-white/12 backdrop-blur-sm border border-white/22 rounded-full px-4 py-1.5 mb-7"
+              className="mb-5 inline-flex max-w-full items-center gap-2 rounded-full border border-white/22 bg-white/12 px-3 py-1.5 backdrop-blur-sm sm:mb-7 sm:px-4"
             >
-              <span className="w-2 h-2 rounded-full bg-[#f4a460] animate-pulse" />
-              <span className="text-white/88 text-xs font-medium tracking-wide">AI-Powered Coconut Farming Platform · Sri Lanka</span>
+              <span className="h-2 w-2 shrink-0 rounded-full bg-[#f4a460] animate-pulse" />
+              <span className="truncate text-[11px] font-medium tracking-wide text-white/88 sm:text-xs">
+                AI-Powered Coconut Farming Platform · Sri Lanka
+              </span>
             </motion.div>
 
             <motion.h1
               initial={{ opacity: 0, y: 32 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1 }}
-              className="text-white mb-5 leading-tight"
+              className="mb-4 leading-tight text-white sm:mb-5"
               style={{
                 fontFamily: "'Fraunces', serif",
                 fontWeight: 700,
-                fontSize: "clamp(2.6rem, 5.5vw, 4rem)",
-                lineHeight: 1.1,
+                fontSize: "clamp(2rem, 8vw, 4rem)",
+                lineHeight: 1.12,
               }}
             >
               AI Powered Coconut
@@ -169,7 +182,7 @@ export function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.24 }}
-              className="text-white/68 text-lg leading-relaxed mb-9 max-w-lg"
+              className="mb-7 max-w-lg text-base leading-relaxed text-white/68 sm:mb-9 sm:text-lg"
             >
               Helping coconut farmers detect diseases, monitor risks, and improve
               plantation management using Artificial Intelligence.
@@ -179,17 +192,17 @@ export function LandingPage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.36 }}
-              className="flex flex-wrap gap-4"
+              className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-4"
             >
               <Link
                 to="/register"
-                className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#f4a460] text-[#1a2e0a] rounded-xl font-bold text-sm hover:bg-[#e8935a] transition-all shadow-xl hover:-translate-y-0.5"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#f4a460] px-7 py-3.5 text-sm font-bold text-[#1a2e0a] shadow-xl transition-all hover:-translate-y-0.5 hover:bg-[#e8935a]"
               >
                 Get Started <ArrowRight size={15} />
               </Link>
               <a
                 href="#features"
-                className="inline-flex items-center gap-2 px-7 py-3.5 bg-white/10 border border-white/28 text-white rounded-xl font-medium text-sm hover:bg-white/18 transition-all backdrop-blur-sm"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/28 bg-white/10 px-7 py-3.5 text-sm font-medium text-white backdrop-blur-sm transition-all hover:bg-white/18"
               >
                 Learn More
               </a>
@@ -200,21 +213,21 @@ export function LandingPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.52 }}
-              className="flex items-center gap-5 mt-10"
+              className="mt-8 flex flex-wrap items-center gap-4 sm:mt-10 sm:gap-5"
             >
               <div className="flex -space-x-2">
                 {["#4a7c2e", "#7ab348", "#2d5016", "#f4a460"].map((c, i) => (
-                  <div key={i} className="w-8 h-8 rounded-full border-2 border-white/50 flex items-center justify-center text-white text-xs font-bold"
+                  <div key={i} className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/50 text-xs font-bold text-white"
                     style={{ backgroundColor: c }}>
                     {["P", "A", "K", "S"][i]}
                   </div>
                 ))}
               </div>
               <div>
-                <div className="flex gap-0.5 mb-0.5">
+                <div className="mb-0.5 flex gap-0.5">
                   {[...Array(5)].map((_, i) => <Star key={i} size={12} className="fill-[#f4a460] text-[#f4a460]" />)}
                 </div>
-                <p className="text-white/60 text-xs">Trusted by 10,000+ Sri Lankan farmers</p>
+                <p className="text-xs text-white/60">Trusted by 10,000+ Sri Lankan farmers</p>
               </div>
             </motion.div>
           </div>
@@ -222,19 +235,19 @@ export function LandingPage() {
       </section>
 
       {/* ── STATS STRIP ── */}
-      <section className="bg-white border-b border-green-100">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-green-100">
+      <section className="border-b border-green-100 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8 sm:py-10">
+          <div className="grid grid-cols-2 gap-6 md:grid-cols-4 md:gap-8 md:divide-x md:divide-green-100">
             {[
               { icon: <Users size={18} />, value: "10,000+", label: "Farmers Registered" },
               { icon: <TrendingUp size={18} />, value: "25,000+", label: "Diseases Detected" },
               { icon: <Award size={18} />, value: "95%", label: "AI Accuracy Rate" },
               { icon: <Target size={18} />, value: "150+", label: "Risk Zones Monitored" },
             ].map((s, i) => (
-              <FadeIn key={s.label} delay={i * 0.08} className="text-center px-4">
-                <div className="flex justify-center mb-2 text-[#2d5016]">{s.icon}</div>
-                <div className="text-3xl font-bold text-[#2d5016] mb-1" style={{ fontFamily: "'Fraunces', serif" }}>{s.value}</div>
-                <div className="text-xs text-[#6b7c6b]">{s.label}</div>
+              <FadeIn key={s.label} delay={i * 0.08} className="px-2 text-center sm:px-4">
+                <div className="mb-2 flex justify-center text-[#2d5016]">{s.icon}</div>
+                <div className="mb-1 text-2xl font-bold text-[#2d5016] sm:text-3xl" style={{ fontFamily: "'Fraunces', serif" }}>{s.value}</div>
+                <div className="text-[11px] text-[#6b7c6b] sm:text-xs">{s.label}</div>
               </FadeIn>
             ))}
           </div>
@@ -242,24 +255,24 @@ export function LandingPage() {
       </section>
 
       {/* ── FEATURES ── */}
-      <section id="features" className="py-24 bg-[#f8faf6]">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8">
-          <FadeIn className="text-center mb-14">
-            <span className="inline-block bg-green-100 text-[#2d5016] text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-4">
+      <section id="features" className="bg-[#f8faf6] py-16 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-8">
+          <FadeIn className="mb-10 text-center sm:mb-14">
+            <span className="mb-4 inline-block rounded-full bg-green-100 px-4 py-1.5 text-xs font-bold tracking-widest uppercase text-[#2d5016]">
               Platform Features
             </span>
             <h2
-              className="text-[#1a2e0a] mb-3"
-              style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: "clamp(1.875rem, 3vw, 2.6rem)", lineHeight: 1.15 }}
+              className="mb-3 text-[#1a2e0a]"
+              style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: "clamp(1.75rem, 3vw, 2.6rem)", lineHeight: 1.15 }}
             >
               Everything you need to grow
             </h2>
-            <p className="text-[#6b7c6b] max-w-md mx-auto text-sm">
+            <p className="mx-auto max-w-md text-sm text-[#6b7c6b]">
               Advanced AI tools purpose-built for coconut farming challenges in Sri Lanka.
             </p>
           </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3">
             {features.map((feat, i) => (
               <FadeIn key={feat.title} delay={i * 0.07}>
                 <FeatureCard {...feat} />
@@ -270,65 +283,65 @@ export function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
-            {/* Image collage */}
-            <FadeIn className="relative h-[480px]">
+      <section id="how-it-works" className="bg-white py-16 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-8">
+          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+            {/* Image collage — scales for mobile */}
+            <FadeIn className="relative mx-auto h-[300px] w-full max-w-md sm:h-[400px] lg:mx-0 lg:h-[480px] lg:max-w-none">
               <img
                 src={PALM_IMAGE}
                 alt="Coconut palm"
-                className="absolute top-0 left-0 w-64 h-80 object-cover rounded-3xl shadow-2xl"
+                className="absolute top-0 left-0 h-52 w-40 rounded-2xl object-cover shadow-2xl sm:h-80 sm:w-64 sm:rounded-3xl"
               />
               <img
                 src={LEAF_IMAGE}
                 alt="Leaf analysis"
-                className="absolute bottom-0 right-0 w-56 h-64 object-cover rounded-3xl shadow-xl border-4 border-white"
+                className="absolute right-0 bottom-0 h-40 w-36 rounded-2xl border-4 border-white object-cover shadow-xl sm:h-64 sm:w-56 sm:rounded-3xl"
               />
               {/* Floating AI result card */}
-              <div className="absolute top-[46%] left-[34%] bg-white rounded-2xl shadow-2xl p-4 border border-green-100 min-w-[176px]">
-                <div className="flex items-center gap-2.5 mb-2">
-                  <div className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center">
+              <div className="absolute top-[42%] left-[28%] min-w-[9.5rem] rounded-2xl border border-green-100 bg-white p-3 shadow-2xl sm:left-[34%] sm:min-w-[176px] sm:p-4">
+                <div className="mb-2 flex items-center gap-2 sm:gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-green-100 sm:h-9 sm:w-9">
                     <Check size={16} className="text-[#2d5016]" />
                   </div>
                   <div>
-                    <div className="text-[10px] text-[#6b7c6b]">AI Diagnosis</div>
-                    <div className="text-xs font-bold text-[#1a2e0a]">Leaf Rot Disease Detected</div>
+                    <div className="text-[10px] text-[#6b7c6b]">ML Diagnosis</div>
+                    <div className="text-[11px] font-bold text-[#1a2e0a] sm:text-xs">Leaf disease detected</div>
                   </div>
                 </div>
-                <div className="h-1.5 rounded-full bg-green-100 overflow-hidden">
-                  <div className="h-full w-[92%] bg-[#2d5016] rounded-full" />
+                <div className="h-1.5 overflow-hidden rounded-full bg-green-100">
+                  <div className="h-full w-[92%] rounded-full bg-[#2d5016]" />
                 </div>
-                <div className="text-right text-[10px] text-[#2d5016] font-bold mt-0.5">92% confidence</div>
+                <div className="mt-0.5 text-right text-[10px] font-bold text-[#2d5016]">92% confidence</div>
               </div>
             </FadeIn>
 
             {/* Steps */}
             <div>
               <FadeIn>
-                <span className="inline-block bg-amber-100 text-[#8b4513] text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-5">
+                <span className="mb-5 inline-block rounded-full bg-amber-100 px-4 py-1.5 text-xs font-bold tracking-widest uppercase text-[#8b4513]">
                   How It Works
                 </span>
                 <h2
-                  className="text-[#1a2e0a] mb-8"
-                  style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: "clamp(1.75rem, 3vw, 2.4rem)", lineHeight: 1.18 }}
+                  className="mb-6 text-[#1a2e0a] sm:mb-8"
+                  style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: "clamp(1.6rem, 3vw, 2.4rem)", lineHeight: 1.18 }}
                 >
                   Three steps to smarter
-                  <br />
-                  coconut farming
+                  <br className="hidden sm:block" />
+                  {" "}coconut farming
                 </h2>
               </FadeIn>
 
-              <div className="space-y-7">
+              <div className="space-y-6 sm:space-y-7">
                 {steps.map((step, i) => (
                   <FadeIn key={step.title} delay={i * 0.1}>
-                    <div className="flex gap-5">
-                      <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-[#2d5016] text-white flex items-center justify-center font-bold text-sm shadow-md">
+                    <div className="flex gap-4 sm:gap-5">
+                      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[#2d5016] text-sm font-bold text-white shadow-md">
                         {i + 1}
                       </div>
-                      <div>
-                        <h3 className="font-semibold text-[#1a2e0a] mb-1 text-base">{step.title}</h3>
-                        <p className="text-sm text-[#6b7c6b] leading-relaxed">{step.description}</p>
+                      <div className="min-w-0">
+                        <h3 className="mb-1 text-base font-semibold text-[#1a2e0a]">{step.title}</h3>
+                        <p className="text-sm leading-relaxed text-[#6b7c6b]">{step.description}</p>
                       </div>
                     </div>
                   </FadeIn>
@@ -338,7 +351,7 @@ export function LandingPage() {
               <FadeIn delay={0.35}>
                 <Link
                   to="/register"
-                  className="inline-flex items-center gap-2 mt-9 px-6 py-3.5 bg-[#2d5016] text-white rounded-xl font-bold text-sm hover:bg-[#1a3a10] transition-all shadow-md hover:shadow-lg"
+                  className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2d5016] px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-[#1a3a10] hover:shadow-lg sm:mt-9 sm:w-auto"
                 >
                   Start Free Today <ChevronRight size={15} />
                 </Link>
@@ -351,45 +364,45 @@ export function LandingPage() {
       {/* ── TESTIMONIALS ── */}
       <section
         id="about"
-        className="py-24 relative overflow-hidden"
+        className="relative overflow-hidden py-16 sm:py-24"
         style={{ background: "linear-gradient(135deg, #0a1f05 0%, #2d5016 65%, #3d6b22 100%)" }}
       >
         <div
           className="absolute inset-0 opacity-10"
           style={{ backgroundImage: `url(${FIELD_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center" }}
         />
-        <div className="relative max-w-7xl mx-auto px-5 sm:px-8">
-          <FadeIn className="text-center mb-14">
-            <span className="inline-block bg-white/12 text-white/80 text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-5">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-8">
+          <FadeIn className="mb-10 text-center sm:mb-14">
+            <span className="mb-5 inline-block rounded-full bg-white/12 px-4 py-1.5 text-xs font-bold tracking-widest uppercase text-white/80">
               Farmer Stories
             </span>
             <h2
-              className="text-white mb-3"
-              style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: "clamp(1.875rem, 3vw, 2.6rem)" }}
+              className="mb-3 text-white"
+              style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: "clamp(1.75rem, 3vw, 2.6rem)" }}
             >
               Farmers love CocoCare
             </h2>
-            <p className="text-green-200/70 max-w-md mx-auto text-sm">
+            <p className="mx-auto max-w-md text-sm text-green-200/70">
               From Kurunegala to Chilaw, farmers are protecting their harvests with AI-powered insights.
             </p>
           </FadeIn>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
             {testimonials.map((t, i) => (
               <FadeIn key={t.name} delay={i * 0.1}>
-                <div className="bg-white/8 backdrop-blur-sm border border-white/14 rounded-3xl p-7">
-                  <div className="flex gap-1 mb-4">
+                <div className="rounded-3xl border border-white/14 bg-white/8 p-6 backdrop-blur-sm sm:p-7">
+                  <div className="mb-4 flex gap-1">
                     {[...Array(5)].map((_, j) => <Star key={j} size={13} className="fill-[#f4a460] text-[#f4a460]" />)}
                   </div>
-                  <p className="text-white/75 text-sm leading-relaxed mb-6">"{t.quote}"</p>
+                  <p className="mb-6 text-sm leading-relaxed text-white/75">"{t.quote}"</p>
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white"
                       style={{ backgroundColor: t.color }}>
                       {t.name[0]}
                     </div>
                     <div>
-                      <div className="text-white text-sm font-semibold">{t.name}</div>
-                      <div className="text-green-300/60 text-xs">{t.location}, Sri Lanka</div>
+                      <div className="text-sm font-semibold text-white">{t.name}</div>
+                      <div className="text-xs text-green-300/60">{t.location}, Sri Lanka</div>
                     </div>
                   </div>
                 </div>
@@ -400,33 +413,33 @@ export function LandingPage() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="py-24 bg-[#f8faf6]">
-        <div className="max-w-3xl mx-auto px-5 text-center">
+      <section className="bg-[#f8faf6] py-16 sm:py-24">
+        <div className="mx-auto max-w-3xl px-4 text-center sm:px-5">
           <FadeIn>
-            <span className="inline-block bg-amber-100 text-[#8b4513] text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-6">
+            <span className="mb-6 inline-block rounded-full bg-amber-100 px-4 py-1.5 text-xs font-bold tracking-widest uppercase text-[#8b4513]">
               Free to Join
             </span>
             <h2
-              className="text-[#1a2e0a] mb-4"
-              style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 3rem)", lineHeight: 1.12 }}
+              className="mb-4 text-[#1a2e0a]"
+              style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: "clamp(1.75rem, 4.5vw, 3rem)", lineHeight: 1.12 }}
             >
               Ready to transform
               <br />
               your plantation?
             </h2>
-            <p className="text-[#6b7c6b] mb-9 max-w-sm mx-auto text-sm">
+            <p className="mx-auto mb-8 max-w-sm text-sm text-[#6b7c6b] sm:mb-9">
               Join thousands of coconut farmers already growing smarter with AI. No credit card required.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
               <Link
                 to="/register"
-                className="inline-flex items-center justify-center gap-2 px-9 py-4 bg-[#2d5016] text-white rounded-xl font-bold text-sm hover:bg-[#1a3a10] transition-all shadow-xl hover:-translate-y-0.5"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#2d5016] px-9 py-4 text-sm font-bold text-white shadow-xl transition-all hover:-translate-y-0.5 hover:bg-[#1a3a10]"
               >
                 Create Free Account <ArrowRight size={15} />
               </Link>
               <Link
                 to="/login"
-                className="inline-flex items-center justify-center gap-2 px-9 py-4 border-2 border-[#2d5016] text-[#2d5016] rounded-xl font-semibold text-sm hover:bg-green-50 transition-all"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-[#2d5016] px-9 py-4 text-sm font-semibold text-[#2d5016] transition-all hover:bg-green-50"
               >
                 Sign In
               </Link>
@@ -436,14 +449,14 @@ export function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-[#0f2208] text-white">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 pt-16 pb-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
-            <div>
+      <footer className="bg-[#0f2208] text-white" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <div className="mx-auto max-w-7xl px-4 pt-12 pb-8 sm:px-8 sm:pt-16">
+          <div className="mb-10 grid grid-cols-2 gap-8 sm:mb-12 md:grid-cols-4 md:gap-10">
+            <div className="col-span-2 md:col-span-1">
               <div className="mb-4">
                 <LandingLogo light to="/" variant="footer" allWhite />
               </div>
-              <p className="text-green-300/55 text-sm leading-relaxed">
+              <p className="text-sm leading-relaxed text-green-300/55">
                 AI-powered coconut farming support platform for Sri Lankan farmers.
               </p>
             </div>
@@ -453,20 +466,20 @@ export function LandingPage() {
               { title: "Company", links: ["About Us", "Our Mission", "Contact", "Privacy Policy"] },
             ].map((col) => (
               <div key={col.title}>
-                <h3 className="text-xs font-bold uppercase tracking-widest text-green-400/60 mb-4">{col.title}</h3>
+                <h3 className="mb-4 text-xs font-bold tracking-widest uppercase text-green-400/60">{col.title}</h3>
                 <ul className="space-y-2.5">
                   {col.links.map((l) => (
                     <li key={l}>
-                      <a href="#" className="text-sm text-green-300/55 hover:text-white transition-colors">{l}</a>
+                      <a href="#" className="text-sm text-green-300/55 transition-colors hover:text-white">{l}</a>
                     </li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
-          <div className="border-t border-green-900/60 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-xs text-green-500/50">&copy; 2026 CocoCare. All rights reserved.</p>
-            <p className="text-xs text-green-600/40">Made with care for Sri Lankan farmers</p>
+          <div className="flex flex-col items-center justify-between gap-3 border-t border-green-900/60 pt-6 sm:flex-row">
+            <p className="text-center text-xs text-green-500/50 sm:text-left">&copy; 2026 CocoCare. All rights reserved.</p>
+            <p className="text-center text-xs text-green-600/40 sm:text-right">Made with care for Sri Lankan farmers</p>
           </div>
         </div>
       </footer>
