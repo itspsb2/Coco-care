@@ -130,6 +130,24 @@ describe('Officer region filtering', () => {
     for (const report of res.body) {
       expect(String(report.region).toLowerCase()).toContain('kurunegala')
     }
+    if (res.body.length > 0) {
+      expect(res.body[0]).toMatchObject({
+        farmer: {
+          name: expect.any(String),
+          username: expect.any(String),
+        },
+        farm: {
+          name: expect.any(String),
+          location: expect.any(String),
+          latitude: expect.any(Number),
+          longitude: expect.any(Number),
+          acreage: expect.any(Number),
+          treeCount: expect.any(Number),
+        },
+      })
+      expect('phone' in res.body[0].farmer).toBe(true)
+      expect('email' in res.body[0].farmer).toBe(true)
+    }
   })
 
   testFn('POST /officer/reports/:id/review rejects out-of-region report', async () => {
@@ -215,6 +233,20 @@ describe('Officer region filtering', () => {
     for (const report of res.body) {
       expect(report.status).toBe('verified')
     }
+    expect(res.body[0]).toMatchObject({
+      farmer: {
+        name: expect.any(String),
+        username: expect.any(String),
+      },
+      farm: {
+        name: expect.any(String),
+        location: expect.any(String),
+        latitude: expect.any(Number),
+        longitude: expect.any(Number),
+        acreage: expect.any(Number),
+        treeCount: expect.any(Number),
+      },
+    })
     const regions = res.body.map((r: { region: string }) => String(r.region).toLowerCase())
     expect(regions.some((r: string) => r.includes('kurunegala'))).toBe(true)
   })
