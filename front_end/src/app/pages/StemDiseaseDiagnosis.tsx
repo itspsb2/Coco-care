@@ -27,6 +27,7 @@ import {
   QuizQuestion,
   YnRow,
 } from '@/app/diagnosis/QuestionnaireChoices'
+import { QuestionnaireStepPager } from '@/app/diagnosis/QuestionnaireStepPager'
 
 export function StemDiseaseDiagnosis() {
   const [step, setStep] = useState(0)
@@ -161,25 +162,7 @@ export function StemDiseaseDiagnosis() {
         </div>
       )}
 
-      {/* Step indicator */}
-      <div className="mb-6 flex gap-1.5 overflow-x-auto pb-1">
-        {STEM_STEPS.map((s, i) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setStep(i)}
-            className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
-              i === step
-                ? 'bg-[#2d5f2e] text-white shadow-sm shadow-emerald-900/20'
-                : i < step
-                  ? 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-200'
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-150'
-            }`}
-          >
-            {i + 1}. {s.title}
-          </button>
-        ))}
-      </div>
+      <QuestionnaireStepPager steps={STEM_STEPS} current={step} onChange={setStep} />
 
       <div className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm sm:p-6">
         <div className="mb-5 flex items-start gap-3 border-b border-gray-100 pb-4">

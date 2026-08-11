@@ -9,7 +9,6 @@ import {
 } from 'lucide-react'
 import { motion } from 'motion/react'
 import { getLeafDiseaseInfo } from '@/app/diagnosis/leafDiseaseInfo'
-import { formatPercentage, toPercentageNumber } from '@/app/diagnosis/formatPercentage'
 
 function buildDescriptionParagraphs(
   description: string[],
@@ -68,22 +67,11 @@ function PreventionStep({ text, index }: { text: string; index: number }) {
   )
 }
 
-export function LeafDiseaseDetailCard({
-  diseaseName,
-  confidence,
-  detectedEvidence,
-}: {
-  diseaseName: string
-  confidence: number
-  detectedEvidence?: string
-}) {
+export function LeafDiseaseDetailCard({ diseaseName }: { diseaseName: string }) {
   const info = getLeafDiseaseInfo(diseaseName)
   if (!info) return null
 
-  const confidencePercentValue = toPercentageNumber(confidence)
-  const confidencePercent = formatPercentage(confidence)
   const descriptionParagraphs = buildDescriptionParagraphs(info.description, info.causalOrganism)
-  const isHealthy = info.category === 'Healthy'
 
   return (
     <motion.div
@@ -92,70 +80,6 @@ export function LeafDiseaseDetailCard({
       transition={{ duration: 0.45, delay: 0.15 }}
       className="overflow-hidden rounded-3xl border border-green-100/80 bg-white shadow-xl shadow-green-900/5"
     >
-      {/* Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#1a2e1a] via-[#234a24] to-[#2d5f2e] px-6 py-6 text-white sm:px-8">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-8 left-1/3 h-24 w-24 rounded-full bg-emerald-400/10 blur-2xl" />
-
-        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-widest text-emerald-200/90">
-              Diagnosis result
-            </p>
-            <h3 className="mt-2 text-xl font-bold leading-snug sm:text-2xl">{diseaseName}</h3>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur-sm">
-                {info.category}
-              </span>
-              {info.diseaseStage ? (
-                <span className="rounded-full bg-amber-400/20 px-3 py-1 text-xs font-medium text-amber-100">
-                  {info.diseaseStage}
-                </span>
-              ) : null}
-              {info.severity ? (
-                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-emerald-100">
-                  {info.severity}
-                </span>
-              ) : null}
-            </div>
-
-            {detectedEvidence ? (
-              <p className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-emerald-100">
-                <ChevronRight className="h-3.5 w-3.5" />
-                {detectedEvidence}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="flex shrink-0 items-center gap-4 self-start rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
-            <div className="relative h-16 w-16">
-              <svg className="h-16 w-16 -rotate-90" viewBox="0 0 56 56">
-                <circle cx="28" cy="28" r="24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="4" />
-                <circle
-                  cx="28"
-                  cy="28"
-                  r="24"
-                  fill="none"
-                  stroke={isHealthy ? '#86efac' : '#fde68a'}
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  strokeDasharray={`${(confidencePercentValue / 100) * 150.8} 150.8`}
-                />
-              </svg>
-              <span className="absolute inset-0 flex items-center justify-center">
-                <CheckCircle2 className="h-4 w-4 text-white/90" />
-              </span>
-            </div>
-            <div className="min-w-[140px]">
-              <p className="text-xs text-emerald-200/80">Model confidence</p>
-              <p className="text-2xl font-bold leading-tight tabular-nums">{confidencePercent}%</p>
-              <p className="text-sm font-semibold text-emerald-100">Top match</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="space-y-6 p-6 sm:p-8">
         {/* Description */}
         <section className="rounded-2xl border border-green-100 bg-gradient-to-br from-green-50/80 via-white to-white p-5 sm:p-6">

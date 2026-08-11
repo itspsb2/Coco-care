@@ -27,6 +27,7 @@ import {
   QuizQuestion,
   YnRow,
 } from '@/app/diagnosis/QuestionnaireChoices'
+import { QuestionnaireStepPager } from '@/app/diagnosis/QuestionnaireStepPager'
 
 export function FruitDiseaseDiagnosis() {
   const [step, setStep] = useState(0)
@@ -165,24 +166,7 @@ export function FruitDiseaseDiagnosis() {
         )}
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {FRUIT_STEPS.map((s, i) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setStep(i)}
-            className={`rounded-full px-3 py-1 text-xs font-medium ${
-              i === step
-                ? 'bg-[#2d5f2e] text-white'
-                : i < step
-                  ? 'bg-emerald-100 text-emerald-900'
-                  : 'bg-gray-100 text-gray-600'
-            }`}
-          >
-            {i + 1}. {s.title}
-          </button>
-        ))}
-      </div>
+      <QuestionnaireStepPager steps={FRUIT_STEPS} current={step} onChange={setStep} />
 
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
         <div className="mb-5 flex items-start gap-2">

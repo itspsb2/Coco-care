@@ -8,12 +8,12 @@ export function DiseaseDetection() {
   const symptomCount = DIAGNOSIS_CATEGORIES.length - mlCount
 
   return (
-    <div className="mx-auto max-w-3xl pb-8">
+    <div className="mx-auto max-w-3xl pb-4 sm:pb-8">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45 }}
-        className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-[#1a2e1a] via-[#2d5f2e] to-[#3d7a3f] px-6 py-8 text-white shadow-lg sm:px-10 sm:py-10"
+        className="relative mb-6 overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a2e1a] via-[#2d5f2e] to-[#3d7a3f] px-4 py-6 text-white shadow-lg sm:mb-8 sm:rounded-3xl sm:px-10 sm:py-10"
       >
         <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-emerald-300/20 blur-2xl" />
@@ -81,21 +81,21 @@ export function DiseaseDetection() {
                     <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-[#2d5f2e] to-emerald-500" />
                   ) : null}
 
-                  <div className="flex items-center gap-4 p-5 sm:gap-5 sm:p-6">
+                  <div className="flex items-center gap-3 p-4 sm:gap-5 sm:p-6">
                     <div className="relative shrink-0">
                       <div
-                        className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${meta.accent} text-white shadow-md transition-transform duration-300 group-hover:scale-105 sm:h-16 sm:w-16`}
+                        className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${meta.accent} text-white shadow-md transition-transform duration-300 group-hover:scale-105 sm:h-16 sm:w-16`}
                       >
-                        <Icon className="h-7 w-7 sm:h-8 sm:w-8" />
+                        <Icon className="h-6 w-6 sm:h-8 sm:w-8" />
                       </div>
-                      <span className="absolute -bottom-1.5 -right-1.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#1a2e1a] text-[10px] font-bold text-white">
+                      <span className="absolute -bottom-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-[#1a2e1a] text-[10px] font-bold text-white sm:h-6 sm:w-6">
                         {index + 1}
                       </span>
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                        <h2 className="text-lg font-semibold text-[#1a2e1a] sm:text-xl">
+                        <h2 className="text-base font-semibold text-[#1a2e1a] sm:text-xl">
                           {meta.label}
                         </h2>
                         {isMl ? (

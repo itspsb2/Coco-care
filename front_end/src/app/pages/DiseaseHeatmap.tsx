@@ -76,69 +76,76 @@ export function DiseaseHeatmap() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl text-[#1a2e1a] mb-2">Disease Heatmap & Risk Monitoring</h1>
-        <p className="text-[#6b7c6b]">
-          Monitor disease spread across Sri Lanka from verified cases and high-confidence AI-suspected reports.
+        <h1 className="mb-1 text-2xl text-[#1a2e1a] sm:mb-2 sm:text-3xl">
+          Disease Heatmap & Risk Monitoring
+        </h1>
+        <p className="text-sm text-[#6b7c6b] sm:text-base">
+          Monitor disease spread across Sri Lanka from verified cases and high-confidence AI-suspected
+          reports.
         </p>
       </div>
 
-      <div className="flex gap-4 flex-wrap items-end">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
         <select
           value={diseaseFilter}
           onChange={(e) => setDiseaseFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-200 rounded-lg bg-white"
+          className="min-h-11 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-base sm:w-auto sm:min-w-[10rem] sm:px-4 sm:text-sm"
         >
           <option value="">All Diseases</option>
           {diseaseOptions.map((d) => (
-            <option key={d} value={d}>{d}</option>
+            <option key={d} value={d}>
+              {d}
+            </option>
           ))}
         </select>
         <select
           value={districtFilter}
           onChange={(e) => setDistrictFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-200 rounded-lg bg-white"
+          className="min-h-11 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-base sm:w-auto sm:min-w-[10rem] sm:px-4 sm:text-sm"
         >
           <option value="">All Districts</option>
           {SRI_LANKA_DISTRICTS.map((d) => (
-            <option key={d} value={d}>{d}</option>
+            <option key={d} value={d}>
+              {d}
+            </option>
           ))}
         </select>
         <select
           value={minWeight ?? ''}
           onChange={(e) => setMinWeight(e.target.value ? Number(e.target.value) : undefined)}
-          className="px-4 py-2 border border-gray-200 rounded-lg bg-white"
+          className="min-h-11 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-base sm:w-auto sm:min-w-[10rem] sm:px-4 sm:text-sm"
         >
           <option value="">All risk levels</option>
           <option value="0.6">Medium+ (≥ 60%)</option>
           <option value="0.7">High (≥ 70%)</option>
           <option value="0.8">Critical (≥ 80%)</option>
         </select>
-        <label className="flex flex-col gap-1 text-sm text-[#6b7c6b]">
+        <label className="flex w-full flex-col gap-1 text-sm text-[#6b7c6b] sm:w-auto">
           From
           <input
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="px-4 py-2 border border-gray-200 rounded-lg bg-white"
+            className="min-h-11 rounded-lg border border-gray-200 bg-white px-3 py-2 text-base sm:px-4 sm:text-sm"
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-[#6b7c6b]">
+        <label className="flex w-full flex-col gap-1 text-sm text-[#6b7c6b] sm:w-auto">
           To
           <input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="px-4 py-2 border border-gray-200 rounded-lg bg-white"
+            className="min-h-11 rounded-lg border border-gray-200 bg-white px-3 py-2 text-base sm:px-4 sm:text-sm"
           />
         </label>
         <button
           type="button"
           onClick={clearFilters}
-          className="px-4 py-2 border-2 border-[#2d5f2e] text-[#2d5f2e] rounded-lg flex items-center gap-2"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border-2 border-[#2d5f2e] px-4 py-2 text-[#2d5f2e] sm:w-auto"
         >
-          <Filter className="w-4 h-4" />
+          <Filter className="h-4 w-4" />
           Clear filters
         </button>
       </div>
@@ -151,14 +158,16 @@ export function DiseaseHeatmap() {
 
       {isLoading ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#2d5f2e]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#2d5f2e]" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-            <h2 className="text-xl text-[#1a2e1a] mb-4">Sri Lanka Disease Distribution</h2>
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
+          <div className="rounded-2xl border border-green-100 bg-white p-3 shadow-sm sm:p-6 lg:col-span-2">
+            <h2 className="mb-3 text-lg text-[#1a2e1a] sm:mb-4 sm:text-xl">
+              Sri Lanka Disease Distribution
+            </h2>
             {heatmap.length === 0 ? (
-              <div className="flex items-center justify-center h-[500px] rounded-xl bg-gray-50 text-gray-500">
+              <div className="flex h-[280px] items-center justify-center rounded-xl bg-gray-50 px-4 text-center text-sm text-gray-500 sm:h-[500px]">
                 No outbreak data matches the current filters.
               </div>
             ) : (
@@ -166,17 +175,19 @@ export function DiseaseHeatmap() {
             )}
           </div>
 
-          <div className="space-y-6">
-            <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-sm p-6 text-white">
-              <h3 className="text-lg mb-2">High Risk Alerts</h3>
-              <div className="text-3xl mb-1">{highRiskCount}</div>
-              <p className="text-red-100 text-sm">Visible outbreak reports with confidence at least 70%</p>
+          <div className="space-y-4 sm:space-y-6">
+            <div className="rounded-2xl bg-gradient-to-br from-red-500 to-red-600 p-5 text-white shadow-sm sm:p-6">
+              <h3 className="mb-2 text-lg">High Risk Alerts</h3>
+              <div className="mb-1 text-3xl">{highRiskCount}</div>
+              <p className="text-sm text-red-100">
+                Visible outbreak reports with confidence at least 70%
+              </p>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-              <h3 className="text-lg text-[#1a2e1a] mb-4">Outbreak Points</h3>
-              <p className="text-xs text-[#6b7c6b] mb-3">Click an outbreak to locate it on the map.</p>
-              <div className="space-y-3 max-h-[360px] overflow-y-auto">
+            <div className="rounded-2xl border border-green-100 bg-white p-4 shadow-sm sm:p-6">
+              <h3 className="mb-2 text-lg text-[#1a2e1a] sm:mb-4">Outbreak Points</h3>
+              <p className="mb-3 text-xs text-[#6b7c6b]">Click an outbreak to locate it on the map.</p>
+              <div className="max-h-[280px] space-y-3 overflow-y-auto sm:max-h-[360px]">
                 {heatmap.length === 0 ? (
                   <p className="text-sm text-gray-500">No outbreaks to display.</p>
                 ) : (
@@ -196,29 +207,31 @@ export function DiseaseHeatmap() {
       )}
 
       {nearbyOutbreaks.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-          <h2 className="text-xl text-[#1a2e1a] mb-4">Nearby Outbreak Alerts</h2>
+        <div className="rounded-2xl border border-green-100 bg-white p-4 shadow-sm sm:p-6">
+          <h2 className="mb-4 text-lg text-[#1a2e1a] sm:text-xl">Nearby Outbreak Alerts</h2>
           <div className="space-y-3">
             {nearbyOutbreaks.slice(0, 5).map((outbreak, i) => (
               <div
                 key={i}
-                className={`p-4 rounded-lg border ${
+                className={`rounded-lg border p-3 sm:p-4 ${
                   outbreak.verificationStatus === 'ai_suspected'
-                    ? 'bg-amber-50 border-amber-200'
-                    : 'bg-red-50 border-red-200'
+                    ? 'border-amber-200 bg-amber-50'
+                    : 'border-red-200 bg-red-50'
                 }`}
               >
                 <div className="flex items-start gap-3">
                   <AlertTriangle
-                    className={`w-5 h-5 mt-0.5 ${
-                      outbreak.verificationStatus === 'ai_suspected' ? 'text-amber-600' : 'text-red-600'
+                    className={`mt-0.5 h-5 w-5 shrink-0 ${
+                      outbreak.verificationStatus === 'ai_suspected'
+                        ? 'text-amber-600'
+                        : 'text-red-600'
                     }`}
                   />
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <div className="min-w-0">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
                       <h4 className="text-sm font-medium text-gray-900">{outbreak.diseaseType}</h4>
                       <span
-                        className={`px-2 py-0.5 rounded text-xs ${
+                        className={`rounded px-2 py-0.5 text-xs ${
                           outbreak.verificationStatus === 'ai_suspected'
                             ? 'bg-amber-100 text-amber-800'
                             : 'bg-green-100 text-green-700'
@@ -228,7 +241,8 @@ export function DiseaseHeatmap() {
                       </span>
                     </div>
                     <p className="text-sm text-gray-700">
-                      {outbreak.distanceKm} km from {outbreak.farmName} - intensity {Math.round(outbreak.weight * 100)}%
+                      {outbreak.distanceKm} km from {outbreak.farmName} - intensity{' '}
+                      {Math.round(outbreak.weight * 100)}%
                       {outbreak.verificationStatus === 'ai_suspected'
                         ? '. This case has not been officer verified yet.'
                         : ''}

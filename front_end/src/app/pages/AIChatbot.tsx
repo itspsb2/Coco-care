@@ -7,6 +7,8 @@ import {
   Plus,
   MessageSquare,
   Trash2,
+  PanelLeft,
+  X,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -157,15 +159,20 @@ export function AIChatbot() {
   }
 
   const selectConversation = async (id: string) => {
-    if (id === activeIdRef.current) return
+    if (id === activeIdRef.current) {
+      setMobileListOpen(false)
+      return
+    }
     const leavingId = activeIdRef.current
     openConversation(id)
+    setMobileListOpen(false)
     if (leavingId) {
       await discardEmptyDraft(leavingId)
     }
   }
 
   const [creating, setCreating] = useState(false)
+  const [mobileListOpen, setMobileListOpen] = useState(false)
 
   const startNewConversation = async () => {
     if (creating) return
@@ -302,116 +309,176 @@ export function AIChatbot() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages.length, sendMutation.isPending])
 
-  return (
-    <div className="h-[calc(100vh-8rem)] flex gap-4">
-      {/* Conversation sidebar */}
-      <aside className="w-64 shrink-0 bg-white rounded-2xl border border-green-100 shadow-sm flex flex-col overflow-hidden">
-        <div className="p-3 border-b border-green-100">
-          <button
-            type="button"
-            onClick={() => startNewConversation()}
-            disabled={creating}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-[#2d5f2e] text-white rounded-xl text-sm font-medium hover:bg-[#1a2e1a] disabled:opacity-50"
-          >
-            {creating ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Plus className="w-4 h-4" />
-            )}
-            New conversation
-          </button>
-        </div>
+  const conversationList = (
+    <>
+      <div className="border-b border-green-100 p-3">
+        <button
+          type="button"
+          onClick={() => {
+            void startNewConversation()
+            setMobileListOpen(false)
+          }}
+          disabled={creating}
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#2d5f2e] px-3 py-2.5 text-sm font-medium text-white hover:bg-[#1a2e1a] disabled:opacity-50"
+        >
+          {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          New conversation
+        </button>
+      </div>
 
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {conversationsLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-[#2d5f2e]" />
-            </div>
-          ) : (
-            conversations.map((c) => {
-              const isActive = c.id === activeId
-              return (
-                <div
-                  key={c.id}
-                  className={`group flex items-start gap-2 rounded-xl px-2 py-2 cursor-pointer transition-colors ${
-                    isActive ? 'bg-green-50 border border-green-200' : 'hover:bg-gray-50 border border-transparent'
-                  }`}
+      <div className="flex-1 space-y-1 overflow-y-auto p-2">
+        {conversationsLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-[#2d5f2e]" />
+          </div>
+        ) : (
+          conversations.map((c) => {
+            const isActive = c.id === activeId
+            return (
+              <div
+                key={c.id}
+                className={`group flex items-start gap-2 rounded-xl border px-2 py-2 transition-colors ${
+                  isActive
+                    ? 'border-green-200 bg-green-50'
+                    : 'border-transparent hover:bg-gray-50'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => void selectConversation(c.id)}
+                  className="min-w-0 flex-1 text-left"
                 >
-                  <button
-                    type="button"
-                    onClick={() => selectConversation(c.id)}
-                    className="flex-1 min-w-0 text-left"
-                  >
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-[#2d5f2e]' : 'text-gray-400'}`} />
-                      <span className={`text-sm truncate ${isActive ? 'text-[#1a2e1a] font-medium' : 'text-gray-700'}`}>
-                        {c.title}
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-400 pl-5">{formatConversationTime(c.updatedAt)}</div>
-                  </button>
-                  <button
-                    type="button"
-                    title="Delete conversation"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (window.confirm('Delete this conversation?')) {
-                        deleteMutation.mutate(c.id)
-                      }
-                    }}
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-opacity"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )
-            })
-          )}
-        </div>
+                  <div className="mb-0.5 flex items-center gap-1.5">
+                    <MessageSquare
+                      className={`h-3.5 w-3.5 shrink-0 ${isActive ? 'text-[#2d5f2e]' : 'text-gray-400'}`}
+                    />
+                    <span
+                      className={`truncate text-sm ${isActive ? 'font-medium text-[#1a2e1a]' : 'text-gray-700'}`}
+                    >
+                      {c.title}
+                    </span>
+                  </div>
+                  <div className="pl-5 text-xs text-gray-400">
+                    {formatConversationTime(c.updatedAt)}
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  title="Delete conversation"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (window.confirm('Delete this conversation?')) {
+                      deleteMutation.mutate(c.id)
+                    }
+                  }}
+                  className="rounded p-2 text-gray-400 transition-opacity hover:bg-red-50 hover:text-red-600 md:opacity-0 md:group-hover:opacity-100"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )
+          })
+        )}
+      </div>
+    </>
+  )
+
+  return (
+    <div className="flex h-[calc(100dvh-8.5rem)] min-h-[20rem] gap-0 overflow-hidden sm:h-[calc(100dvh-7rem)] lg:h-[calc(100dvh-5.5rem)] lg:gap-4">
+      {/* Desktop sidebar */}
+      <aside className="hidden w-64 shrink-0 flex-col overflow-hidden rounded-2xl border border-green-100 bg-white shadow-sm md:flex">
+        {conversationList}
       </aside>
 
-      {/* Main chat */}
-      <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-sm border border-green-100 h-full flex flex-col">
-        <div className="border-b border-green-100 p-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-[#2d5f2e] to-[#1a2e1a] rounded-full flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
+      {/* Mobile conversation drawer */}
+      {mobileListOpen ? (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/40"
+            aria-label="Close conversations"
+            onClick={() => setMobileListOpen(false)}
+          />
+          <aside className="absolute inset-y-0 left-0 flex w-[min(20rem,88vw)] flex-col bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-green-100 px-3 py-3">
+              <span className="text-sm font-semibold text-[#1a2e1a]">Conversations</span>
+              <button
+                type="button"
+                onClick={() => setMobileListOpen(false)}
+                className="flex min-h-10 min-w-10 items-center justify-center rounded-xl hover:bg-gray-50"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl text-[#1a2e1a]">AI Farming Assistant</h1>
-              <div className="flex items-center gap-2 text-sm text-green-600">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                Connected to CRI knowledge base · uses conversation context
+            {conversationList}
+          </aside>
+        </div>
+      ) : null}
+
+      {/* Main chat */}
+      <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-green-100 bg-white shadow-sm">
+        <div className="shrink-0 border-b border-green-100 p-3 sm:p-5 lg:p-6">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => setMobileListOpen(true)}
+              className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-green-100 text-[#2d5f2e] hover:bg-green-50 md:hidden"
+              aria-label="Open conversations"
+            >
+              <PanelLeft className="h-5 w-5" />
+            </button>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2d5f2e] to-[#1a2e1a] sm:h-12 sm:w-12">
+              <Sparkles className="h-5 w-5 text-white sm:h-6 sm:w-6" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-lg text-[#1a2e1a] sm:text-2xl">AI Farming Assistant</h1>
+              <div className="flex items-center gap-2 text-xs text-green-600 sm:text-sm">
+                <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-green-500" />
+                <span className="truncate">CRI knowledge · conversation context</span>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg shrink-0">
-              <FileText className="w-4 h-4 text-blue-600" />
+            <div className="hidden items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 shrink-0 sm:flex">
+              <FileText className="h-4 w-4 text-blue-600" />
               <span className="text-sm text-blue-900">RAG Knowledge Base</span>
             </div>
           </div>
         </div>
 
-        {sendError && (
-          <div className="mx-6 mt-4 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+        {sendError ? (
+          <div className="mx-3 mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:mx-6 sm:mt-4">
             {sendError}
           </div>
-        )}
+        ) : null}
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 sm:space-y-4 sm:p-6">
           {!activeId || messagesLoading ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-[#2d5f2e]" />
+              <Loader2 className="h-8 w-8 animate-spin text-[#2d5f2e]" />
             </div>
           ) : (
             messages.map((message) => (
-              <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] ${message.role === 'user' ? 'bg-[#2d5f2e] text-white' : 'bg-gray-100 text-gray-900'} rounded-2xl px-4 py-3`}>
+              <div
+                key={message.id}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[90%] rounded-2xl px-3 py-2.5 text-sm sm:max-w-[80%] sm:px-4 sm:py-3 sm:text-base ${
+                    message.role === 'user'
+                      ? 'bg-[#2d5f2e] text-white'
+                      : 'bg-gray-100 text-gray-900'
+                  }`}
+                >
                   <MessageContent
                     content={message.content}
                     role={message.role}
                     onOpenSource={openSourceArticle}
                   />
-                  <div className={`text-xs mt-1 ${message.role === 'user' ? 'text-green-100' : 'text-gray-500'}`}>
+                  <div
+                    className={`mt-1 text-xs ${
+                      message.role === 'user' ? 'text-green-100' : 'text-gray-500'
+                    }`}
+                  >
                     {formatTime(message.createdAt)}
                   </div>
                 </div>
@@ -419,28 +486,28 @@ export function AIChatbot() {
             ))
           )}
 
-          {sendMutation.isPending && (
+          {sendMutation.isPending ? (
             <div className="flex justify-start">
-              <div className="bg-gray-100 rounded-2xl px-4 py-3 flex items-center gap-2 text-sm text-gray-600">
-                <Loader2 className="w-4 h-4 animate-spin text-[#2d5f2e]" />
-                Searching knowledge base with conversation context…
+              <div className="flex items-center gap-2 rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-600">
+                <Loader2 className="h-4 w-4 animate-spin text-[#2d5f2e]" />
+                Searching knowledge base…
               </div>
             </div>
-          )}
+          ) : null}
         </div>
 
-        {activeId && userMessageCount === 0 && !messagesLoading && (
-          <div className="px-6 pb-4">
-            <div className="bg-gradient-to-br from-green-50 to-yellow-50 rounded-xl p-4">
-              <h3 className="text-sm text-gray-900 mb-3">Suggested Questions:</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        {activeId && userMessageCount === 0 && !messagesLoading ? (
+          <div className="shrink-0 px-3 pb-3 sm:px-6 sm:pb-4">
+            <div className="rounded-xl bg-gradient-to-br from-green-50 to-yellow-50 p-3 sm:p-4">
+              <h3 className="mb-2 text-sm text-gray-900 sm:mb-3">Suggested Questions:</h3>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                 {suggestedQuestions.map((question) => (
                   <button
                     key={question}
                     type="button"
                     disabled={sendMutation.isPending}
-                    onClick={() => sendMessage(question)}
-                    className="text-left px-3 py-2 bg-white rounded-lg text-sm text-gray-700 hover:bg-green-50 hover:text-[#2d5f2e] border border-green-100 disabled:opacity-50"
+                    onClick={() => void sendMessage(question)}
+                    className="min-h-11 rounded-lg border border-green-100 bg-white px-3 py-2 text-left text-sm text-gray-700 hover:bg-green-50 hover:text-[#2d5f2e] disabled:opacity-50"
                   >
                     {question}
                   </button>
@@ -448,26 +515,27 @@ export function AIChatbot() {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
-        <div className="border-t border-green-100 p-4">
-          <div className="flex items-center gap-3">
+        <div className="shrink-0 border-t border-green-100 p-3 sm:p-4">
+          <div className="flex items-end gap-2 sm:items-center sm:gap-3">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="Ask in English — follow-ups use this conversation’s context..."
+              onKeyDown={(e) => e.key === 'Enter' && void handleSend()}
+              placeholder="Ask about coconut farming…"
               disabled={!activeId}
-              className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d5f2e] bg-gray-50 disabled:opacity-50"
+              className="min-h-12 flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#2d5f2e] disabled:opacity-50 sm:rounded-lg sm:px-4"
             />
             <button
               type="button"
-              onClick={handleSend}
+              onClick={() => void handleSend()}
               disabled={!input.trim() || sendMutation.isPending || !activeId}
-              className="p-3 bg-[#2d5f2e] text-white rounded-lg hover:bg-[#1a2e1a] disabled:bg-gray-300"
+              className="flex min-h-12 min-w-12 items-center justify-center rounded-xl bg-[#2d5f2e] text-white hover:bg-[#1a2e1a] disabled:bg-gray-300 sm:rounded-lg sm:p-3"
+              aria-label="Send message"
             >
-              <Send className="w-5 h-5" />
+              <Send className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -484,9 +552,9 @@ export function AIChatbot() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-3 border-b border-green-100 shrink-0">
-            <DialogTitle className="text-[#1a2e1a] pr-8">
+        <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+          <DialogHeader className="shrink-0 border-b border-green-100 p-4 pb-3 sm:p-6">
+            <DialogTitle className="pr-8 text-[#1a2e1a]">
               {article?.title ?? articleTitle ?? 'CRI Article'}
             </DialogTitle>
             <DialogDescription>
@@ -494,7 +562,7 @@ export function AIChatbot() {
                 ? `${article.source} · Full advisory from the knowledge base`
                 : 'Full advisory from the CRI knowledge base'}
             </DialogDescription>
-            {article?.sourceUrl && (
+            {article?.sourceUrl ? (
               <a
                 href={article.sourceUrl}
                 target="_blank"
@@ -503,25 +571,25 @@ export function AIChatbot() {
               >
                 Open official CRI PDF
               </a>
-            )}
+            ) : null}
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0 max-h-[70vh]">
-            {articleLoading && (
+          <div className="min-h-0 max-h-[70vh] flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+            {articleLoading ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-[#2d5f2e]" />
+                <Loader2 className="h-8 w-8 animate-spin text-[#2d5f2e]" />
               </div>
-            )}
-            {articleError && (
-              <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+            ) : null}
+            {articleError ? (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                 {articleError}
               </div>
-            )}
-            {article && !articleLoading && (
-              <div className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed">
+            ) : null}
+            {article && !articleLoading ? (
+              <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
                 {article.content || 'No content available for this document.'}
               </div>
-            )}
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>
