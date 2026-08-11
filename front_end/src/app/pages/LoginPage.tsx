@@ -103,35 +103,41 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+    <div
+      className="flex min-h-[100dvh] items-center justify-center bg-white px-4 py-8 sm:p-6"
+      style={{
+        paddingTop: 'max(2rem, env(safe-area-inset-top))',
+        paddingBottom: 'max(2rem, env(safe-area-inset-bottom))',
+      }}
+    >
       <div className="w-full max-w-md">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="mb-8 text-center sm:mb-12"
         >
-          <div className="flex justify-center mb-6">
+          <div className="mb-5 flex justify-center sm:mb-6">
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               whileHover={{ scale: 1.05 }}
               transition={{ delay: 0.2, duration: 0.5 }}
             >
-              <Link to="/" className="inline-block hover:opacity-90 transition-opacity">
+              <Link to="/" className="inline-block transition-opacity hover:opacity-90">
                 <img
                   src={loginLogo}
                   alt="Coco Care"
-                  className="h-12 w-auto max-w-[200px] object-contain mx-auto"
+                  className="mx-auto h-10 w-auto max-w-[180px] object-contain sm:h-12 sm:max-w-[200px]"
                 />
               </Link>
             </motion.div>
           </div>
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-5xl font-bold text-[#1a2e1a] mb-3"
+            className="mb-2 text-3xl font-bold text-[#1a2e1a] sm:mb-3 sm:text-5xl"
           >
             Login
           </motion.h1>
@@ -139,7 +145,7 @@ export function LoginPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.5 }}
-            className="text-gray-600"
+            className="text-sm text-gray-600 sm:text-base"
           >
             Welcome back to CocoCare
           </motion.p>
@@ -150,9 +156,9 @@ export function LoginPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.6 }}
         >
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             {error ? (
-              <div className="rounded-full border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 text-center">
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm text-red-700 sm:rounded-full">
                 {error}
               </div>
             ) : null}
@@ -161,16 +167,13 @@ export function LoginPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.6, duration: 0.5 }}
             >
-              <label className="block text-sm font-bold mb-3 text-[#1a2e1a]">NIC Number</label>
-              <motion.div
-                whileFocus={{ scale: 1.01 }}
-                transition={{ duration: 0.2 }}
-              >
+              <label className="mb-2 block text-sm font-bold text-[#1a2e1a] sm:mb-3">NIC Number</label>
+              <motion.div whileFocus={{ scale: 1.01 }} transition={{ duration: 0.2 }}>
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-6 py-4 border-2 border-[#1a2e1a] rounded-full focus:outline-none focus:border-[#2d5016] transition-all bg-white text-[#1a2e1a] hover:shadow-md"
+                  className="w-full rounded-full border-2 border-[#1a2e1a] bg-white px-5 py-3.5 text-base text-[#1a2e1a] transition-all hover:shadow-md focus:border-[#2d5016] focus:outline-none sm:px-6 sm:py-4"
                   placeholder="Enter your NIC number"
                   autoComplete="username"
                   required
@@ -184,17 +187,13 @@ export function LoginPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.7, duration: 0.5 }}
             >
-              <label className="block text-sm font-bold mb-3 text-[#1a2e1a]">Password</label>
-              <motion.div 
-                className="relative"
-                whileFocus={{ scale: 1.01 }}
-                transition={{ duration: 0.2 }}
-              >
+              <label className="mb-2 block text-sm font-bold text-[#1a2e1a] sm:mb-3">Password</label>
+              <motion.div className="relative" whileFocus={{ scale: 1.01 }} transition={{ duration: 0.2 }}>
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-6 py-4 border-2 border-[#1a2e1a] rounded-full focus:outline-none focus:border-[#2d5016] transition-all bg-white text-[#1a2e1a] pr-12 hover:shadow-md"
+                  className="w-full rounded-full border-2 border-[#1a2e1a] bg-white px-5 py-3.5 pr-12 text-base text-[#1a2e1a] transition-all hover:shadow-md focus:border-[#2d5016] focus:outline-none sm:px-6 sm:py-4"
                   placeholder="Enter your password"
                   required
                   disabled={loading}
@@ -204,21 +203,18 @@ export function LoginPage() {
                   whileTap={{ scale: 0.95 }}
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#2d5016] transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-500 transition-colors hover:text-[#2d5016] sm:right-5"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </motion.button>
               </motion.div>
-              <div className="text-right mt-2">
+              <div className="mt-2 text-right">
                 <motion.button
                   whileHover={{ x: 3 }}
                   type="button"
                   onClick={openPasswordReset}
-                  className="text-sm text-gray-500 hover:text-[#2d5016] transition-colors inline-block"
+                  className="inline-block min-h-10 text-sm text-gray-500 transition-colors hover:text-[#2d5016]"
                 >
                   Forgot password?
                 </motion.button>
@@ -233,50 +229,40 @@ export function LoginPage() {
               <motion.button
                 type="submit"
                 disabled={loading}
-                whileHover={loading ? undefined : { scale: 1.02, boxShadow: "0 10px 30px rgba(45, 80, 22, 0.3)" }}
+                whileHover={
+                  loading ? undefined : { scale: 1.02, boxShadow: '0 10px 30px rgba(45, 80, 22, 0.3)' }
+                }
                 whileTap={loading ? undefined : { scale: 0.98 }}
-                className="w-full py-4 bg-[#2d5016] text-white rounded-full font-bold text-lg hover:bg-[#1a2e1a] transition-colors shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#2d5016] py-3.5 text-base font-bold text-white shadow-lg transition-colors hover:bg-[#1a2e1a] disabled:cursor-not-allowed disabled:opacity-60 sm:py-4 sm:text-lg"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="h-5 w-5 animate-spin" />
                     Signing in…
                   </>
                 ) : (
-                  "Login"
+                  'Login'
                 )}
               </motion.button>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.9, duration: 0.5 }}
-              className="border-t-2 border-gray-200 my-8"
-            ></motion.div>
+            <div className="my-6 border-t-2 border-gray-200 sm:my-8" />
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1, duration: 0.5 }}
-              className="text-center"
-            >
-              <p className="text-[#1a2e1a]">
-                Don't have an account?{" "}
-                <Link 
-                  to="/register" 
-                  className="font-bold text-[#2d5016] hover:text-[#1a2e1a] transition-colors underline"
-                >
-                  Create an account
-                </Link>
-              </p>
-            </motion.div>
+            <p className="text-center text-sm text-[#1a2e1a] sm:text-base">
+              Don&apos;t have an account?{' '}
+              <Link
+                to="/register"
+                className="font-bold text-[#2d5016] underline transition-colors hover:text-[#1a2e1a]"
+              >
+                Create an account
+              </Link>
+            </p>
           </form>
         </motion.div>
       </div>
 
       <Dialog open={resetOpen} onOpenChange={setResetOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Change Password</DialogTitle>
             <DialogDescription>

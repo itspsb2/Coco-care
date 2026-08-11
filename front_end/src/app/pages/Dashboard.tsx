@@ -81,37 +81,43 @@ export function Dashboard() {
   ]
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl text-[#1a2e1a] mb-2">Welcome, {firstName}!</h1>
-        <p className="text-[#6b7c6b] mb-6">Quick access to your plantation tools.</p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <h1 className="mb-1 text-2xl text-[#1a2e1a] sm:mb-2 sm:text-3xl">Welcome, {firstName}!</h1>
+        <p className="mb-4 text-sm text-[#6b7c6b] sm:mb-6 sm:text-base">
+          Quick access to your plantation tools.
+        </p>
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
           {quickLinks.map((link) => (
             <Link
               key={link.href}
               to={link.href}
-              className="group flex flex-col items-center gap-3 p-5 bg-white rounded-2xl border border-green-100 shadow-sm hover:shadow-md hover:border-green-200 transition-all duration-200 hover:-translate-y-0.5"
+              className="group flex min-h-[6.5rem] flex-col items-center gap-2 rounded-2xl border border-green-100 bg-white p-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-green-200 hover:shadow-md sm:min-h-0 sm:gap-3 sm:p-5"
             >
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${link.color} flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform duration-200`}>
-                <link.icon className="w-6 h-6" />
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${link.color} text-white shadow-sm transition-transform duration-200 group-hover:scale-110 sm:h-12 sm:w-12`}
+              >
+                <link.icon className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
-              <span className="text-sm font-medium text-gray-800 text-center">{link.label}</span>
+              <span className="text-center text-xs font-medium leading-snug text-gray-800 sm:text-sm">
+                {link.label}
+              </span>
             </Link>
           ))}
         </div>
       </div>
 
       {/* Row 1: Recent AI Diagnoses + Disease Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-green-100 p-6">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
+        <div className="rounded-2xl border border-green-100 bg-white p-4 shadow-sm sm:p-6 lg:col-span-2">
           <RecentDiagnosesSection reports={reports} compact />
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl text-[#1a2e1a]">Current Disease Alerts</h2>
+        <div className="rounded-2xl border border-green-100 bg-white p-4 shadow-sm sm:p-6">
+          <div className="mb-4 flex items-start justify-between gap-2">
+            <h2 className="text-lg text-[#1a2e1a] sm:text-xl">Current Disease Alerts</h2>
             {unreadAlertCount > 0 && (
-              <span className="text-xs font-medium px-2 py-1 rounded-full bg-red-100 text-red-700">
+              <span className="shrink-0 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
                 {unreadAlertCount} unread
               </span>
             )}
@@ -159,9 +165,12 @@ export function Dashboard() {
 function RecentDiagnosesSection({ reports, compact }: { reports: DiseaseReport[]; compact?: boolean }) {
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl text-[#1a2e1a]">Recent AI Diagnoses</h2>
-        <Link to="/app/disease-detection" className="text-sm text-[#2d5f2e] hover:underline">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h2 className="text-lg text-[#1a2e1a] sm:text-xl">Recent AI Diagnoses</h2>
+        <Link
+          to="/app/disease-detection"
+          className="shrink-0 text-sm text-[#2d5f2e] hover:underline"
+        >
           New diagnosis
         </Link>
       </div>
@@ -202,11 +211,13 @@ function WeatherForecastCard({
   const displayRegion = weather?.location ?? region
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
+    <div className="rounded-2xl border border-green-100 bg-white p-4 shadow-sm sm:p-6">
+      <div className="mb-4 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl text-[#1a2e1a]">Weather Forecast</h2>
-          <p className="text-sm text-gray-500">{displayRegion}, Sri Lanka · 5–6 day outlook</p>
+          <h2 className="text-lg text-[#1a2e1a] sm:text-xl">Weather Forecast</h2>
+          <p className="text-sm text-gray-500">
+            {displayRegion}, Sri Lanka · 5–6 day outlook
+          </p>
         </div>
       </div>
 
@@ -234,7 +245,7 @@ function WeatherForecastCard({
               <div className="flex items-center gap-4 mb-4">
                 <WeatherIconDisplay icon={weather.current.icon} className="w-14 h-14 shrink-0" />
                 <div>
-                  <div className="text-3xl font-semibold text-gray-900">
+                  <div className="text-2xl font-semibold text-gray-900 sm:text-3xl">
                     {weather.current.temp}°C
                   </div>
                   <div className="text-sm text-gray-600 capitalize">
