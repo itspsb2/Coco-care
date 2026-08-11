@@ -20,61 +20,13 @@ import {
   fruitQuestionnaireToSymptomsPayload,
   isFruitQuestionnaireReady,
   type FruitQuestionnaireState,
-  type YnUnsure,
 } from '@/app/diagnosis/fruitSymptomQuestionnaire'
-
-function Choice({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-xl border px-3 py-2.5 text-left text-sm transition-colors ${
-        active
-          ? 'border-[#2d5f2e] bg-emerald-50 font-semibold text-[#1a2e1a] ring-1 ring-[#2d5f2e]/25'
-          : 'border-gray-200 bg-white text-gray-700 hover:border-green-200 hover:bg-green-50/40'
-      }`}
-    >
-      {children}
-    </button>
-  )
-}
-
-function YnRow({
-  label,
-  value,
-  onChange,
-}: {
-  label: string
-  value: YnUnsure
-  onChange: (v: YnUnsure) => void
-}) {
-  return (
-    <div className="space-y-2">
-      <p className="text-sm font-medium text-gray-800">{label}</p>
-      <div className="flex flex-wrap gap-2">
-        {(
-          [
-            ['yes', 'Yes'],
-            ['no', 'No'],
-            ['unsure', 'Not sure'],
-          ] as const
-        ).map(([id, text]) => (
-          <Choice key={id} active={value === id} onClick={() => onChange(id)}>
-            {text}
-          </Choice>
-        ))}
-      </div>
-    </div>
-  )
-}
+import {
+  Choice,
+  QuizChoiceGrid,
+  QuizQuestion,
+  YnRow,
+} from '@/app/diagnosis/QuestionnaireChoices'
 
 export function FruitDiseaseDiagnosis() {
   const [step, setStep] = useState(0)
@@ -242,12 +194,9 @@ export function FruitDiseaseDiagnosis() {
         </div>
 
         {step === 0 && (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-800">
-                Approximately how old is the affected nut?
-              </p>
-              <div className="grid gap-2 sm:grid-cols-2">
+          <div className="space-y-4">
+            <QuizQuestion label="Approximately how old is the affected nut?">
+              <QuizChoiceGrid>
                 {(
                   [
                     ['button', 'Very young / button nut'],
@@ -266,11 +215,10 @@ export function FruitDiseaseDiagnosis() {
                     {label}
                   </Choice>
                 ))}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-800">Where does the visible damage begin?</p>
-              <div className="grid gap-2 sm:grid-cols-2">
+              </QuizChoiceGrid>
+            </QuizQuestion>
+            <QuizQuestion label="Where does the visible damage begin?">
+              <QuizChoiceGrid>
                 {(
                   [
                     ['below_perianth', 'Immediately below floral cap / perianth'],
@@ -289,13 +237,13 @@ export function FruitDiseaseDiagnosis() {
                     {label}
                   </Choice>
                 ))}
-              </div>
-            </div>
+              </QuizChoiceGrid>
+            </QuizQuestion>
           </div>
         )}
 
         {step === 1 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <YnRow
               label="Pale yellow / cream / white triangular patch beginning below the perianth?"
               value={form.fr_q3_triangle}
@@ -340,7 +288,7 @@ export function FruitDiseaseDiagnosis() {
         )}
 
         {step === 2 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <YnRow
               label="Many tiny scale-like spots attached to the nut surface?"
               value={form.fr_q11_scale}
@@ -380,7 +328,7 @@ export function FruitDiseaseDiagnosis() {
         )}
 
         {step === 3 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <YnRow
               label="Is nut damage mainly shallow / superficial scraping of the outer skin?"
               value={form.fr_q18_scrape}
@@ -396,11 +344,8 @@ export function FruitDiseaseDiagnosis() {
               value={form.fr_q20_galleries}
               onChange={(v) => patch('fr_q20_galleries', v)}
             />
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-800">
-                Are immature nuts falling before maturity?
-              </p>
-              <div className="flex flex-wrap gap-2">
+            <QuizQuestion label="Are immature nuts falling before maturity?">
+              <QuizChoiceGrid>
                 {(
                   [
                     ['no', 'No'],
@@ -418,8 +363,8 @@ export function FruitDiseaseDiagnosis() {
                     {label}
                   </Choice>
                 ))}
-              </div>
-            </div>
+              </QuizChoiceGrid>
+            </QuizQuestion>
             <YnRow
               label="Do fallen nuts show characteristic mite scars?"
               value={form.fr_q22_fallen_mite}
@@ -434,7 +379,7 @@ export function FruitDiseaseDiagnosis() {
         )}
 
         {step === 4 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <YnRow
               label="Has there been a prolonged dry period?"
               value={form.fr_q24_dry}

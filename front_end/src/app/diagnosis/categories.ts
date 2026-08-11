@@ -23,7 +23,7 @@ export const CATEGORY_META: Record<
 > = {
   leaves: {
     label: 'Coconut Leaves & Leaflets',
-    description: 'Upload a leaf photo for AI-powered disease classification.',
+    description: 'Upload a leaf photo for ML-powered disease classification.',
     icon: Leaf,
     usesMl: true,
     accent: 'from-emerald-500 to-[#2d5f2e]',

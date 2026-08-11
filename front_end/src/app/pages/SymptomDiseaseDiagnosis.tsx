@@ -12,6 +12,7 @@ import {
 } from '@/app/diagnosis/categories'
 import { FarmSelector } from '@/app/diagnosis/FarmSelector'
 import { DiagnosisResultPanel } from '@/app/diagnosis/DiagnosisResultPanel'
+import { Choice, QuizChoiceGrid, QuizQuestion } from '@/app/diagnosis/QuestionnaireChoices'
 
 export function SymptomDiseaseDiagnosis() {
   const { category: categoryParam } = useParams()
@@ -164,27 +165,22 @@ export function SymptomDiseaseDiagnosis() {
                 <ClipboardList className="h-5 w-5 text-[#2d5f2e]" />
                 <h2 className="text-xl text-[#1a2e1a]">Symptom Questionnaire</h2>
               </div>
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {diseases.map((disease) => (
-                  <div key={disease.name}>
-                    <h3 className="mb-2 text-sm font-semibold text-gray-900">{disease.name}</h3>
-                    <div className="flex flex-wrap gap-2">
+                  <QuizQuestion key={disease.name} label={disease.name} hint="Select all that you observe">
+                    <QuizChoiceGrid>
                       {disease.symptoms.map((symptom) => (
-                        <button
+                        <Choice
                           key={symptom}
-                          type="button"
+                          variant="multi"
+                          active={selectedSymptoms.includes(symptom)}
                           onClick={() => toggleSymptom(symptom)}
-                          className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
-                            selectedSymptoms.includes(symptom)
-                              ? 'bg-[#2d5f2e] text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
                         >
                           {symptom}
-                        </button>
+                        </Choice>
                       ))}
-                    </div>
-                  </div>
+                    </QuizChoiceGrid>
+                  </QuizQuestion>
                 ))}
               </div>
             </div>

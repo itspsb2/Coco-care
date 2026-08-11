@@ -4,8 +4,8 @@ import { motion } from 'motion/react'
 import { CATEGORY_META, DIAGNOSIS_CATEGORIES, getCategoryPath } from '@/app/diagnosis/categories'
 
 export function DiseaseDetection() {
-  const aiCount = DIAGNOSIS_CATEGORIES.filter((c) => CATEGORY_META[c].usesMl).length
-  const symptomCount = DIAGNOSIS_CATEGORIES.length - aiCount
+  const mlCount = DIAGNOSIS_CATEGORIES.filter((c) => CATEGORY_META[c].usesMl).length
+  const symptomCount = DIAGNOSIS_CATEGORIES.length - mlCount
 
   return (
     <div className="mx-auto max-w-3xl pb-8">
@@ -29,14 +29,15 @@ export function DiseaseDetection() {
           </h1>
           <p className="max-w-xl text-sm leading-relaxed text-green-100 sm:text-base">
             Select which part of your coconut palm shows symptoms. Leaf diseases are classified
-            with our trained AI model; all other areas use a guided symptom questionnaire.
+            with our trained machine learning (ML) model; all other areas use a guided symptom
+            questionnaire.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
             <div className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm backdrop-blur-sm">
               <Brain className="h-4 w-4 text-emerald-200" />
               <span>
-                <strong className="font-semibold">{aiCount}</strong> AI-powered
+                <strong className="font-semibold">{mlCount}</strong> ML-powered
               </span>
             </div>
             <div className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm backdrop-blur-sm">
@@ -59,7 +60,7 @@ export function DiseaseDetection() {
           {DIAGNOSIS_CATEGORIES.map((category, index) => {
             const meta = CATEGORY_META[category]
             const Icon = meta.icon
-            const isAi = meta.usesMl
+            const isMl = meta.usesMl
 
             return (
               <motion.div
@@ -71,12 +72,12 @@ export function DiseaseDetection() {
                 <Link
                   to={getCategoryPath(category)}
                   className={`group relative block overflow-hidden rounded-2xl border bg-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
-                    isAi
+                    isMl
                       ? 'border-emerald-200 shadow-md shadow-emerald-100/60 ring-1 ring-emerald-100'
                       : 'border-green-100 shadow-sm hover:border-green-200'
                   }`}
                 >
-                  {isAi ? (
+                  {isMl ? (
                     <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-[#2d5f2e] to-emerald-500" />
                   ) : null}
 
@@ -97,10 +98,10 @@ export function DiseaseDetection() {
                         <h2 className="text-lg font-semibold text-[#1a2e1a] sm:text-xl">
                           {meta.label}
                         </h2>
-                        {isAi ? (
+                        {isMl ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
                             <Sparkles className="h-3 w-3" />
-                            AI Model
+                            ML Model
                           </span>
                         ) : (
                           <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
