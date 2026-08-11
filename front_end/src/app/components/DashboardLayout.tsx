@@ -226,7 +226,7 @@ export function DashboardLayout() {
         </main>
       </div>
 
-      {/* Floating Quick AI Diagnosis */}
+      {/* Floating Quick ML Diagnosis (leaf image model) */}
       <div ref={fabRef} className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3">
         <div
           className={`
@@ -245,9 +245,9 @@ export function DashboardLayout() {
               >
                 <X className="w-5 h-5" />
               </button>
-              <h3 className="text-lg font-semibold mb-2 pr-6">Quick AI Diagnosis</h3>
+              <h3 className="text-lg font-semibold mb-2 pr-6">Coco Disease Diagnosis</h3>
               <p className="text-green-100 text-sm mb-4">
-                Upload a coconut leaf image for instant disease detection.
+                Upload a coconut leaf image for ML-based disease classification.
               </p>
               <Link
                 to="/app/disease-detection"
@@ -269,10 +269,10 @@ export function DashboardLayout() {
           onClick={() => setFabOpen((o) => !o)}
           className="flex items-center gap-2 rounded-full shadow-lg transition-all duration-300 bg-gradient-to-br from-[#2d5f2e] to-[#1a2e1a] text-white px-5 py-4 hover:scale-105 hover:shadow-xl"
           aria-expanded={fabOpen}
-          aria-label="Quick AI Diagnosis"
+          aria-label="Coco Disease Diagnosis"
         >
           <Microscope className="w-6 h-6" />
-          <span className="font-medium text-sm pr-1">AI Diagnosis</span>
+          <span className="font-medium text-sm pr-1">Coco Disease Diagnosis</span>
         </button>
       </div>
     </div>

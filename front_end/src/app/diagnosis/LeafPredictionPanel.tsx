@@ -35,7 +35,7 @@ export function LeafPredictionPanel({
           </div>
         </div>
         <h3 className="mb-1 text-xl font-semibold text-gray-900">Analyzing Leaf Image</h3>
-        <p className="text-sm text-gray-500">Running disease classification model…</p>
+        <p className="text-sm text-gray-500">Running ML disease classification model…</p>
       </div>
     )
   }
@@ -50,7 +50,7 @@ export function LeafPredictionPanel({
         </div>
         <h3 className="mb-2 text-xl font-semibold text-[#1a2e1a]">Disease Predictions</h3>
         <p className="max-w-xs text-sm leading-relaxed text-gray-500">
-          Upload a leaf image and run classification to see probability scores for each disease.
+          Upload a leaf image and run the ML model to see probability scores for each disease.
         </p>
       </div>
     )
@@ -70,7 +70,7 @@ export function LeafPredictionPanel({
       <div className="mb-4 flex shrink-0 items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold text-[#1a2e1a]">Disease Predictions</h2>
-          <p className="mt-0.5 text-sm text-gray-500">All diagnosis percentage outputs</p>
+          <p className="mt-0.5 text-sm text-gray-500">ML model probability scores</p>
         </div>
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50 text-[#2d5f2e]">
           <Leaf className="h-4 w-4" />

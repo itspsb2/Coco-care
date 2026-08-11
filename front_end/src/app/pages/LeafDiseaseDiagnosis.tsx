@@ -30,30 +30,11 @@ import {
   questionnaireToSymptomsPayload,
   type LeafQuestionnaireState,
 } from '@/app/diagnosis/leafSymptomQuestionnaire'
-
-function ChoiceButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-        active
-          ? 'bg-[#2d5f2e] text-white'
-          : 'bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50'
-      }`}
-    >
-      {children}
-    </button>
-  )
-}
+import {
+  Choice,
+  QuizChoiceGrid,
+  QuizQuestion,
+} from '@/app/diagnosis/QuestionnaireChoices'
 
 export function LeafDiseaseDiagnosis() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
@@ -235,12 +216,12 @@ export function LeafDiseaseDiagnosis() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="mb-1 text-xs font-medium uppercase tracking-wider text-emerald-200">
-                AI leaf diagnosis
+                ML leaf diagnosis
               </p>
               <h1 className="text-2xl font-bold sm:text-3xl">Coconut Leaves & Leaflets</h1>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-green-100">
-                Upload a clear photo of affected leaves. Our disease classification model will
-                classify the disease.
+                Upload a clear photo of affected leaves. Our machine learning model classifies
+                the disease from the image.
               </p>
             </div>
           </div>
@@ -339,7 +320,7 @@ export function LeafDiseaseDiagnosis() {
             ) : (
               <>
                 <Sparkles className="h-5 w-5 transition-transform group-hover:scale-110" />
-                Classify with AI Model
+                Classify with ML Model
               </>
             )}
           </button>
@@ -382,224 +363,205 @@ export function LeafDiseaseDiagnosis() {
 
           {/* Step 1 */}
           <section className="mb-6">
-            <h4 className="mb-2 text-sm font-bold uppercase tracking-wide text-[#1a2e1a]">
-              Step 1 — Select the affected leaf area
-            </h4>
-            <p className="mb-3 text-xs text-gray-600">Allow one selection.</p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {LEAF_AREA_OPTIONS.map((option) => {
-                const active = questionnaire.leafArea === option.id
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() =>
-                      setQuestionnaire((prev) => ({ ...prev, leafArea: option.id }))
-                    }
-                    className={`rounded-xl border px-4 py-3 text-left transition-colors ${
-                      active
-                        ? 'border-[#2d5f2e] bg-[#2d5f2e] text-white'
-                        : 'border-amber-100 bg-white text-gray-800 hover:border-amber-200'
-                    }`}
-                  >
-                    <div className="text-sm font-semibold">{option.label}</div>
-                  </button>
-                )
-              })}
-            </div>
+            <QuizQuestion
+              label="Step 1 — Select the affected leaf area"
+              hint="Allow one selection."
+            >
+              <QuizChoiceGrid>
+                {LEAF_AREA_OPTIONS.map((option) => {
+                  const active = questionnaire.leafArea === option.id
+                  return (
+                    <Choice
+                      key={option.id}
+                      active={active}
+                      onClick={() =>
+                        setQuestionnaire((prev) => ({ ...prev, leafArea: option.id }))
+                      }
+                    >
+                      {option.label}
+                    </Choice>
+                  )
+                })}
+              </QuizChoiceGrid>
+            </QuizQuestion>
           </section>
 
           {/* Step 2 */}
           <section className="mb-6">
-            <h4 className="mb-2 text-sm font-bold uppercase tracking-wide text-[#1a2e1a]">
+            <h4 className="mb-3 text-sm font-bold uppercase tracking-wide text-[#1a2e1a]">
               Step 2 — Select all visible symptoms
             </h4>
             <div className="space-y-4">
               {LEAF_SYMPTOM_GROUPS.map((group) => (
-                <div
-                  key={group.title}
-                  className="rounded-xl border border-amber-100 bg-white/90 p-4"
-                >
-                  <h5 className="text-sm font-semibold text-[#1a2e1a]">{group.title}</h5>
-                  {group.note ? (
-                    <p className="mt-1 text-xs text-gray-500">{group.note}</p>
-                  ) : null}
-                  <div className="mt-3 flex flex-wrap gap-2">
+                <QuizQuestion key={group.title} label={group.title} hint={group.note}>
+                  <QuizChoiceGrid>
                     {group.symptoms.map((symptom) => {
                       const selected = questionnaire.selectedSymptoms.includes(symptom.id)
                       return (
-                        <button
+                        <Choice
                           key={symptom.id}
-                          type="button"
+                          variant="multi"
+                          active={selected}
                           onClick={() => toggleSymptom(symptom.id)}
-                          className={`rounded-full px-3 py-1.5 text-left text-xs transition-colors ${
-                            selected
-                              ? 'bg-[#2d5f2e] text-white'
-                              : 'bg-gray-50 text-gray-700 ring-1 ring-gray-200 hover:bg-gray-100'
-                          }`}
                         >
-                          <span className="font-medium">{symptom.label}</span>
-                        </button>
+                          {symptom.label}
+                        </Choice>
                       )
                     })}
-                  </div>
-                </div>
+                  </QuizChoiceGrid>
+                </QuizQuestion>
               ))}
             </div>
           </section>
 
           {/* Step 3 */}
           <section className="mb-5">
-            <h4 className="mb-2 text-sm font-bold uppercase tracking-wide text-[#1a2e1a]">
+            <h4 className="mb-3 text-sm font-bold uppercase tracking-wide text-[#1a2e1a]">
               Step 3 — Additional questions
             </h4>
             <p className="mb-3 text-xs text-gray-600">
               These questions help distinguish similar conditions.
             </p>
-            <div className="space-y-3">
-              <div className="rounded-xl border border-amber-100 bg-white px-4 py-3">
-                <p className="mb-2 text-sm text-gray-800">
-                  Can you see separate spots with defined borders?
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <ChoiceButton
+            <div className="space-y-4">
+              <QuizQuestion label="Can you see separate spots with defined borders?">
+                <QuizChoiceGrid cols={2}>
+                  <Choice
                     active={questionnaire.qSpotsBordered === 'yes'}
                     onClick={() =>
                       setQuestionnaire((p) => ({ ...p, qSpotsBordered: 'yes' }))
                     }
+                    variant="compact"
                   >
                     Yes
-                  </ChoiceButton>
-                  <ChoiceButton
+                  </Choice>
+                  <Choice
                     active={questionnaire.qSpotsBordered === 'no'}
                     onClick={() => setQuestionnaire((p) => ({ ...p, qSpotsBordered: 'no' }))}
+                    variant="compact"
                   >
                     No
-                  </ChoiceButton>
-                </div>
-              </div>
+                  </Choice>
+                </QuizChoiceGrid>
+              </QuizQuestion>
 
-              <div className="rounded-xl border border-amber-100 bg-white px-4 py-3">
-                <p className="mb-2 text-sm text-gray-800">
-                  Is the yellowing uneven rather than uniformly affecting an old leaf?
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <ChoiceButton
+              <QuizQuestion label="Is the yellowing uneven rather than uniformly affecting an old leaf?">
+                <QuizChoiceGrid cols={2}>
+                  <Choice
                     active={questionnaire.qUnevenYellowing === 'yes'}
                     onClick={() =>
                       setQuestionnaire((p) => ({ ...p, qUnevenYellowing: 'yes' }))
                     }
+                    variant="compact"
                   >
                     Yes
-                  </ChoiceButton>
-                  <ChoiceButton
+                  </Choice>
+                  <Choice
                     active={questionnaire.qUnevenYellowing === 'no'}
                     onClick={() =>
                       setQuestionnaire((p) => ({ ...p, qUnevenYellowing: 'no' }))
                     }
+                    variant="compact"
                   >
                     No
-                  </ChoiceButton>
-                </div>
-              </div>
+                  </Choice>
+                </QuizChoiceGrid>
+              </QuizQuestion>
 
-              <div className="rounded-xl border border-amber-100 bg-white px-4 py-3">
-                <p className="mb-2 text-sm text-gray-800">
-                  Are the leaflets visibly bent or hanging downward?
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <ChoiceButton
+              <QuizQuestion label="Are the leaflets visibly bent or hanging downward?">
+                <QuizChoiceGrid cols={3}>
+                  <Choice
                     active={questionnaire.qLeafletsBent === 'slightly'}
                     onClick={() =>
                       setQuestionnaire((p) => ({ ...p, qLeafletsBent: 'slightly' }))
                     }
+                    variant="compact"
                   >
                     Slightly
-                  </ChoiceButton>
-                  <ChoiceButton
+                  </Choice>
+                  <Choice
                     active={questionnaire.qLeafletsBent === 'severely'}
                     onClick={() =>
                       setQuestionnaire((p) => ({ ...p, qLeafletsBent: 'severely' }))
                     }
+                    variant="compact"
                   >
                     Severely
-                  </ChoiceButton>
-                  <ChoiceButton
+                  </Choice>
+                  <Choice
                     active={questionnaire.qLeafletsBent === 'no'}
                     onClick={() => setQuestionnaire((p) => ({ ...p, qLeafletsBent: 'no' }))}
+                    variant="compact"
                   >
                     No
-                  </ChoiceButton>
-                </div>
-              </div>
+                  </Choice>
+                </QuizChoiceGrid>
+              </QuizQuestion>
 
-              <div className="rounded-xl border border-amber-100 bg-white px-4 py-3">
-                <p className="mb-2 text-sm text-gray-800">
-                  Can you see silk, frass or caterpillars underneath?
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <ChoiceButton
+              <QuizQuestion label="Can you see silk, frass or caterpillars underneath?">
+                <QuizChoiceGrid cols={2}>
+                  <Choice
                     active={questionnaire.qSilkFrass === 'yes'}
                     onClick={() => setQuestionnaire((p) => ({ ...p, qSilkFrass: 'yes' }))}
+                    variant="compact"
                   >
                     Yes
-                  </ChoiceButton>
-                  <ChoiceButton
+                  </Choice>
+                  <Choice
                     active={questionnaire.qSilkFrass === 'no'}
                     onClick={() => setQuestionnaire((p) => ({ ...p, qSilkFrass: 'no' }))}
+                    variant="compact"
                   >
                     No
-                  </ChoiceButton>
-                </div>
-              </div>
+                  </Choice>
+                </QuizChoiceGrid>
+              </QuizQuestion>
 
-              <div className="rounded-xl border border-amber-100 bg-white px-4 py-3">
-                <p className="mb-2 text-sm text-gray-800">
-                  Is the youngest spear leaf rotten or unable to open?
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <ChoiceButton
+              <QuizQuestion label="Is the youngest spear leaf rotten or unable to open?">
+                <QuizChoiceGrid cols={2}>
+                  <Choice
                     active={questionnaire.qSpearRotten === 'yes'}
                     onClick={() => setQuestionnaire((p) => ({ ...p, qSpearRotten: 'yes' }))}
+                    variant="compact"
                   >
                     Yes
-                  </ChoiceButton>
-                  <ChoiceButton
+                  </Choice>
+                  <Choice
                     active={questionnaire.qSpearRotten === 'no'}
                     onClick={() => setQuestionnaire((p) => ({ ...p, qSpearRotten: 'no' }))}
+                    variant="compact"
                   >
                     No
-                  </ChoiceButton>
-                </div>
-              </div>
+                  </Choice>
+                </QuizChoiceGrid>
+              </QuizQuestion>
 
-              <div className="rounded-xl border border-amber-100 bg-white px-4 py-3">
-                <p className="mb-2 text-sm text-gray-800">
-                  Are symptoms present on more than one palm nearby?
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <ChoiceButton
+              <QuizQuestion label="Are symptoms present on more than one palm nearby?">
+                <QuizChoiceGrid cols={3}>
+                  <Choice
                     active={questionnaire.qNearbyPalms === 'yes'}
                     onClick={() => setQuestionnaire((p) => ({ ...p, qNearbyPalms: 'yes' }))}
+                    variant="compact"
                   >
                     Yes
-                  </ChoiceButton>
-                  <ChoiceButton
+                  </Choice>
+                  <Choice
                     active={questionnaire.qNearbyPalms === 'no'}
                     onClick={() => setQuestionnaire((p) => ({ ...p, qNearbyPalms: 'no' }))}
+                    variant="compact"
                   >
                     No
-                  </ChoiceButton>
-                  <ChoiceButton
+                  </Choice>
+                  <Choice
                     active={questionnaire.qNearbyPalms === 'unsure'}
                     onClick={() =>
                       setQuestionnaire((p) => ({ ...p, qNearbyPalms: 'unsure' }))
                     }
+                    variant="compact"
                   >
                     Not sure
-                  </ChoiceButton>
-                </div>
-              </div>
+                  </Choice>
+                </QuizChoiceGrid>
+              </QuizQuestion>
             </div>
           </section>
 
