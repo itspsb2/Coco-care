@@ -32,6 +32,14 @@ interface ReportRow {
   created_at: Date
   farm_name: string
   region: string
+  farm_latitude: string | number | null
+  farm_longitude: string | number | null
+  farm_acreage: string | number | null
+  farm_tree_count: number | null
+  farmer_name: string | null
+  farmer_username: string | null
+  farmer_email: string | null
+  farmer_phone: string | null
 }
 
 function mapReport(row: ReportRow): DiseaseReport {
@@ -47,6 +55,22 @@ function mapReport(row: ReportRow): DiseaseReport {
     farmId: row.farm_id,
     farmName: row.farm_name,
     region: row.region,
+    farmer: {
+      id: row.user_id,
+      name: row.farmer_name ?? 'Unknown farmer',
+      username: row.farmer_username ?? 'unknown',
+      email: row.farmer_email,
+      phone: row.farmer_phone,
+    },
+    farm: {
+      id: row.farm_id,
+      name: row.farm_name,
+      location: row.region,
+      latitude: Number(row.farm_latitude ?? 0),
+      longitude: Number(row.farm_longitude ?? 0),
+      acreage: Number(row.farm_acreage ?? 0),
+      treeCount: Number(row.farm_tree_count ?? 0),
+    },
     imageUrl: row.image_url ?? undefined,
     symptoms,
     imageResult: row.image_result ?? undefined,
@@ -65,9 +89,14 @@ const REPORT_SELECT = `
          dr.image_result, dr.symptom_result, dr.final_result, dr.confidence,
          dr.advice, dr.status, dr.review_comment,
          dr.reviewed_by_officer, dr.reviewed_by_admin, dr.created_at,
-         f.name AS farm_name, f.location AS region
+         f.name AS farm_name, f.location AS region,
+         f.latitude AS farm_latitude, f.longitude AS farm_longitude,
+         f.acreage AS farm_acreage, f.tree_count AS farm_tree_count,
+         farmer.name AS farmer_name, farmer.username AS farmer_username,
+         farmer.email AS farmer_email, farmer.phone AS farmer_phone
   FROM disease_reports dr
   JOIN farms f ON f.id = dr.farm_id
+  JOIN farmers farmer ON farmer.id = dr.user_id
 `
 
 export async function createReport(input: CreateReportInput): Promise<DiseaseReport> {

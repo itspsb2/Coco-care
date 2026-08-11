@@ -8,11 +8,13 @@ import {
   FileWarning,
   Globe,
   Clock,
+  Eye,
 } from 'lucide-react'
 import { useState } from 'react'
 import { reportsApi } from '@/api/services'
 import { useAuth } from '@/contexts/AuthContext'
 import type { DiseaseReport } from '@/types'
+import { ReportDetailDialog } from '../admin/ReportDetailDialog'
 
 type Tab = 'pending' | 'confirmed'
 
@@ -40,6 +42,7 @@ export function ReportReviewPage() {
   const queryClient = useQueryClient()
   const [tab, setTab] = useState<Tab>('pending')
   const [comment, setComment] = useState<Record<string, string>>({})
+  const [selectedReport, setSelectedReport] = useState<DiseaseReport | null>(null)
   const assignedRegion = user?.assignedRegion?.trim()
 
   const { data: pendingReports = [], isLoading: pendingLoading } = useQuery({
@@ -231,6 +234,14 @@ export function ReportReviewPage() {
                       <div className="flex flex-wrap gap-3">
                         <button
                           type="button"
+                          onClick={() => setSelectedReport(report)}
+                          className="flex items-center gap-2 rounded-xl border border-green-200 px-4 py-2 text-sm text-[#2d5f2e] hover:bg-green-50"
+                        >
+                          <Eye className="h-4 w-4" />
+                          View details
+                        </button>
+                        <button
+                          type="button"
                           onClick={() =>
                             reviewMutation.mutate({
                               id: report.id,
@@ -347,6 +358,17 @@ export function ReportReviewPage() {
                           {report.reviewComment}
                         </div>
                       ) : null}
+
+                      <div className="mt-4">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedReport(report)}
+                          className="inline-flex items-center gap-2 rounded-xl border border-green-200 px-4 py-2 text-sm text-[#2d5f2e] hover:bg-green-50"
+                        >
+                          <Eye className="h-4 w-4" />
+                          View details
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </article>
@@ -355,6 +377,14 @@ export function ReportReviewPage() {
           )}
         </>
       )}
+
+      <ReportDetailDialog
+        report={selectedReport}
+        open={selectedReport !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedReport(null)
+        }}
+      />
     </div>
   )
 }
