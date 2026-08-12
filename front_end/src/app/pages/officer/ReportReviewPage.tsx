@@ -37,6 +37,10 @@ function ReportMeta({ report }: { report: DiseaseReport }) {
   )
 }
 
+function asReportArray(value: unknown): DiseaseReport[] {
+  return Array.isArray(value) ? value : []
+}
+
 export function ReportReviewPage() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
@@ -45,17 +49,20 @@ export function ReportReviewPage() {
   const [selectedReport, setSelectedReport] = useState<DiseaseReport | null>(null)
   const assignedRegion = user?.assignedRegion?.trim()
 
-  const { data: pendingReports = [], isLoading: pendingLoading } = useQuery({
+  const { data: pendingReportsData, isLoading: pendingLoading } = useQuery({
     queryKey: ['officer', 'pending-reports'],
     queryFn: reportsApi.pending,
     enabled: Boolean(assignedRegion),
   })
 
-  const { data: confirmedReports = [], isLoading: confirmedLoading } = useQuery({
+  const { data: confirmedReportsData, isLoading: confirmedLoading } = useQuery({
     queryKey: ['officer', 'verified-reports'],
     queryFn: reportsApi.verified,
     enabled: tab === 'confirmed',
   })
+
+  const pendingReports = asReportArray(pendingReportsData)
+  const confirmedReports = asReportArray(confirmedReportsData)
 
   const reviewMutation = useMutation({
     mutationFn: ({
