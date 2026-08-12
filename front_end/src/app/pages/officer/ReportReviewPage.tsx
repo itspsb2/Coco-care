@@ -41,6 +41,11 @@ function asReportArray(value: unknown): DiseaseReport[] {
   return Array.isArray(value) ? value : []
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  const axiosError = error as { response?: { data?: { message?: string } }; message?: string }
+  return axiosError.response?.data?.message ?? axiosError.message ?? fallback
+}
+
 export function ReportReviewPage() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
@@ -49,13 +54,27 @@ export function ReportReviewPage() {
   const [selectedReport, setSelectedReport] = useState<DiseaseReport | null>(null)
   const assignedRegion = user?.assignedRegion?.trim()
 
-  const { data: pendingReportsData, isLoading: pendingLoading } = useQuery({
+  const {
+    data: pendingReportsData,
+    isLoading: pendingLoading,
+    isError: pendingIsError,
+    error: pendingError,
+    refetch: refetchPendingReports,
+    isFetching: pendingFetching,
+  } = useQuery({
     queryKey: ['officer', 'pending-reports'],
     queryFn: reportsApi.pending,
     enabled: Boolean(assignedRegion),
   })
 
-  const { data: confirmedReportsData, isLoading: confirmedLoading } = useQuery({
+  const {
+    data: confirmedReportsData,
+    isLoading: confirmedLoading,
+    isError: confirmedIsError,
+    error: confirmedError,
+    refetch: refetchConfirmedReports,
+    isFetching: confirmedFetching,
+  } = useQuery({
     queryKey: ['officer', 'verified-reports'],
     queryFn: reportsApi.verified,
     enabled: tab === 'confirmed',
@@ -63,6 +82,10 @@ export function ReportReviewPage() {
 
   const pendingReports = asReportArray(pendingReportsData)
   const confirmedReports = asReportArray(confirmedReportsData)
+  const pendingInvalidResponse =
+    pendingReportsData !== undefined && !Array.isArray(pendingReportsData)
+  const confirmedInvalidResponse =
+    confirmedReportsData !== undefined && !Array.isArray(confirmedReportsData)
 
   const reviewMutation = useMutation({
     mutationFn: ({
@@ -81,6 +104,21 @@ export function ReportReviewPage() {
   })
 
   const isLoading = tab === 'pending' ? pendingLoading : confirmedLoading
+  const activeError =
+    tab === 'pending'
+      ? pendingIsError
+        ? getErrorMessage(pendingError, 'Unable to load pending reports.')
+        : pendingInvalidResponse
+          ? 'Pending reports response was not a list.'
+          : null
+      : confirmedIsError
+        ? getErrorMessage(confirmedError, 'Unable to load confirmed reports.')
+        : confirmedInvalidResponse
+          ? 'Confirmed reports response was not a list.'
+          : null
+  const refetchActiveReports =
+    tab === 'pending' ? refetchPendingReports : refetchConfirmedReports
+  const activeFetching = tab === 'pending' ? pendingFetching : confirmedFetching
 
   if (tab === 'pending' && pendingLoading) {
     return (
@@ -154,6 +192,26 @@ export function ReportReviewPage() {
         </button>
       </div>
 
+      {activeError ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-red-800 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="font-semibold">Could not load reports</h2>
+              <p className="mt-1 text-sm">{activeError}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void refetchActiveReports()}
+              disabled={activeFetching}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-300 px-4 py-2 text-sm font-medium text-red-800 hover:bg-red-100 disabled:opacity-60"
+            >
+              {activeFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Retry
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {tab === 'pending' ? (
         <>
           {!assignedRegion ? (
@@ -180,7 +238,7 @@ export function ReportReviewPage() {
             </div>
           )}
 
-          {assignedRegion && pendingReports.length === 0 ? (
+          {!activeError && assignedRegion && pendingReports.length === 0 ? (
             <div className="rounded-2xl border border-green-100 bg-white p-12 text-center shadow-sm">
               <CheckCircle className="mx-auto mb-3 h-10 w-10 text-green-600" />
               <h2 className="text-lg font-semibold text-gray-900 mb-2">All caught up</h2>
@@ -190,7 +248,7 @@ export function ReportReviewPage() {
             </div>
           ) : null}
 
-          {assignedRegion && pendingReports.length > 0 ? (
+          {!activeError && assignedRegion && pendingReports.length > 0 ? (
             <div className="space-y-4">
               {pendingReports.map((report) => (
                 <article
@@ -303,7 +361,7 @@ export function ReportReviewPage() {
             </div>
           </div>
 
-          {isLoading ? (
+          {activeError ? null : isLoading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-8 h-8 animate-spin text-[#2d5f2e]" />
             </div>

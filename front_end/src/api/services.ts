@@ -96,12 +96,14 @@ export const reportsApi = {
   pending: async () => {
     const { data } = await apiClient.get<DiseaseReport[]>(
       '/officer/reports/pending',
+      { params: { _: Date.now() } },
     )
     return data
   },
   verified: async () => {
     const { data } = await apiClient.get<DiseaseReport[]>(
       '/officer/reports/verified',
+      { params: { _: Date.now() } },
     )
     return data
   },

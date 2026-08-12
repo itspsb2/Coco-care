@@ -36,6 +36,16 @@ export function createApp() {
     next()
   })
 
+  app.use((req, res, next) => {
+    if (req.path !== '/health') {
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+      res.set('Pragma', 'no-cache')
+      res.set('Expires', '0')
+      res.set('Surrogate-Control', 'no-store')
+    }
+    next()
+  })
+
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', service: 'coco-care-backend' })
   })
