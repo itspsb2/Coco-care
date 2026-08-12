@@ -3,11 +3,13 @@ import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { adminApi } from '@/api/services'
 
 export function AdminSystemPage() {
-  const { data, isLoading, refetch, isFetching } = useQuery({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ['admin', 'health'],
     queryFn: adminApi.health,
     refetchInterval: 30_000,
   })
+
+  const errorMessage = getErrorMessage(error)
 
   return (
     <div className="space-y-6">
@@ -25,7 +27,12 @@ export function AdminSystemPage() {
         </button>
       </div>
 
-      {isLoading || !data ? (
+      {isError ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-red-800 shadow-sm">
+          <h2 className="font-semibold">Could not load system health</h2>
+          <p className="mt-1 text-sm">{errorMessage}</p>
+        </div>
+      ) : isLoading || !data ? (
         <div className="flex justify-center py-16">
           <Loader2 className="w-8 h-8 animate-spin text-[#2d5f2e]" />
         </div>
@@ -37,17 +44,22 @@ export function AdminSystemPage() {
           <HealthCard
             label="Knowledge documents"
             ok={data.knowledgeDocuments > 0}
-            detail={`${data.knowledgeDocuments} documents`}
+            detail={`${data.knowledgeDocuments ?? 0} documents`}
           />
           <HealthCard
             label="Knowledge chunks"
             ok={data.knowledgeChunks > 0}
-            detail={`${data.knowledgeChunks} chunks`}
+            detail={`${data.knowledgeChunks ?? 0} chunks`}
           />
         </div>
       )}
     </div>
   )
+}
+
+function getErrorMessage(error: unknown) {
+  const axiosError = error as { response?: { data?: { message?: string } }; message?: string }
+  return axiosError.response?.data?.message ?? axiosError.message ?? 'Unable to load system health.'
 }
 
 function HealthCard({

@@ -268,7 +268,9 @@ export const adminApi = {
     return data
   },
   health: async () => {
-    const { data } = await apiClient.get<SystemHealth>('/admin/health')
+    const { data } = await apiClient.get<SystemHealth>('/admin/health', {
+      params: { _: Date.now() },
+    })
     return data
   },
   listBroadcasts: async () => {
