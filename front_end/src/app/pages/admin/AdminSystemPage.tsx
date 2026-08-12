@@ -58,6 +58,7 @@ export function AdminSystemPage() {
 }
 
 function getErrorMessage(error: unknown) {
+  if (!error || typeof error !== 'object') return 'Unable to load system health.'
   const axiosError = error as { response?: { data?: { message?: string } }; message?: string }
   return axiosError.response?.data?.message ?? axiosError.message ?? 'Unable to load system health.'
 }

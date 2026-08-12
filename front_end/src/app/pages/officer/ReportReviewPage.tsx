@@ -42,6 +42,7 @@ function asReportArray(value: unknown): DiseaseReport[] {
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
+  if (!error || typeof error !== 'object') return fallback
   const axiosError = error as { response?: { data?: { message?: string } }; message?: string }
   return axiosError.response?.data?.message ?? axiosError.message ?? fallback
 }
